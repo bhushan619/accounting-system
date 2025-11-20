@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: VeloSync API
+  version: 0.1.0
+paths:
+  /auth/signup:
+    post:
+      summary: Sign up
+      responses: { '200': { description: OK } }
+  /clients:
+    get:
+      summary: List clients
+      responses: { '200': { description: OK } }

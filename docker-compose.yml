@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6.0
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+      - ./backend/docker/mongo-init-replica.js:/docker-entrypoint-initdb.d/init.js:ro
+    ports:
+      - 27017:27017
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend/uploads:/usr/src/app/uploads
+      - ./backend:/usr/src/app
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/velosync
+    ports:
+      - 4000:4000
+    depends_on:
+      - mongo
+  frontend:
+    build: ./frontend
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/usr/src/app
+    depends_on:
+      - backend
+volumes:
+  mongo-data:
