@@ -1,27 +1,45 @@
+// src/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import User from '../models/User';
 
+// Keep a typed user, but don't fight TS for headers
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: {
+    _id: string;
+    email: string;
+    role: string;
+  };
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
+    // Cast to any for headers to avoid TS complaining
+    const headers = (req as any).headers || {};
+    const authHeader: string | undefined =
+      headers.authorization || headers.Authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, config.JWT_SECRET) as any;
+    const token = authHeader.split(' ')[1];
+
+    const decoded = jwt.verify(token, config.JWT_SECRET) as { sub: string };
+
     const user = await User.findById(decoded.sub).select('-password');
-    
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    req.user = user;
+    req.user = {
+      _id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    };
+
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Invalid token' });

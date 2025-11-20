@@ -12,6 +12,9 @@ services:
     build: ./backend
     volumes:
       - ./backend/uploads:/usr/src/app/uploads
+      - ./backend/uploads:/usr/src/app/uploads/bills
+      - ./backend/uploads:/usr/src/app/uploads/invoices
+      - ./backend/uploads:/usr/src/app/uploads/receipts
       - ./backend:/usr/src/app
     environment:
       - MONGODB_URI=mongodb://mongo:27017/velosync
