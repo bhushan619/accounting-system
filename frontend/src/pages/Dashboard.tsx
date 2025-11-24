@@ -25,13 +25,13 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-6">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Revenue</p>
+              <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-bold text-green-600">
                 LKR {stats?.totalRevenue?.toLocaleString() || 0}
               </p>
@@ -40,10 +40,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Expenses</p>
+              <p className="text-sm text-muted-foreground">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600">
                 LKR {stats?.totalExpenses?.toLocaleString() || 0}
               </p>
@@ -52,44 +52,44 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Profit</p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-sm text-muted-foreground">Profit</p>
+              <p className="text-2xl font-bold text-primary">
                 LKR {stats?.profit?.toLocaleString() || 0}
               </p>
             </div>
-            <TrendingUp className="text-blue-600" size={32} />
+            <TrendingUp className="text-primary" size={32} />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Invoices</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-muted-foreground">Invoices</p>
+              <p className="text-2xl font-bold text-foreground">
                 {stats?.invoiceCount || 0}
               </p>
             </div>
-            <FileText className="text-gray-600" size={32} />
+            <FileText className="text-muted-foreground" size={32} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <p className="text-gray-600">No recent activity</p>
+          <p className="text-muted-foreground">No recent activity</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6 border border-border">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="space-y-2">
-            <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
               Create Invoice
             </button>
-            <button className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            <button className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80">
               Add Expense
             </button>
           </div>
