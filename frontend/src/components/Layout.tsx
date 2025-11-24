@@ -52,12 +52,12 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white shadow-lg transition-all duration-300`}>
-        <div className="flex items-center justify-between p-4 border-b">
-          {sidebarOpen && <h1 className="text-xl font-bold text-blue-600">VeloSync</h1>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded">
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-card shadow-lg transition-all duration-300`}>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          {sidebarOpen && <h1 className="text-xl font-bold text-primary">VeloSync</h1>}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-accent rounded">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
@@ -69,8 +69,8 @@ export default function Layout({ children }: LayoutProps) {
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 isActive(item.path)
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               <item.icon size={20} />
@@ -82,7 +82,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="absolute bottom-4 left-0 right-0 px-4">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 w-full text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-3 py-2 w-full text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
           >
             <LogOut size={20} />
             {sidebarOpen && <span>Logout</span>}

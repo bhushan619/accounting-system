@@ -1,5 +1,49 @@
-import React from 'react'; import { createRoot } from 'react-dom/client'; import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import Clients from './pages/Clients'; import Invoices from './pages/Invoices'; import Login from './pages/Login';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Clients from './pages/Clients';
+import Invoices from './pages/Invoices';
+import Expenses from './pages/Expenses';
+import Vendors from './pages/Vendors';
+import Banks from './pages/Banks';
+import Employees from './pages/Employees';
+import Payroll from './pages/Payroll';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
+import Guide from './pages/Guide';
 import './styles.css';
-function App(){ return (<BrowserRouter><nav><Link to='/clients'>Clients</Link> <Link to='/invoices'>Invoices</Link></nav><Routes><Route path='/clients' element={<Clients/>}/><Route path='/invoices' element={<Invoices/>}/><Route path='/login' element={<Login/>}/></Routes></BrowserRouter>); }
-createRoot(document.getElementById('root')!).render(<App/>);
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('accessToken');
+  return token ? <Layout>{children}</Layout> : <Navigate to="/login" />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+          <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+          <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
+          <Route path="/banks" element={<ProtectedRoute><Banks /></ProtectedRoute>} />
+          <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+          <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
