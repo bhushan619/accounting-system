@@ -1,0 +1,32 @@
+{
+    // TypeScript configuration for the frontend
+    "compilerOptions": {
+        "target": "ES2020",                        // modern JS target for browsers
+        "module": "ESNext",
+        "lib": ["DOM", "ES2020"],
+        "jsx": "react-jsx",                        // use automatic JSX runtime (React 17+)
+        "moduleResolution": "Node",
+        "allowJs": false,
+        "checkJs": false,
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "incremental": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        },
+        "types": []                                // add tool/runtime types here if needed
+    },
+
+    // Files to include/exclude
+    "include": ["src/**/*", "vite-env.d.ts", ".eslintrc.cjs"],
+    "exclude": ["node_modules", "dist", "build"]
+}
