@@ -111,17 +111,19 @@ export default function Layout({ children }: LayoutProps) {
                   <Landmark size={20} />
                   <span>Banks</span>
                 </Link>
-                <Link
-                  to="/tax-configurations"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/tax-configurations')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <SettingsIcon size={20} />
-                  <span>Tax Configurations</span>
-                </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/tax-configurations"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive('/tax-configurations')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <SettingsIcon size={20} />
+                    <span>Tax Configurations</span>
+                  </Link>
+                )}
               </div>
             )}
           </div>
