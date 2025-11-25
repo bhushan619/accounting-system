@@ -1,0 +1,255 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
+
+interface TaxConfig {
+  _id: string;
+  name: string;
+  taxType: 'vat' | 'income' | 'withholding';
+  rate: number;
+  applicableFrom: string;
+  applicableTo?: string;
+  isActive: boolean;
+}
+
+export default function TaxConfigurations() {
+  const [configs, setConfigs] = useState<TaxConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<TaxConfig | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    taxType: 'vat' as 'vat' | 'income' | 'withholding',
+    rate: 0,
+    applicableFrom: '',
+    applicableTo: '',
+    isActive: true
+  });
+
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
+
+  const fetchConfigs = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/taxconfig`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setConfigs(response.data);
+    } catch (error) {
+      console.error('Error fetching tax configs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingConfig) {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/taxconfig/${editingConfig._id}`,
+          formData,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      } else {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/taxconfig`,
+          formData,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      }
+      fetchConfigs();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving tax config:', error);
+    }
+  };
+
+  const handleEdit = (config: TaxConfig) => {
+    setEditingConfig(config);
+    setFormData({
+      name: config.name,
+      taxType: config.taxType,
+      rate: config.rate,
+      applicableFrom: config.applicableFrom.split('T')[0],
+      applicableTo: config.applicableTo ? config.applicableTo.split('T')[0] : '',
+      isActive: config.isActive
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this tax configuration?')) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/taxconfig/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      fetchConfigs();
+    } catch (error) {
+      console.error('Error deleting tax config:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      taxType: 'vat',
+      rate: 0,
+      applicableFrom: '',
+      applicableTo: '',
+      isActive: true
+    });
+    setEditingConfig(null);
+    setShowModal(false);
+  };
+
+  if (loading) return <div className="text-foreground">Loading...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <Settings className="text-primary" />
+          Tax Configurations
+        </h1>
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={20} />
+          Add Tax Config
+        </button>
+      </div>
+
+      <div className="bg-card rounded-lg shadow overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-muted">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rate (%)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">From</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">To</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {configs.map((config) => (
+              <tr key={config._id} className="hover:bg-accent/50">
+                <td className="px-6 py-4 text-sm text-foreground">{config.name}</td>
+                <td className="px-6 py-4 text-sm text-foreground capitalize">{config.taxType}</td>
+                <td className="px-6 py-4 text-sm text-foreground">{config.rate}%</td>
+                <td className="px-6 py-4 text-sm text-foreground">
+                  {new Date(config.applicableFrom).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 text-sm text-foreground">
+                  {config.applicableTo ? new Date(config.applicableTo).toLocaleDateString() : 'Ongoing'}
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    config.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {config.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(config)} className="text-primary hover:text-primary/80">
+                      <Pencil size={18} />
+                    </button>
+                    <button onClick={() => handleDelete(config._id)} className="text-destructive hover:text-destructive/80">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-foreground">
+              {editingConfig ? 'Edit Tax Configuration' : 'Add Tax Configuration'}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Tax Type</label>
+                <select
+                  value={formData.taxType}
+                  onChange={(e) => setFormData({ ...formData, taxType: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="vat">VAT</option>
+                  <option value="income">Income Tax</option>
+                  <option value="withholding">Withholding Tax</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.rate}
+                  onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Applicable From</label>
+                <input
+                  type="date"
+                  value={formData.applicableFrom}
+                  onChange={(e) => setFormData({ ...formData, applicableFrom: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Applicable To (Optional)</label>
+                <input
+                  type="date"
+                  value={formData.applicableTo}
+                  onChange={(e) => setFormData({ ...formData, applicableTo: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="mr-2"
+                />
+                <label className="text-sm text-foreground">Active</label>
+              </div>
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90">
+                  {editingConfig ? 'Update' : 'Create'}
+                </button>
+                <button type="button" onClick={resetForm} className="flex-1 bg-muted text-foreground py-2 rounded-lg hover:bg-muted/80">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
