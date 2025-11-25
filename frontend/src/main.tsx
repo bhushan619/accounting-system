@@ -18,7 +18,7 @@ import Guide from './pages/Guide';
 import './styles.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem('token');
   return token ? <Layout>{children}</Layout> : <Navigate to="/login" />;
 }
 

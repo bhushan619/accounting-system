@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "build:dev": "cd frontend && npm run build:dev"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@types/node": "^24.10.1",
