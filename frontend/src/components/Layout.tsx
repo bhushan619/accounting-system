@@ -35,6 +35,9 @@ export default function Layout({ children }: LayoutProps) {
   const [bookkeepingOpen, setBookkeepingOpen] = useState(true);
   const [salaryOpen, setSalaryOpen] = useState(true);
 
+  // Debug: print current authenticated user details
+  console.log('Layout current user:', user);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
