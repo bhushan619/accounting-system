@@ -10,6 +10,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "date-fns": "^4.1.0",
     "jspdf": "^3.0.4",
+    "lovable-tagger": "^1.1.11",
     "lucide-react": "^0.554.0",
     "react-hook-form": "^7.66.1",
     "recharts": "^3.4.1",
