@@ -24,14 +24,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Verify token and get user info
+    const verifyToken = async () => {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        try {
+          // Verify token and get user info
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`);
+          setUser(response.data.user);
+          setToken(response.data.access);
+          localStorage.setItem('token', response.data.access);
+        } catch (error) {
+          console.error('Token verification failed:', error);
+          // Token is invalid, clear it
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        }
+      }
       setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    };
+    verifyToken();
+  }, []);
 
   const login = async (email: string, password: string) => {
     const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
