@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -11,11 +11,15 @@ import {
   UserCog, 
   DollarSign, 
   BarChart3, 
-  Settings, 
+  Settings as SettingsIcon, 
   BookOpen,
   LogOut,
   Menu,
-  X
+  X,
+  ChevronDown,
+  ChevronRight,
+  Wallet,
+  PieChart
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -26,7 +30,10 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mastersOpen, setMastersOpen] = useState(true);
+  const [bookkeepingOpen, setBookkeepingOpen] = useState(true);
+  const [salaryOpen, setSalaryOpen] = useState(true);
 
   const handleLogout = () => {
     logout();
@@ -34,24 +41,6 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const isActive = (path: string) => location.pathname === path;
-
-  const navItems = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/clients', icon: Users, label: 'Clients' },
-    { path: '/invoices', icon: FileText, label: 'Invoices' },
-    { path: '/expenses', icon: Receipt, label: 'Expenses' },
-    { path: '/vendors', icon: Building2, label: 'Vendors' },
-    { path: '/banks', icon: Landmark, label: 'Banks' },
-    ...(user?.role === 'admin' ? [
-      { path: '/employees', icon: UserCog, label: 'Employees' },
-      { path: '/payroll', icon: DollarSign, label: 'Payroll' },
-      { path: '/payroll-runs', icon: DollarSign, label: 'Payroll Runs' },
-      { path: '/users', icon: Users, label: 'User Management' }
-    ] : []),
-    { path: '/reports', icon: BarChart3, label: 'Reports' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
-    { path: '/guide', icon: BookOpen, label: 'User Guide' }
-  ];
 
   return (
     <div className="flex h-screen bg-background">
@@ -64,21 +53,204 @@ export default function Layout({ children }: LayoutProps) {
           </button>
         </div>
         
-        <nav className="p-4 space-y-2">
-          {navItems.map(item => (
+        <nav className="p-4 space-y-1 overflow-y-auto flex-1">
+          {/* Dashboard */}
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              isActive('/dashboard')
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground hover:bg-accent'
+            }`}
+          >
+            <Home size={20} />
+            {sidebarOpen && <span>Dashboard</span>}
+          </Link>
+
+          {/* Masters Group */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setMastersOpen(!mastersOpen)}
+              className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+            >
+              {mastersOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+              {sidebarOpen && <span className="font-medium">Masters</span>}
+            </button>
+            {mastersOpen && sidebarOpen && (
+              <div className="ml-6 space-y-1">
+                <Link
+                  to="/clients"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/clients')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Users size={20} />
+                  <span>Clients</span>
+                </Link>
+                <Link
+                  to="/vendors"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/vendors')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Building2 size={20} />
+                  <span>Vendors</span>
+                </Link>
+                <Link
+                  to="/banks"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/banks')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Landmark size={20} />
+                  <span>Banks</span>
+                </Link>
+                <Link
+                  to="/tax-configurations"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/tax-configurations')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <SettingsIcon size={20} />
+                  <span>Tax Configurations</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Bookkeeping Group */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setBookkeepingOpen(!bookkeepingOpen)}
+              className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+            >
+              {bookkeepingOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+              {sidebarOpen && <span className="font-medium">Bookkeeping</span>}
+            </button>
+            {bookkeepingOpen && sidebarOpen && (
+              <div className="ml-6 space-y-1">
+                <Link
+                  to="/invoices"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/invoices')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <FileText size={20} />
+                  <span>Invoices</span>
+                </Link>
+                <Link
+                  to="/expenses"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/expenses')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Receipt size={20} />
+                  <span>Expenses</span>
+                </Link>
+                <Link
+                  to="/transactions"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/transactions')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Wallet size={20} />
+                  <span>Transactions</span>
+                </Link>
+                <Link
+                  to="/reports"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/reports')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <PieChart size={20} />
+                  <span>Financial Reports</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Salary Group (Admin only) */}
+          {user?.role === 'admin' && (
+            <div className="space-y-1">
+              <button
+                onClick={() => setSalaryOpen(!salaryOpen)}
+                className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+              >
+                {salaryOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                {sidebarOpen && <span className="font-medium">Salary</span>}
+              </button>
+              {salaryOpen && sidebarOpen && (
+                <div className="ml-6 space-y-1">
+                  <Link
+                    to="/employees"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive('/employees')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <UserCog size={20} />
+                    <span>Employees</span>
+                  </Link>
+                  <Link
+                    to="/payroll"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive('/payroll')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <DollarSign size={20} />
+                    <span>Payroll</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Users (Admin only) */}
+          {user?.role === 'admin' && (
             <Link
-              key={item.path}
-              to={item.path}
+              to="/users"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive(item.path)
+                isActive('/users')
                   ? 'bg-primary text-primary-foreground'
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              <item.icon size={20} />
-              {sidebarOpen && <span>{item.label}</span>}
+              <Users size={20} />
+              {sidebarOpen && <span>Users</span>}
             </Link>
-          ))}
+          )}
+
+          {/* User Guide */}
+          <Link
+            to="/guide"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              isActive('/guide')
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground hover:bg-accent'
+            }`}
+          >
+            <BookOpen size={20} />
+            {sidebarOpen && <span>User Guide</span>}
+          </Link>
         </nav>
 
         <div className="absolute bottom-4 left-0 right-0 px-4">

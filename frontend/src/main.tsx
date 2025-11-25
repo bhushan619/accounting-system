@@ -14,10 +14,11 @@ import Employees from './pages/Employees';
 import Payroll from './pages/Payroll';
 import PayrollRuns from './pages/PayrollRuns';
 import UserManagement from './pages/UserManagement';
-import Reports from './pages/Reports';
 import EnhancedReports from './pages/EnhancedReports';
 import Settings from './pages/Settings';
 import Guide from './pages/Guide';
+import TaxConfigurations from './pages/TaxConfigurations';
+import Transactions from './pages/Transactions';
 import './styles.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,8 @@ function App() {
           <Route path="/payroll-runs" element={<ProtectedRoute><PayrollRuns /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><EnhancedReports /></ProtectedRoute>} />
+          <Route path="/tax-configurations" element={<ProtectedRoute><TaxConfigurations /></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
