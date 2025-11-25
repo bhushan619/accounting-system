@@ -12,7 +12,10 @@ import Vendors from './pages/Vendors';
 import Banks from './pages/Banks';
 import Employees from './pages/Employees';
 import Payroll from './pages/Payroll';
+import PayrollRuns from './pages/PayrollRuns';
+import UserManagement from './pages/UserManagement';
 import Reports from './pages/Reports';
+import EnhancedReports from './pages/EnhancedReports';
 import Settings from './pages/Settings';
 import Guide from './pages/Guide';
 import './styles.css';
@@ -36,7 +39,9 @@ function App() {
           <Route path="/banks" element={<ProtectedRoute><Banks /></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
-          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/payroll-runs" element={<ProtectedRoute><PayrollRuns /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><EnhancedReports /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" />} />

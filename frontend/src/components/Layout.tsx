@@ -44,7 +44,9 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/banks', icon: Landmark, label: 'Banks' },
     ...(user?.role === 'admin' ? [
       { path: '/employees', icon: UserCog, label: 'Employees' },
-      { path: '/payroll', icon: DollarSign, label: 'Payroll' }
+      { path: '/payroll', icon: DollarSign, label: 'Payroll' },
+      { path: '/payroll-runs', icon: DollarSign, label: 'Payroll Runs' },
+      { path: '/users', icon: Users, label: 'User Management' }
     ] : []),
     { path: '/reports', icon: BarChart3, label: 'Reports' },
     { path: '/settings', icon: Settings, label: 'Settings' },
