@@ -28,8 +28,14 @@ export default function Employees() {
     address: '',
     designation: '',
     department: '',
+    joinDate: new Date().toISOString().split('T')[0],
     basicSalary: 0,
     allowances: 0,
+    epfEmployeeRate: 8,
+    epfEmployerRate: 12,
+    etfRate: 3,
+    apitScenario: 'employee' as 'employee' | 'employer',
+    apitRate: 0,
     status: 'active'
   });
 
@@ -71,12 +77,18 @@ export default function Employees() {
       fullName: employee.fullName,
       email: employee.email,
       phone: employee.phone || '',
-      nic: '',
-      address: '',
+      nic: (employee as any).nic || '',
+      address: (employee as any).address || '',
       designation: employee.designation || '',
       department: employee.department || '',
+      joinDate: (employee as any).joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
       basicSalary: employee.basicSalary,
-      allowances: 0,
+      allowances: (employee as any).allowances || 0,
+      epfEmployeeRate: (employee as any).epfEmployeeRate || 8,
+      epfEmployerRate: (employee as any).epfEmployerRate || 12,
+      etfRate: (employee as any).etfRate || 3,
+      apitScenario: (employee as any).apitScenario || 'employee',
+      apitRate: (employee as any).apitRate || 0,
       status: employee.status
     });
     setShowModal(true);
@@ -103,8 +115,14 @@ export default function Employees() {
       address: '',
       designation: '',
       department: '',
+      joinDate: new Date().toISOString().split('T')[0],
       basicSalary: 0,
       allowances: 0,
+      epfEmployeeRate: 8,
+      epfEmployerRate: 12,
+      etfRate: 3,
+      apitScenario: 'employee',
+      apitRate: 0,
       status: 'active'
     });
   };
@@ -302,6 +320,15 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Join Date</label>
+                  <input
+                    type="date"
+                    value={formData.joinDate}
+                    onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Basic Salary *</label>
                   <input
                     type="number"
@@ -311,12 +338,69 @@ export default function Employees() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Allowances</label>
                   <input
                     type="number"
                     value={formData.allowances}
                     onChange={(e) => setFormData({ ...formData, allowances: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">EPF Employee %</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.epfEmployeeRate}
+                    onChange={(e) => setFormData({ ...formData, epfEmployeeRate: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">EPF Employer %</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.epfEmployerRate}
+                    onChange={(e) => setFormData({ ...formData, epfEmployerRate: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">ETF %</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.etfRate}
+                    onChange={(e) => setFormData({ ...formData, etfRate: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">APIT Scenario</label>
+                  <select
+                    value={formData.apitScenario}
+                    onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value as 'employee' | 'employer' })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="employee">Employee Pays APIT</option>
+                    <option value="employer">Employer Pays APIT</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">APIT Rate %</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.apitRate}
+                    onChange={(e) => setFormData({ ...formData, apitRate: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
