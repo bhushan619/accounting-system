@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // Verify token and get user info
           const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`);
+          console.log('AuthContext refresh - User data received:', response.data.user);
           setUser(response.data.user);
           setToken(response.data.access);
           localStorage.setItem('token', response.data.access);
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password
     });
     const { access, user: userData } = response.data;
+    console.log('AuthContext login - User data received:', userData);
     setToken(access);
     setUser(userData);
     localStorage.setItem('token', access);
