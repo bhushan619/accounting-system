@@ -4,6 +4,9 @@ import Employee from '../models/Employee';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import { validateRequest } from '../middleware/validateRequest';
+import { payrollCalculateSchema, payrollCreateSchema } from '../validation/payroll';
+import { getActiveTaxRates, calculateAPIT } from '../services/taxService';
 
 const router = express.Router();
 
@@ -27,45 +30,85 @@ router.get('/:id', async (req, res) => {
   res.json(payroll);
 });
 
-router.post('/calculate', async (req: any, res) => {
-  const { employeeId, month, year, allowances = 0, apit = 0 } = req.body;
-  
-  const employee = await Employee.findById(employeeId);
-  if (!employee) return res.status(404).json({ error: 'Employee not found' });
-  
-  const basicSalary = employee.basicSalary;
-  const grossSalary = basicSalary + allowances;
-  
-  const epfEmployee = grossSalary * (employee.epfEmployeeRate / 100);
-  const epfEmployer = grossSalary * (employee.epfEmployerRate / 100);
-  const etf = grossSalary * (employee.etfRate / 100);
-  const stampFee = 25;
-  
-  const totalDeductions = epfEmployee + apit + stampFee;
-  const netSalary = grossSalary - totalDeductions;
-  
-  res.json({
-    basicSalary,
-    allowances,
-    grossSalary,
-    epfEmployee,
-    epfEmployer,
-    etf,
-    apit,
-    stampFee,
-    totalDeductions,
-    netSalary
-  });
+router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: any, res) => {
+  try {
+    const { employeeId, month, year, allowances = 0 } = req.body;
+    
+    const employee = await Employee.findById(employeeId);
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    
+    // Get active tax rates from TaxConfig
+    const taxRates = await getActiveTaxRates();
+    
+    const basicSalary = employee.basicSalary;
+    const grossSalary = basicSalary + allowances;
+    
+    // Use rates from TaxConfig, fall back to employee-specific rates if set
+    const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
+    const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
+    const etfRate = employee.etfRate || taxRates.etf;
+    const stampFee = taxRates.stampFee;
+    
+    const epfEmployee = Math.round((grossSalary * epfEmployeeRate / 100) * 100) / 100;
+    const epfEmployer = Math.round((grossSalary * epfEmployerRate / 100) * 100) / 100;
+    const etf = Math.round((grossSalary * etfRate / 100) * 100) / 100;
+    
+    // Calculate APIT based on progressive brackets
+    const apit = calculateAPIT(grossSalary, taxRates.apitBrackets);
+    
+    // Calculate based on APIT scenario
+    let totalDeductions: number;
+    let netSalary: number;
+    let apitEmployer = 0;
+    let totalCTC: number;
+    
+    if (employee.apitScenario === 'employer') {
+      // Scenario B: Employer pays APIT
+      totalDeductions = epfEmployee + stampFee;
+      netSalary = grossSalary - totalDeductions;
+      apitEmployer = apit;
+      totalCTC = grossSalary + epfEmployer + etf + apitEmployer;
+    } else {
+      // Scenario A: Employee pays APIT (default)
+      totalDeductions = epfEmployee + apit + stampFee;
+      netSalary = grossSalary - totalDeductions;
+      totalCTC = grossSalary + epfEmployer + etf;
+    }
+    
+    res.json({
+      basicSalary,
+      allowances,
+      grossSalary,
+      epfEmployee,
+      epfEmployer,
+      etf,
+      apit,
+      apitEmployer,
+      stampFee,
+      totalDeductions,
+      netSalary,
+      totalCTC,
+      apitScenario: employee.apitScenario
+    });
+  } catch (error) {
+    console.error('Calculation error:', error);
+    res.status(500).json({ error: 'Failed to calculate payroll' });
+  }
 });
 
-router.post('/', auditLog('create', 'payroll'), async (req: any, res) => {
-  const serialNumber = await getNextSequence('payroll', 'PAY');
-  const payroll = await Payroll.create({
-    ...req.body,
-    serialNumber,
-    createdBy: req.user._id
-  });
-  res.json(payroll);
+router.post('/', validateRequest(payrollCreateSchema), auditLog('create', 'payroll'), async (req: any, res) => {
+  try {
+    const serialNumber = await getNextSequence('payroll', 'PAY');
+    const payroll = await Payroll.create({
+      ...req.body,
+      serialNumber,
+      createdBy: req.user._id
+    });
+    res.json(payroll);
+  } catch (error) {
+    console.error('Create payroll error:', error);
+    res.status(500).json({ error: 'Failed to create payroll' });
+  }
 });
 
 router.put('/:id', auditLog('update', 'payroll'), async (req, res) => {
