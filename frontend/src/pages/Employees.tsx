@@ -35,13 +35,87 @@ export default function Employees() {
     epfEmployerRate: 12,
     etfRate: 3,
     apitScenario: 'employee' as 'employee' | 'employer',
-    apitRate: 0,
     status: 'active'
+  });
+
+  const [calculations, setCalculations] = useState({
+    grossSalary: 0,
+    epfEmployee: 0,
+    epfEmployer: 0,
+    etf: 0,
+    apit: 0,
+    stampFee: 25,
+    netSalary: 0,
+    totalCTC: 0
   });
 
   useEffect(() => {
     loadEmployees();
   }, []);
+
+  // Calculate APIT based on brackets
+  const calculateAPIT = (grossSalary: number): number => {
+    const brackets = [
+      { minIncome: 0, maxIncome: 100000, rate: 0 },
+      { minIncome: 100000, maxIncome: 141667, rate: 6 },
+      { minIncome: 141667, maxIncome: 183333, rate: 12 },
+      { minIncome: 183333, maxIncome: 225000, rate: 18 },
+      { minIncome: 225000, maxIncome: 266667, rate: 24 },
+      { minIncome: 266667, maxIncome: 308333, rate: 30 },
+      { minIncome: 308333, maxIncome: null, rate: 36 }
+    ];
+
+    let totalTax = 0;
+    let previousMax = 0;
+
+    for (const bracket of brackets) {
+      if (grossSalary <= previousMax) break;
+
+      const upperBound = bracket.maxIncome ? Math.min(grossSalary, bracket.maxIncome) : grossSalary;
+      const lowerBound = previousMax;
+      const taxableInBracket = upperBound - lowerBound;
+
+      if (taxableInBracket > 0) {
+        totalTax += (taxableInBracket * bracket.rate) / 100;
+      }
+
+      previousMax = bracket.maxIncome || grossSalary;
+    }
+
+    return Math.round(totalTax * 100) / 100;
+  };
+
+  // Recalculate whenever salary or rates change
+  useEffect(() => {
+    const grossSalary = formData.basicSalary + formData.allowances;
+    const epfEmployee = (grossSalary * formData.epfEmployeeRate) / 100;
+    const epfEmployer = (grossSalary * formData.epfEmployerRate) / 100;
+    const etf = (grossSalary * formData.etfRate) / 100;
+    const apit = calculateAPIT(grossSalary);
+    const stampFee = 25;
+
+    let netSalary = 0;
+    let totalCTC = 0;
+
+    if (formData.apitScenario === 'employee') {
+      netSalary = grossSalary - epfEmployee - apit - stampFee;
+      totalCTC = grossSalary + epfEmployer + etf;
+    } else {
+      netSalary = grossSalary - epfEmployee - stampFee;
+      totalCTC = grossSalary + epfEmployer + etf + apit;
+    }
+
+    setCalculations({
+      grossSalary: Math.round(grossSalary * 100) / 100,
+      epfEmployee: Math.round(epfEmployee * 100) / 100,
+      epfEmployer: Math.round(epfEmployer * 100) / 100,
+      etf: Math.round(etf * 100) / 100,
+      apit: Math.round(apit * 100) / 100,
+      stampFee,
+      netSalary: Math.round(netSalary * 100) / 100,
+      totalCTC: Math.round(totalCTC * 100) / 100
+    });
+  }, [formData.basicSalary, formData.allowances, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate, formData.apitScenario]);
 
   const loadEmployees = async () => {
     try {
@@ -88,7 +162,6 @@ export default function Employees() {
       epfEmployerRate: (employee as any).epfEmployerRate || 12,
       etfRate: (employee as any).etfRate || 3,
       apitScenario: (employee as any).apitScenario || 'employee',
-      apitRate: (employee as any).apitRate || 0,
       status: employee.status
     });
     setShowModal(true);
@@ -122,7 +195,6 @@ export default function Employees() {
       epfEmployerRate: 12,
       etfRate: 3,
       apitScenario: 'employee',
-      apitRate: 0,
       status: 'active'
     });
   };
@@ -372,7 +444,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">ETF %</label>
                   <input
@@ -394,15 +466,58 @@ export default function Employees() {
                     <option value="employer">Employer Pays APIT</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">APIT Rate %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.apitRate}
-                    onChange={(e) => setFormData({ ...formData, apitRate: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
+              </div>
+
+              {/* Payroll Calculations Preview */}
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
+                <h3 className="text-sm font-semibold mb-3 text-foreground">Payroll Calculations Preview</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Gross Salary:</span>
+                    <span className="font-medium text-foreground">LKR {calculations.grossSalary.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border my-2"></div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">EPF (Employee {formData.epfEmployeeRate}%):</span>
+                    <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toLocaleString()}</span>
+                  </div>
+                  {formData.apitScenario === 'employee' && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">APIT:</span>
+                      <span className="font-medium text-foreground">LKR {calculations.apit.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Stamp Fee:</span>
+                    <span className="font-medium text-foreground">LKR {calculations.stampFee.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border my-2"></div>
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-foreground">Net Salary:</span>
+                    <span className="text-primary">LKR {calculations.netSalary.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border my-2"></div>
+                  <div className="text-xs text-muted-foreground mt-3">
+                    <div className="font-medium mb-1">Employer Contributions:</div>
+                    <div className="flex justify-between">
+                      <span>EPF (Employer {formData.epfEmployerRate}%):</span>
+                      <span>LKR {calculations.epfEmployer.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>ETF ({formData.etfRate}%):</span>
+                      <span>LKR {calculations.etf.toLocaleString()}</span>
+                    </div>
+                    {formData.apitScenario === 'employer' && (
+                      <div className="flex justify-between">
+                        <span>APIT (Employer Pays):</span>
+                        <span>LKR {calculations.apit.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold mt-1 pt-1 border-t border-border">
+                      <span>Total CTC:</span>
+                      <span>LKR {calculations.totalCTC.toLocaleString()}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

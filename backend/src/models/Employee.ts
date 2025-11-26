@@ -16,7 +16,6 @@ const EmployeeSchema = new Schema({
   epfEmployerRate: { type: Number, default: 12 },
   etfRate: { type: Number, default: 3 },
   apitScenario: { type: String, enum: ['employee', 'employer'], default: 'employee' },
-  apitRate: { type: Number, default: 0 },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
