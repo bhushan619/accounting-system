@@ -37,7 +37,7 @@ router.get('/overview', async (req, res) => {
   }
   
   const invoices = await Invoice.find(invoiceFilter);
-  const expenses = await Expense.find(expenseFilter);
+  const expenses = await Expense.find({ ...expenseFilter, category: { $ne: 'Payroll' } });
   const payrolls = await Payroll.find(payrollFilter);
   
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
@@ -81,7 +81,7 @@ router.get('/profit-loss', async (req, res) => {
   }
   
   const invoices = await Invoice.find(invoiceFilter).populate('client');
-  const expenses = await Expense.find(expenseFilter).populate('vendor');
+  const expenses = await Expense.find({ ...expenseFilter, category: { $ne: 'Payroll' } }).populate('vendor');
   const payrolls = await Payroll.find(payrollFilter).populate('employee');
   
   res.json({
@@ -125,7 +125,7 @@ router.get('/expenses-breakdown', async (req, res) => {
     if (endDate) filter.date.$lte = new Date(endDate as string);
   }
   
-  const expenses = await Expense.find(filter);
+  const expenses = await Expense.find({ ...filter, category: { $ne: 'Payroll' } });
   
   const byCategory = expenses.reduce((acc: any, exp) => {
     if (!acc[exp.category]) {
