@@ -95,9 +95,9 @@ export default function Transactions() {
       const bankMap = new Map(banks.map((bank: any) => [bank._id, bank]));
 
       const bankIncomeTransactions = invoicesRes.data
-        .filter((inv: any) => inv.status === 'paid' && inv.bankAccountId)
+        .filter((inv: any) => inv.status === 'paid' && inv.bank)
         .map((inv: any) => {
-          const bank = bankMap.get(inv.bankAccountId);
+          const bank = bankMap.get(inv.bank);
           return {
             _id: inv._id,
             type: 'credit' as const,
@@ -112,9 +112,9 @@ export default function Transactions() {
         });
 
       const bankExpenseTransactions = expensesRes.data
-        .filter((exp: any) => exp.status === 'approved' && exp.bankAccountId)
+        .filter((exp: any) => exp.status === 'approved' && exp.bank)
         .map((exp: any) => {
-          const bank = bankMap.get(exp.bankAccountId);
+          const bank = bankMap.get(exp.bank);
           return {
             _id: exp._id,
             type: 'debit' as const,
@@ -129,9 +129,9 @@ export default function Transactions() {
         });
 
       const bankPayrollTransactions = payrollRes.data
-        .filter((pay: any) => pay.status === 'paid' && pay.bankAccountId)
+        .filter((pay: any) => pay.status === 'paid' && pay.bank)
         .map((pay: any) => {
-          const bank = bankMap.get(pay.bankAccountId);
+          const bank = bankMap.get(pay.bank);
           return {
             _id: pay._id,
             type: 'debit' as const,
