@@ -16,6 +16,7 @@ router.use(requireAuth);
 router.get('/', async (req, res) => {
   const invoices = await Invoice.find()
     .populate('client')
+    .populate('bank')
     .populate('createdBy', 'email')
     .sort({ createdAt: -1 })
     .lean();
@@ -25,6 +26,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const invoice = await Invoice.findById(req.params.id)
     .populate('client')
+    .populate('bank')
     .populate('createdBy', 'email');
   if (!invoice) return res.status(404).json({ error: 'Not found' });
   res.json(invoice);

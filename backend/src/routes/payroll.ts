@@ -16,6 +16,7 @@ router.use(requireRole('admin'));
 router.get('/', async (req, res) => {
   const payrolls = await Payroll.find()
     .populate('employee')
+    .populate('bank')
     .populate('createdBy', 'email')
     .sort({ year: -1, month: -1 })
     .lean();
@@ -25,6 +26,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const payroll = await Payroll.findById(req.params.id)
     .populate('employee')
+    .populate('bank')
     .populate('createdBy', 'email');
   if (!payroll) return res.status(404).json({ error: 'Not found' });
   res.json(payroll);
