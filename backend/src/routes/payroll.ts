@@ -53,8 +53,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
     const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
     
-    // Calculate APIT based on progressive brackets
-    const apit = calculateAPIT(grossSalary, taxRates.apitBrackets);
+    // Calculate APIT based on slab system with standard deductions
+    const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
     
     // Calculate based on APIT scenario
     let totalDeductions: number;
