@@ -56,9 +56,26 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
 
 // Allow partial updates (e.g., status only)
 router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
+  const { bankId, ...updateData } = req.body;
+  
+  // If marking as paid and bank is provided, update bank balance
+  if (updateData.status === 'paid' && bankId) {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Not found' });
+    
+    const Bank = require('../models/Bank').default;
+    const bank = await Bank.findById(bankId);
+    if (!bank) return res.status(404).json({ error: 'Bank not found' });
+    
+    // Increase bank balance for received payment
+    bank.balance += invoice.total;
+    bank.updatedAt = new Date();
+    await bank.save();
+  }
+  
   const invoice = await Invoice.findByIdAndUpdate(
     req.params.id,
-    { ...req.body, updatedAt: new Date() },
+    { ...updateData, updatedAt: new Date() },
     { new: true }
   );
   

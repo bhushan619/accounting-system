@@ -23,6 +23,9 @@ export default function Expenses() {
   const [banks, setBanks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{id: string, status: string, expense: Expense} | null>(null);
+  const [selectedBank, setSelectedBank] = useState('');
   const [formData, setFormData] = useState({
     vendor: '',
     category: '',
@@ -97,6 +100,23 @@ export default function Expenses() {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    const expense = expenses.find(exp => exp._id === id);
+    if (!expense) return;
+    
+    // If approving and payment method is bank, need to select bank account
+    if (newStatus === 'approved' && expense.paymentMethod === 'bank') {
+      // Check if expense already has a bank assigned
+      const expenseDetail = await axios.get(`${import.meta.env.VITE_API_URL}/expenses/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      if (!expenseDetail.data.bank) {
+        setPendingStatusChange({ id, status: newStatus, expense });
+        setShowBankModal(true);
+        return;
+      }
+    }
+    
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${import.meta.env.VITE_API_URL}/expenses/${id}`, 
@@ -106,6 +126,25 @@ export default function Expenses() {
       loadData();
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const confirmBankUpdate = async () => {
+    if (!selectedBank || !pendingStatusChange) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/expenses/${pendingStatusChange.id}`, 
+        { status: pendingStatusChange.status, bank: selectedBank },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setShowBankModal(false);
+      setPendingStatusChange(null);
+      setSelectedBank('');
+      loadData();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      alert('Failed to update expense status');
     }
   };
 
@@ -477,6 +516,55 @@ export default function Expenses() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Selection Modal */}
+      {showBankModal && pendingStatusChange && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 m-4 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Select Bank Account</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Which bank account paid the expense of {pendingStatusChange.expense.currency} {pendingStatusChange.expense.amount.toLocaleString()}?
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">Bank Account</label>
+                <select
+                  value={selectedBank}
+                  onChange={(e) => setSelectedBank(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                >
+                  <option value="">Select bank account</option>
+                  {banks.map((bank) => (
+                    <option key={bank._id} value={bank._id}>
+                      {bank.name} - {bank.accountNumber} ({bank.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowBankModal(false);
+                    setPendingStatusChange(null);
+                    setSelectedBank('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBankUpdate}
+                  disabled={!selectedBank}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
