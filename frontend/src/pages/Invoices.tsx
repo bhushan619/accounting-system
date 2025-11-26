@@ -18,6 +18,7 @@ export default function Invoices() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [viewInvoice, setViewInvoice] = useState<any>(null);
   const [formData, setFormData] = useState({
     client: '',
     issueDate: new Date().toISOString().split('T')[0],
@@ -85,13 +86,25 @@ export default function Invoices() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL}/invoices/${id}`, 
+      await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       loadData();
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleViewInvoice = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/invoices/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setViewInvoice(res.data);
+    } catch (error) {
+      console.error('Failed to load invoice:', error);
     }
   };
 
@@ -187,7 +200,10 @@ export default function Invoices() {
                   </select>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
-                  <button className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80">
+                  <button 
+                    onClick={() => handleViewInvoice(invoice._id)}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+                  >
                     <Eye size={14} />
                     View
                   </button>
@@ -355,6 +371,109 @@ export default function Invoices() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Invoice Details</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Invoice Number</p>
+                  <p className="font-medium text-foreground">{viewInvoice.serialNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Client</p>
+                  <p className="font-medium text-foreground">{viewInvoice.client?.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Issue Date</p>
+                  <p className="font-medium text-foreground">{new Date(viewInvoice.issueDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Due Date</p>
+                  <p className="font-medium text-foreground">
+                    {viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(viewInvoice.status)}`}>
+                    {viewInvoice.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Currency</p>
+                  <p className="font-medium text-foreground">{viewInvoice.currency}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Line Items</p>
+                <table className="w-full border border-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-sm text-foreground">Description</th>
+                      <th className="px-4 py-2 text-right text-sm text-foreground">Qty</th>
+                      <th className="px-4 py-2 text-right text-sm text-foreground">Price</th>
+                      <th className="px-4 py-2 text-right text-sm text-foreground">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewInvoice.lines?.map((line: any, idx: number) => (
+                      <tr key={idx} className="border-t border-border">
+                        <td className="px-4 py-2 text-sm text-foreground">{line.description}</td>
+                        <td className="px-4 py-2 text-sm text-foreground text-right">{line.quantity}</td>
+                        <td className="px-4 py-2 text-sm text-foreground text-right">{line.unitPrice.toLocaleString()}</td>
+                        <td className="px-4 py-2 text-sm text-foreground text-right">
+                          {(line.quantity * line.unitPrice).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Subtotal</span>
+                  <span className="font-medium text-foreground">{viewInvoice.currency} {viewInvoice.subtotal?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Tax ({viewInvoice.tax}%)</span>
+                  <span className="font-medium text-foreground">
+                    {viewInvoice.currency} {((viewInvoice.subtotal * viewInvoice.tax) / 100).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Discount</span>
+                  <span className="font-medium text-foreground">{viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-lg font-semibold border-t border-border pt-2">
+                  <span className="text-foreground">Total</span>
+                  <span className="text-foreground">{viewInvoice.currency} {viewInvoice.total?.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {viewInvoice.notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                  <p className="text-sm text-foreground">{viewInvoice.notes}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setViewInvoice(null)}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

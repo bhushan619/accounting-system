@@ -51,6 +51,18 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
   res.json(invoice);
 });
 
+// Allow partial updates (e.g., status only)
+router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
+  const invoice = await Invoice.findByIdAndUpdate(
+    req.params.id,
+    { ...req.body, updatedAt: new Date() },
+    { new: true }
+  );
+  
+  if (!invoice) return res.status(404).json({ error: 'Not found' });
+  res.json(invoice);
+});
+
 router.put('/:id', validateRequest(createInvoiceSchema), auditLog('update', 'invoice'), async (req: any, res) => {
   const { lines, tax, discount, ...rest } = req.body;
   
