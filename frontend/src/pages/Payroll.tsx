@@ -327,10 +327,12 @@ export default function Payroll() {
                     <span className="text-muted-foreground">EPF Employee:</span>
                     <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">APIT {calculations.apitScenario === 'employer' ? '(Employer)' : '(Employee)'}:</span>
-                    <span className="font-medium text-foreground">LKR {(calculations.apitScenario === 'employer' ? calculations.apitEmployer : calculations.apit).toFixed(2)}</span>
-                  </div>
+                  {calculations.apitScenario === 'employee' && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">APIT (Employee):</span>
+                      <span className="font-medium text-foreground">LKR {calculations.apit.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Stamp Fee:</span>
                     <span className="font-medium text-foreground">LKR {calculations.stampFee.toFixed(2)}</span>
