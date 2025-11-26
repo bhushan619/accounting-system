@@ -10,17 +10,35 @@ router.use(requireAuth);
 
 router.get('/overview', async (req, res) => {
   const { startDate, endDate } = req.query;
-  const filter: any = {};
+  
+  // Build separate filters for each collection based on their date fields
+  const invoiceFilter: any = {};
+  const expenseFilter: any = {};
+  const payrollFilter: any = {};
   
   if (startDate || endDate) {
-    filter.createdAt = {};
-    if (startDate) filter.createdAt.$gte = new Date(startDate as string);
-    if (endDate) filter.createdAt.$lte = new Date(endDate as string);
+    if (startDate || endDate) {
+      invoiceFilter.issueDate = {};
+      if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
+      if (endDate) invoiceFilter.issueDate.$lte = new Date(endDate as string);
+    }
+    
+    if (startDate || endDate) {
+      expenseFilter.date = {};
+      if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
+      if (endDate) expenseFilter.date.$lte = new Date(endDate as string);
+    }
+    
+    if (startDate || endDate) {
+      payrollFilter.createdAt = {};
+      if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
+      if (endDate) payrollFilter.createdAt.$lte = new Date(endDate as string);
+    }
   }
   
-  const invoices = await Invoice.find(filter);
-  const expenses = await Expense.find(filter);
-  const payrolls = await Payroll.find(filter);
+  const invoices = await Invoice.find(invoiceFilter);
+  const expenses = await Expense.find(expenseFilter);
+  const payrolls = await Payroll.find(payrollFilter);
   
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -42,17 +60,29 @@ router.get('/overview', async (req, res) => {
 
 router.get('/profit-loss', async (req, res) => {
   const { startDate, endDate } = req.query;
-  const filter: any = {};
+  
+  // Build separate filters for each collection
+  const invoiceFilter: any = {};
+  const expenseFilter: any = {};
+  const payrollFilter: any = {};
   
   if (startDate || endDate) {
-    filter.createdAt = {};
-    if (startDate) filter.createdAt.$gte = new Date(startDate as string);
-    if (endDate) filter.createdAt.$lte = new Date(endDate as string);
+    invoiceFilter.issueDate = {};
+    if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
+    if (endDate) invoiceFilter.issueDate.$lte = new Date(endDate as string);
+    
+    expenseFilter.date = {};
+    if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
+    if (endDate) expenseFilter.date.$lte = new Date(endDate as string);
+    
+    payrollFilter.createdAt = {};
+    if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
+    if (endDate) payrollFilter.createdAt.$lte = new Date(endDate as string);
   }
   
-  const invoices = await Invoice.find(filter).populate('client');
-  const expenses = await Expense.find(filter).populate('vendor');
-  const payrolls = await Payroll.find(filter).populate('employee');
+  const invoices = await Invoice.find(invoiceFilter).populate('client');
+  const expenses = await Expense.find(expenseFilter).populate('vendor');
+  const payrolls = await Payroll.find(payrollFilter).populate('employee');
   
   res.json({
     revenue: {
