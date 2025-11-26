@@ -51,19 +51,22 @@ export default function Payroll() {
     if (formData.employee) {
       const employee = employees.find(e => e._id === formData.employee);
       if (employee) {
-        // Fetch calculations from backend
+        // First, populate the form with employee's default values
+        const employeeAllowances = employee.allowances || 0;
+        setFormData(prev => ({
+          ...prev,
+          basicSalary: employee.basicSalary,
+          allowances: employeeAllowances
+        }));
+
+        // Then fetch calculations from backend with employee's allowances
         axios.post(`${import.meta.env.VITE_API_URL}/payroll/calculate`, {
           employeeId: formData.employee,
           month: formData.month,
           year: formData.year,
-          allowances: formData.allowances
+          allowances: employeeAllowances
         }).then(response => {
           const calc = response.data;
-          setFormData(prev => ({
-            ...prev,
-            basicSalary: calc.basicSalary,
-            allowances: calc.allowances
-          }));
           setCalculations({
             grossSalary: calc.grossSalary,
             epfEmployee: calc.epfEmployee,
