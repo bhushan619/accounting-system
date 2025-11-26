@@ -31,6 +31,77 @@ router.get('/:id', async (req, res) => {
   res.json(run);
 });
 
+router.post('/preview', async (req: any, res) => {
+  try {
+    const { month, year, employeeIds } = req.body;
+    
+    const employees = await Employee.find({ 
+      _id: { $in: employeeIds },
+      status: 'active'
+    });
+    
+    const taxRates = await getActiveTaxRates();
+    const previewData = [];
+    
+    for (const employee of employees) {
+      const basicSalary = employee.basicSalary;
+      const allowances = employee.allowances || 0;
+      const grossSalary = basicSalary + allowances;
+      
+      const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
+      const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
+      const etfRate = employee.etfRate || taxRates.etf;
+      const stampFee = taxRates.stampFee;
+      
+      const epfEmployee = Math.round((basicSalary * epfEmployeeRate / 100) * 100) / 100;
+      const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
+      const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
+      const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
+      
+      let deductions: number;
+      let netSalary: number;
+      let apitEmployer = 0;
+      let ctc: number;
+      
+      if (employee.apitScenario === 'employer') {
+        deductions = epfEmployee + stampFee;
+        netSalary = grossSalary - deductions;
+        apitEmployer = apit;
+        ctc = grossSalary + epfEmployer + etf + apitEmployer;
+      } else {
+        deductions = epfEmployee + apit + stampFee;
+        netSalary = grossSalary - deductions;
+        ctc = grossSalary + epfEmployer + etf;
+      }
+      
+      previewData.push({
+        employee: {
+          _id: employee._id,
+          employeeId: employee.employeeId,
+          fullName: employee.fullName
+        },
+        basicSalary,
+        allowances,
+        grossSalary,
+        epfEmployee,
+        epfEmployer,
+        etf,
+        apit,
+        apitEmployer,
+        stampFee,
+        totalDeductions: deductions,
+        netSalary,
+        totalCTC: ctc
+      });
+    }
+    
+    res.json(previewData);
+  } catch (error) {
+    console.error('Preview payroll error:', error);
+    res.status(500).json({ error: 'Failed to preview payroll' });
+  }
+});
+
 router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res) => {
   try {
     const { month, year, employeeIds } = req.body;
@@ -145,6 +216,54 @@ router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {
   );
   if (!run) return res.status(404).json({ error: 'Not found' });
   res.json(run);
+});
+
+router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const run = await PayrollRun.findById(req.params.id).populate({
+      path: 'payrollEntries',
+      populate: { path: 'employee' }
+    });
+    
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    if (run.status === 'paid') return res.status(400).json({ error: 'Already processed' });
+    
+    const Expense = require('../models/Expense').default;
+    const { getNextSequence } = require('../services/counterService');
+    
+    // Create expense entries for each payroll entry
+    for (const payrollEntry of run.payrollEntries as any[]) {
+      const serialNumber = await getNextSequence('expense', 'EXP');
+      
+      await Expense.create({
+        serialNumber,
+        category: 'Payroll',
+        description: `Salary payment - ${payrollEntry.employee.fullName} (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        amount: payrollEntry.netSalary,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Update run status
+    run.status = 'paid';
+    run.paidDate = new Date();
+    await run.save();
+    
+    // Update all payroll entries status
+    await Payroll.updateMany(
+      { _id: { $in: run.payrollEntries } },
+      { status: 'paid', paidDate: new Date() }
+    );
+    
+    res.json(run);
+  } catch (error) {
+    console.error('Process payroll error:', error);
+    res.status(500).json({ error: 'Failed to process payroll' });
+  }
 });
 
 router.delete('/:id', auditLog('delete', 'payrollrun'), async (req, res) => {

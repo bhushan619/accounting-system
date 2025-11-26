@@ -12,6 +12,7 @@ interface PayrollRun {
   totalGrossSalary: number;
   totalNetSalary: number;
   totalDeductions: number;
+  totalCTC?: number;
   createdAt: string;
 }
 
@@ -19,7 +20,26 @@ interface Employee {
   _id: string;
   employeeId: string;
   fullName: string;
+  basicSalary: number;
+  allowances: number;
+  apitScenario?: string;
   status: string;
+}
+
+interface PayrollPreview {
+  employee: Employee;
+  basicSalary: number;
+  allowances: number;
+  grossSalary: number;
+  epfEmployee: number;
+  epfEmployer: number;
+  etf: number;
+  apit: number;
+  apitEmployer: number;
+  stampFee: number;
+  totalDeductions: number;
+  netSalary: number;
+  totalCTC: number;
 }
 
 export default function PayrollRuns() {
@@ -27,6 +47,8 @@ export default function PayrollRuns() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
@@ -52,7 +74,7 @@ export default function PayrollRuns() {
     }
   };
 
-  const handleGenerate = async (e: React.FormEvent) => {
+  const handlePreview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEmployees.length === 0) {
       alert('Please select at least one employee');
@@ -60,14 +82,39 @@ export default function PayrollRuns() {
     }
     
     try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/preview`, {
+        ...formData,
+        employeeIds: selectedEmployees
+      });
+      setPreviewData(response.data);
+      setShowPreview(true);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to preview payroll');
+    }
+  };
+
+  const handleGenerate = async () => {
+    try {
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
         ...formData,
         employeeIds: selectedEmployees
       });
       loadData();
       resetForm();
+      setShowPreview(false);
+      setPreviewData([]);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to generate payroll run');
+    }
+  };
+
+  const handleProcess = async (id: string) => {
+    if (!confirm('Process this payroll run? This will create expense transactions and mark as paid.')) return;
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/process`);
+      loadData();
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to process payroll');
     }
   };
 
@@ -102,6 +149,8 @@ export default function PayrollRuns() {
     });
     setSelectedEmployees([]);
     setShowModal(false);
+    setShowPreview(false);
+    setPreviewData([]);
   };
 
   const getMonthName = (month: number) => {
@@ -169,12 +218,22 @@ export default function PayrollRuns() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleDelete(run._id)}
-                    className="text-destructive hover:text-destructive/80"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    {(run.status === 'draft' || run.status === 'completed') && (
+                      <button
+                        onClick={() => handleProcess(run._id)}
+                        className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                      >
+                        Process
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(run._id)}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -192,7 +251,7 @@ export default function PayrollRuns() {
               </button>
             </div>
 
-            <form onSubmit={handleGenerate} className="space-y-4">
+            <form onSubmit={handlePreview} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">Month</label>
@@ -273,10 +332,124 @@ export default function PayrollRuns() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
-                  Generate Run
+                  Preview Payroll
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showPreview && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                Payroll Preview - {getMonthName(formData.month)} {formData.year}
+              </h2>
+              <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Employee</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Basic</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allow.</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Total Ded.</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(ER)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">ETF</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT(ER)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">CTC</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {previewData.map((entry, idx) => (
+                    <tr key={idx} className="hover:bg-accent/50">
+                      <td className="px-3 py-2 text-foreground">{entry.employee.fullName}</td>
+                      <td className="px-3 py-2 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-destructive">{entry.apit.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-muted font-semibold">
+                  <tr>
+                    <td className="px-3 py-2 text-foreground">Total</td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.allowances, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-destructive">
+                      {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-destructive">
+                      {previewData.reduce((sum, e) => sum + e.apit, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-destructive">
+                      {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-destructive">
+                      {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-primary">
+                      {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-orange-600">
+                      {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-orange-600">
+                      {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-orange-600">
+                      {previewData.reduce((sum, e) => sum + e.apitEmployer, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-border">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                Confirm & Generate
+              </button>
+            </div>
           </div>
         </div>
       )}
