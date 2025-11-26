@@ -63,9 +63,9 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
       const etfRate = employee.etfRate || taxRates.etf;
       const stampFee = taxRates.stampFee;
       
-      const epfEmployee = Math.round((grossSalary * epfEmployeeRate / 100) * 100) / 100;
-      const epfEmployer = Math.round((grossSalary * epfEmployerRate / 100) * 100) / 100;
-      const etf = Math.round((grossSalary * etfRate / 100) * 100) / 100;
+      const epfEmployee = Math.round((basicSalary * epfEmployeeRate / 100) * 100) / 100;
+      const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
+      const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
       // Calculate APIT based on progressive brackets
       const apit = calculateAPIT(grossSalary, taxRates.apitBrackets);
