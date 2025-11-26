@@ -8,27 +8,30 @@ services:
       - ./backend/docker/mongo-init-replica.js:/docker-entrypoint-initdb.d/init.js:ro
     ports:
       - 27017:27017
+    
   backend:
     build: ./backend
     volumes:
       - ./backend/uploads:/usr/src/app/uploads
-      - ./backend/uploads:/usr/src/app/uploads/bills
-      - ./backend/uploads:/usr/src/app/uploads/invoices
-      - ./backend/uploads:/usr/src/app/uploads/receipts
-      - ./backend:/usr/src/app
     environment:
       - MONGODB_URI=mongodb://mongo:27017/velosync
+      - JWT_SECRET=hrVwJGQgD4d2T5WeMhjatlEFisfyJgWow3m+jlwlLLEpAT6kt+h3Da4IlIsCVsjL1PuWGFnoFxi0bEQxwKGZjQ==
+      - JWT_EXP=15m
+      - REFRESH_EXP=7d
+      - UPLOADS_DIR=./uploads
+      - NODE_ENV=production
+      - PORT=4000
     ports:
       - 4000:4000
     depends_on:
       - mongo
+    
   frontend:
     build: ./frontend
     ports:
-      - 5173:5173
-    volumes:
-      - ./frontend:/usr/src/app
+      - 80:80
     depends_on:
       - backend
+
 volumes:
   mongo-data:
