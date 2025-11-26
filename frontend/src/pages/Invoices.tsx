@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, FileText, Eye, Upload, FileDown } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, Upload, FileDown, Receipt } from 'lucide-react';
 
 interface Invoice {
   _id: string;
