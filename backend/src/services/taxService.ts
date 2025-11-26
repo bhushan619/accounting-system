@@ -73,28 +73,41 @@ export async function getActiveTaxRates(): Promise<TaxRates> {
   return rates;
 }
 
-export function calculateAPIT(grossSalary: number, brackets: { minIncome: number; maxIncome: number | null; rate: number }[]): number {
-  let totalTax = 0;
-  let previousMax = 0;
-  
-  for (const bracket of brackets) {
-    // Skip if gross salary doesn't reach this bracket
-    if (grossSalary <= previousMax) {
-      break;
+export function calculateAPIT(grossSalary: number, scenario: 'employee' | 'employer' = 'employee'): number {
+  // Scenario A: APIT Paid by Employee (Standard)
+  const employeeSlabs = [
+    { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+    { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
+    { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
+    { minIncome: 275001, maxIncome: 316667, rate: 24, standardDeduction: 53500 },
+    { minIncome: 316668, maxIncome: 358333, rate: 30, standardDeduction: 72500 },
+    { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
+  ];
+
+  // Scenario B: APIT Paid by Employer
+  const employerSlabs = [
+    { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+    { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
+    { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
+    { minIncome: 262501, maxIncome: 294167, rate: 32.56, standardDeduction: 73000 },
+    { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
+    { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
+  ];
+
+  const slabs = scenario === 'employee' ? employeeSlabs : employerSlabs;
+
+  // Find applicable slab
+  let applicableSlab = slabs[0];
+  for (const slab of slabs) {
+    if (grossSalary >= slab.minIncome) {
+      if (slab.maxIncome === null || grossSalary <= slab.maxIncome) {
+        applicableSlab = slab;
+        break;
+      }
     }
-    
-    // Calculate income that falls within this bracket
-    const upperBound = bracket.maxIncome ? Math.min(grossSalary, bracket.maxIncome) : grossSalary;
-    const lowerBound = previousMax;
-    const taxableInBracket = upperBound - lowerBound;
-    
-    if (taxableInBracket > 0) {
-      totalTax += (taxableInBracket * bracket.rate) / 100;
-    }
-    
-    // Update previousMax for next bracket
-    previousMax = bracket.maxIncome || grossSalary;
   }
-  
-  return Math.round(totalTax * 100) / 100;
+
+  // APIT = (Gross Salary × Tax Rate) - Standard Deduction
+  const apit = (grossSalary * applicableSlab.rate / 100) - applicableSlab.standardDeduction;
+  return Math.max(0, Math.round(apit * 100) / 100);
 }
