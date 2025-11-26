@@ -53,36 +53,32 @@ export default function Employees() {
     loadEmployees();
   }, []);
 
-  // Calculate APIT based on brackets
+  // Calculate APIT based on slab system with standard deductions (Scenario B)
   const calculateAPIT = (grossSalary: number): number => {
-    const brackets = [
-      { minIncome: 0, maxIncome: 100000, rate: 0 },
-      { minIncome: 100000, maxIncome: 141667, rate: 6 },
-      { minIncome: 141667, maxIncome: 183333, rate: 12 },
-      { minIncome: 183333, maxIncome: 225000, rate: 18 },
-      { minIncome: 225000, maxIncome: 266667, rate: 24 },
-      { minIncome: 266667, maxIncome: 308333, rate: 30 },
-      { minIncome: 308333, maxIncome: null, rate: 36 }
+    const slabs = [
+      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+      { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
+      { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
+      { minIncome: 262501, maxIncome: 294167, rate: 31.58, standardDeduction: 70398 },
+      { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
+      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
     ];
 
-    let totalTax = 0;
-    let previousMax = 0;
-
-    for (const bracket of brackets) {
-      if (grossSalary <= previousMax) break;
-
-      const upperBound = bracket.maxIncome ? Math.min(grossSalary, bracket.maxIncome) : grossSalary;
-      const lowerBound = previousMax;
-      const taxableInBracket = upperBound - lowerBound;
-
-      if (taxableInBracket > 0) {
-        totalTax += (taxableInBracket * bracket.rate) / 100;
+    // Find applicable slab
+    let applicableSlab = slabs[0];
+    for (const slab of slabs) {
+      if (grossSalary >= slab.minIncome) {
+        if (slab.maxIncome === null || grossSalary <= slab.maxIncome) {
+          applicableSlab = slab;
+          break;
+        }
       }
-
-      previousMax = bracket.maxIncome || grossSalary;
     }
 
-    return Math.round(totalTax * 100) / 100;
+    // APIT = (Gross Salary × Tax Rate) - Standard Deduction
+    const apit = (grossSalary * applicableSlab.rate / 100) - applicableSlab.standardDeduction;
+    
+    return Math.max(0, Math.round(apit * 100) / 100);
   };
 
   // Recalculate whenever salary or rates change
