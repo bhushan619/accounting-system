@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Receipt, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Receipt, Upload, FileDown } from 'lucide-react';
 
 interface Expense {
   _id: string;
@@ -31,8 +31,12 @@ export default function Expenses() {
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash',
     bank: '',
-    status: 'pending'
+    status: 'pending',
+    billUrl: '',
+    receiptUrl: ''
   });
+  const [uploadingBill, setUploadingBill] = useState(false);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -103,6 +107,34 @@ export default function Expenses() {
     }
   };
 
+  const handleFileUpload = async (file: File, type: 'bill' | 'receipt') => {
+    const setUploading = type === 'bill' ? setUploadingBill : setUploadingReceipt;
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/uploads/${type}`, formDataUpload, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (type === 'bill') {
+        setFormData({ ...formData, billUrl: res.data.url });
+      } else {
+        setFormData({ ...formData, receiptUrl: res.data.url });
+      }
+    } catch (error) {
+      console.error(`Failed to upload ${type}:`, error);
+      alert(`Failed to upload ${type}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       vendor: '',
@@ -113,7 +145,9 @@ export default function Expenses() {
       date: new Date().toISOString().split('T')[0],
       paymentMethod: 'cash',
       bank: '',
-      status: 'pending'
+      status: 'pending',
+      billUrl: '',
+      receiptUrl: ''
     });
   };
 
@@ -299,6 +333,63 @@ export default function Expenses() {
                     </select>
                   </div>
                 )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Bill Document</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
+                      <Upload size={16} />
+                      {uploadingBill ? 'Uploading...' : 'Upload Bill'}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'bill')}
+                        className="hidden"
+                        disabled={uploadingBill}
+                      />
+                    </label>
+                    {formData.billUrl && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL}${formData.billUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <FileDown size={14} />
+                        View
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Receipt</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
+                      <Upload size={16} />
+                      {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt')}
+                        className="hidden"
+                        disabled={uploadingReceipt}
+                      />
+                    </label>
+                    {formData.receiptUrl && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL}${formData.receiptUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <FileDown size={14} />
+                        View
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end">
