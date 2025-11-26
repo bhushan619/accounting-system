@@ -541,9 +541,9 @@ export default function Payroll() {
                   required
                 >
                   <option value="">Select bank account</option>
-                  {banks.map((bank) => (
+                  {banks.map((bank: any) => (
                     <option key={bank._id} value={bank._id}>
-                      {bank.name} - {bank.accountNumber} ({bank.currency})
+                      {bank.bankName || bank.name} - {bank.accountNumber} ({bank.currency})
                     </option>
                   ))}
                 </select>
