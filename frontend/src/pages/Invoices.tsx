@@ -181,9 +181,9 @@ export default function Invoices() {
       } else {
         // Update form data for new invoice
         if (type === 'invoice') {
-          setFormData({ ...formData, attachmentUrl: res.data.url });
+          setFormData(prev => ({ ...prev, attachmentUrl: res.data.url }));
         } else {
-          setFormData({ ...formData, receiptUrl: res.data.url });
+          setFormData(prev => ({ ...prev, receiptUrl: res.data.url }));
         }
       }
     } catch (error) {
