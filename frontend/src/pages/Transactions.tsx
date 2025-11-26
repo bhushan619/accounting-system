@@ -4,7 +4,7 @@ import { Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface Transaction {
   _id: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'payroll';
   amount: number;
   category: string;
   description: string;
@@ -23,12 +23,15 @@ export default function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      // Fetch both invoices and expenses to create a unified transaction view
-      const [invoicesRes, expensesRes] = await Promise.all([
+      // Fetch invoices, expenses, and payroll to create a unified transaction view
+      const [invoicesRes, expensesRes, payrollRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/invoices`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/api/expenses`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/payroll`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -53,7 +56,17 @@ export default function Transactions() {
         reference: exp.receiptNumber
       }));
 
-      const allTransactions = [...incomeTransactions, ...expenseTransactions]
+      const payrollTransactions = payrollRes.data.map((pay: any) => ({
+        _id: pay._id,
+        type: 'payroll',
+        amount: pay.netSalary,
+        category: 'Payroll',
+        description: `Payroll - ${pay.employee?.fullName || 'Employee'} (${pay.month}/${pay.year})`,
+        date: pay.createdAt,
+        reference: pay.serialNumber
+      }));
+
+      const allTransactions = [...incomeTransactions, ...expenseTransactions, ...payrollTransactions]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setTransactions(allTransactions);
@@ -76,7 +89,11 @@ export default function Transactions() {
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const balance = totalIncome - totalExpense;
+  const totalPayroll = transactions
+    .filter(t => t.type === 'payroll')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const balance = totalIncome - (totalExpense + totalPayroll);
 
   if (loading) return <div className="text-foreground">Loading...</div>;
 
@@ -106,6 +123,18 @@ export default function Transactions() {
               <p className="text-sm text-muted-foreground">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600">
                 Rs. {totalExpense.toLocaleString()}
+              </p>
+            </div>
+            <ArrowDownRight className="text-red-600" size={32} />
+          </div>
+        </div>
+
+        <div className="bg-card p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Payroll</p>
+              <p className="text-2xl font-bold text-red-600">
+                Rs. {totalPayroll.toLocaleString()}
               </p>
             </div>
             <ArrowDownRight className="text-red-600" size={32} />
@@ -151,6 +180,14 @@ export default function Transactions() {
           >
             Expenses
           </button>
+          <button
+            onClick={() => setFilter('payroll')}
+            className={`px-4 py-2 rounded-lg ${
+              filter === 'payroll' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+            }`}
+          >
+            Payroll
+          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -177,6 +214,8 @@ export default function Transactions() {
                     }`}>
                       {transaction.type === 'income' ? (
                         <><ArrowUpRight size={16} /> Income</>
+                      ) : transaction.type === 'payroll' ? (
+                        <><ArrowDownRight size={16} /> Payroll</>
                       ) : (
                         <><ArrowDownRight size={16} /> Expense</>
                       )}
