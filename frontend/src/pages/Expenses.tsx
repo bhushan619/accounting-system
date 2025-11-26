@@ -40,10 +40,17 @@ export default function Expenses() {
 
   const loadData = async () => {
     try {
+      const token = localStorage.getItem('token');
       const [expensesRes, vendorsRes, banksRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/expenses`),
-        axios.get(`${import.meta.env.VITE_API_URL}/vendors`),
-        axios.get(`${import.meta.env.VITE_API_URL}/banks`)
+        axios.get(`${import.meta.env.VITE_API_URL}/api/expenses`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/vendors`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/banks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
       ]);
       setExpenses(expensesRes.data);
       setVendors(vendorsRes.data);
@@ -58,7 +65,10 @@ export default function Expenses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/expenses`, formData);
+      const token = localStorage.getItem('token');
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/expenses`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setShowModal(false);
       resetForm();
       loadData();
@@ -70,10 +80,26 @@ export default function Expenses() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this expense?')) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/expenses/${id}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       loadData();
     } catch (error) {
       console.error('Failed to delete expense:', error);
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, 
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      loadData();
+    } catch (error) {
+      console.error('Failed to update status:', error);
     }
   };
 
@@ -141,9 +167,15 @@ export default function Expenses() {
                   {expense.currency} {expense.amount.toLocaleString()}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(expense.status)}`}>
-                    {expense.status}
-                  </span>
+                  <select
+                    value={expense.status}
+                    onChange={(e) => handleStatusChange(expense._id, e.target.value)}
+                    className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${getStatusColor(expense.status)}`}
+                  >
+                    <option value="pending">pending</option>
+                    <option value="approved">approved</option>
+                    <option value="rejected">rejected</option>
+                  </select>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
