@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Transaction {
   _id: string;
@@ -13,27 +14,24 @@ interface Transaction {
 }
 
 export default function Transactions() {
+  const { loading: authLoading, token } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   useEffect(() => {
-    fetchTransactions();
-  }, []);
+    if (!authLoading && token) {
+      fetchTransactions();
+    }
+  }, [authLoading, token]);
 
   const fetchTransactions = async () => {
     try {
       // Fetch invoices, expenses, and payroll to create a unified transaction view
       const [invoicesRes, expensesRes, payrollRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/expenses`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/payroll`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
+        axios.get(`${import.meta.env.VITE_API_URL}/invoices`),
+        axios.get(`${import.meta.env.VITE_API_URL}/expenses`),
+        axios.get(`${import.meta.env.VITE_API_URL}/payroll`)
       ]);
 
       const incomeTransactions = invoicesRes.data.map((inv: any) => ({

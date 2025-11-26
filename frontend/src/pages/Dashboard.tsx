@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { DollarSign, TrendingUp, TrendingDown, FileText } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
+  const { loading: authLoading, token } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    if (!authLoading && token) {
+      loadStats();
+    }
+  }, [authLoading, token]);
 
   const loadStats = async () => {
     try {
@@ -21,7 +25,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (authLoading || loading) return <div>Loading...</div>;
 
   return (
     <div>
