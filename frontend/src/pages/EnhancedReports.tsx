@@ -15,7 +15,7 @@ export default function EnhancedReports() {
 
   useEffect(() => {
     loadReports();
-  }, [dateRange]);
+  }, [dateRange, activeTab]);
 
   const loadReports = async () => {
     setLoading(true);
