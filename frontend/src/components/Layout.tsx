@@ -224,6 +224,17 @@ export default function Layout({ children }: LayoutProps) {
                     <DollarSign size={20} />
                     <span>Payroll</span>
                   </Link>
+                  <Link
+                    to="/payroll-runs"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive('/payroll-runs')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <BarChart3 size={20} />
+                    <span>Payroll Runs</span>
+                  </Link>
                 </div>
               )}
             </div>
