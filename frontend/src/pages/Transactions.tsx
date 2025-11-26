@@ -44,15 +44,17 @@ export default function Transactions() {
         reference: inv.invoiceNumber
       }));
 
-      const expenseTransactions = expensesRes.data.map((exp: any) => ({
-        _id: exp._id,
-        type: 'expense',
-        amount: exp.amount,
-        category: exp.category,
-        description: exp.description || 'Expense',
-        date: exp.date,
-        reference: exp.receiptNumber
-      }));
+      const expenseTransactions = expensesRes.data
+        .filter((exp: any) => exp.category?.toLowerCase() !== 'payroll')
+        .map((exp: any) => ({
+          _id: exp._id,
+          type: 'expense',
+          amount: exp.amount,
+          category: exp.category,
+          description: exp.description || 'Expense',
+          date: exp.date,
+          reference: exp.receiptNumber
+        }));
 
       const payrollTransactions = payrollRes.data.map((pay: any) => ({
         _id: pay._id,
