@@ -58,7 +58,7 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
 router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
   const { bankId, ...updateData } = req.body;
   
-  // If marking as paid and bank is provided, update bank balance
+  // If marking as paid and bank is provided, update bank balance and save bank reference
   if (updateData.status === 'paid' && bankId) {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ error: 'Not found' });
@@ -71,6 +71,9 @@ router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
     bank.balance += invoice.total;
     bank.updatedAt = new Date();
     await bank.save();
+    
+    // Save bank reference to invoice
+    updateData.bank = bankId;
   }
   
   const invoice = await Invoice.findByIdAndUpdate(

@@ -20,6 +20,7 @@ const PayrollSchema = new Schema({
   status: { type: String, enum: ['draft', 'approved', 'paid'], default: 'draft' },
   paidDate: Date,
   notes: String,
+  bank: { type: Schema.Types.ObjectId, ref: 'Bank' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

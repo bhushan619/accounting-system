@@ -269,10 +269,10 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
     run.paidDate = new Date();
     await run.save();
     
-    // Update all payroll entries status
+    // Update all payroll entries status and bank reference
     await Payroll.updateMany(
       { _id: { $in: run.payrollEntries } },
-      { status: 'paid', paidDate: new Date() }
+      { status: 'paid', paidDate: new Date(), bank: bankId }
     );
     
     res.json(run);
