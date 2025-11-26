@@ -42,13 +42,13 @@ export default function Expenses() {
     try {
       const token = localStorage.getItem('token');
       const [expensesRes, vendorsRes, banksRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/expenses`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/expenses`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/vendors`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/vendors`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/banks`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/banks`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -66,7 +66,7 @@ export default function Expenses() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/expenses`, formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/expenses`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setShowModal(false);
@@ -81,7 +81,7 @@ export default function Expenses() {
     if (!confirm('Are you sure you want to delete this expense?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/expenses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadData();
@@ -93,7 +93,7 @@ export default function Expenses() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, 
+      await axios.put(`${import.meta.env.VITE_API_URL}/expenses/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
