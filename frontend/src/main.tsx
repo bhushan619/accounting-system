@@ -12,7 +12,6 @@ import Vendors from './pages/Vendors';
 import Banks from './pages/Banks';
 import Employees from './pages/Employees';
 import Payroll from './pages/Payroll';
-import PayrollRuns from './pages/PayrollRuns';
 import UserManagement from './pages/UserManagement';
 import EnhancedReports from './pages/EnhancedReports';
 import Settings from './pages/Settings';
@@ -40,7 +39,6 @@ function App() {
           <Route path="/banks" element={<ProtectedRoute><Banks /></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
-          <Route path="/payroll-runs" element={<ProtectedRoute><PayrollRuns /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><EnhancedReports /></ProtectedRoute>} />
           <Route path="/tax-configurations" element={<ProtectedRoute><TaxConfigurations /></ProtectedRoute>} />
