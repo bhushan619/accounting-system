@@ -36,6 +36,7 @@ export default function Invoices() {
   });
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'invoice' | 'receipt'} | null>(null);
 
   useEffect(() => {
     loadData();
@@ -114,9 +115,12 @@ export default function Invoices() {
     }
   };
 
-  const handleFileUpload = async (file: File, type: 'invoice' | 'receipt') => {
+  const handleFileUpload = async (file: File, type: 'invoice' | 'receipt', invoiceId?: string) => {
     const setUploading = type === 'invoice' ? setUploadingInvoice : setUploadingReceipt;
     setUploading(true);
+    if (invoiceId) {
+      setUploadingForId({ id: invoiceId, type });
+    }
     try {
       const token = localStorage.getItem('token');
       const formDataUpload = new FormData();
@@ -129,16 +133,27 @@ export default function Invoices() {
         }
       });
       
-      if (type === 'invoice') {
-        setFormData({ ...formData, attachmentUrl: res.data.url });
+      if (invoiceId) {
+        // Update existing invoice with file URL
+        const updateData = type === 'invoice' ? { attachmentUrl: res.data.url } : { receiptUrl: res.data.url };
+        await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${invoiceId}`, updateData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        loadData();
       } else {
-        setFormData({ ...formData, receiptUrl: res.data.url });
+        // Update form data for new invoice
+        if (type === 'invoice') {
+          setFormData({ ...formData, attachmentUrl: res.data.url });
+        } else {
+          setFormData({ ...formData, receiptUrl: res.data.url });
+        }
       }
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error);
       alert(`Failed to upload ${type}`);
     } finally {
       setUploading(false);
+      setUploadingForId(null);
     }
   };
 
@@ -237,8 +252,8 @@ export default function Invoices() {
                   </select>
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  <div className="flex gap-2">
-                    {invoice.attachmentUrl && (
+                  <div className="flex gap-2 flex-wrap">
+                    {invoice.attachmentUrl ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}${invoice.attachmentUrl}`}
                         target="_blank"
@@ -249,8 +264,20 @@ export default function Invoices() {
                         <FileText size={14} />
                         Invoice
                       </a>
+                    ) : (
+                      <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
+                        <Upload size={14} />
+                        {uploadingForId?.id === invoice._id && uploadingForId?.type === 'invoice' ? 'Uploading...' : 'Invoice'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'invoice', invoice._id)}
+                          className="hidden"
+                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === 'invoice'}
+                        />
+                      </label>
                     )}
-                    {invoice.receiptUrl && (
+                    {invoice.receiptUrl ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}${invoice.receiptUrl}`}
                         target="_blank"
@@ -261,9 +288,18 @@ export default function Invoices() {
                         <Receipt size={14} />
                         Receipt
                       </a>
-                    )}
-                    {!invoice.attachmentUrl && !invoice.receiptUrl && (
-                      <span className="text-muted-foreground text-xs">No files</span>
+                    ) : (
+                      <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
+                        <Upload size={14} />
+                        {uploadingForId?.id === invoice._id && uploadingForId?.type === 'receipt' ? 'Uploading...' : 'Receipt'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt', invoice._id)}
+                          className="hidden"
+                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === 'receipt'}
+                        />
+                      </label>
                     )}
                   </div>
                 </td>

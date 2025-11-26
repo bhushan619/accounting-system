@@ -38,6 +38,7 @@ export default function Expenses() {
   });
   const [uploadingBill, setUploadingBill] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'bill' | 'receipt'} | null>(null);
 
   useEffect(() => {
     loadData();
@@ -108,9 +109,12 @@ export default function Expenses() {
     }
   };
 
-  const handleFileUpload = async (file: File, type: 'bill' | 'receipt') => {
+  const handleFileUpload = async (file: File, type: 'bill' | 'receipt', expenseId?: string) => {
     const setUploading = type === 'bill' ? setUploadingBill : setUploadingReceipt;
     setUploading(true);
+    if (expenseId) {
+      setUploadingForId({ id: expenseId, type });
+    }
     try {
       const token = localStorage.getItem('token');
       const formDataUpload = new FormData();
@@ -123,16 +127,27 @@ export default function Expenses() {
         }
       });
       
-      if (type === 'bill') {
-        setFormData({ ...formData, billUrl: res.data.url });
+      if (expenseId) {
+        // Update existing expense with file URL
+        const updateData = type === 'bill' ? { billUrl: res.data.url } : { receiptUrl: res.data.url };
+        await axios.put(`${import.meta.env.VITE_API_URL}/expenses/${expenseId}`, updateData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        loadData();
       } else {
-        setFormData({ ...formData, receiptUrl: res.data.url });
+        // Update form data for new expense
+        if (type === 'bill') {
+          setFormData({ ...formData, billUrl: res.data.url });
+        } else {
+          setFormData({ ...formData, receiptUrl: res.data.url });
+        }
       }
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error);
       alert(`Failed to upload ${type}`);
     } finally {
       setUploading(false);
+      setUploadingForId(null);
     }
   };
 
@@ -214,8 +229,8 @@ export default function Expenses() {
                   </select>
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  <div className="flex gap-2">
-                    {expense.billUrl && (
+                  <div className="flex gap-2 flex-wrap">
+                    {expense.billUrl ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}${expense.billUrl}`}
                         target="_blank"
@@ -226,8 +241,20 @@ export default function Expenses() {
                         <FileDown size={14} />
                         Bill
                       </a>
+                    ) : (
+                      <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
+                        <Upload size={14} />
+                        {uploadingForId?.id === expense._id && uploadingForId?.type === 'bill' ? 'Uploading...' : 'Bill'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'bill', expense._id)}
+                          className="hidden"
+                          disabled={uploadingForId?.id === expense._id && uploadingForId?.type === 'bill'}
+                        />
+                      </label>
                     )}
-                    {expense.receiptUrl && (
+                    {expense.receiptUrl ? (
                       <a
                         href={`${import.meta.env.VITE_API_URL}${expense.receiptUrl}`}
                         target="_blank"
@@ -238,9 +265,18 @@ export default function Expenses() {
                         <Receipt size={14} />
                         Receipt
                       </a>
-                    )}
-                    {!expense.billUrl && !expense.receiptUrl && (
-                      <span className="text-muted-foreground text-xs">No files</span>
+                    ) : (
+                      <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
+                        <Upload size={14} />
+                        {uploadingForId?.id === expense._id && uploadingForId?.type === 'receipt' ? 'Uploading...' : 'Receipt'}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt', expense._id)}
+                          className="hidden"
+                          disabled={uploadingForId?.id === expense._id && uploadingForId?.type === 'receipt'}
+                        />
+                      </label>
                     )}
                   </div>
                 </td>
