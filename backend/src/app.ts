@@ -43,7 +43,7 @@ app.use('/taxconfig', taxconfigSeedRouter);
 app.use('/reports', reportsRoutes);
 app.use('/exports', exportsRoutes);
 app.use('/auditlogs', auditlogsRoutes);
-app.use('/uploads', uploadsRoutes);
+app.use('/api/uploads', uploadsRoutes);
 app.use('/docs', swaggerRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), config.UPLOADS_DIR)));
 

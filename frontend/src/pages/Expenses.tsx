@@ -159,7 +159,7 @@ export default function Expenses() {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/uploads/${type}`, formDataUpload, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/uploads/${type}`, formDataUpload, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
