@@ -25,13 +25,13 @@ export default function Transactions() {
     try {
       // Fetch invoices, expenses, and payroll to create a unified transaction view
       const [invoicesRes, expensesRes, payrollRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/invoices`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/expenses`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/expenses`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/payroll`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/payroll`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

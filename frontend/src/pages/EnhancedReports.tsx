@@ -24,13 +24,13 @@ export default function EnhancedReports() {
       const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
       
       if (activeTab === 'overview') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/reports/overview${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/overview${params}`, { headers });
         setOverviewData(res.data);
       } else if (activeTab === 'profitloss') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/reports/profit-loss${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/profit-loss${params}`, { headers });
         setProfitLossData(res.data);
       } else if (activeTab === 'expenses') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/reports/expenses-breakdown${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/expenses-breakdown${params}`, { headers });
         setExpensesData(res.data);
       }
     } catch (error) {
