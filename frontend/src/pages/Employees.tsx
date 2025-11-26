@@ -53,9 +53,20 @@ export default function Employees() {
     loadEmployees();
   }, []);
 
-  // Calculate APIT based on slab system with standard deductions (Scenario B)
-  const calculateAPIT = (grossSalary: number): number => {
-    const slabs = [
+  // Calculate APIT based on slab system with standard deductions
+  const calculateAPIT = (grossSalary: number, scenario: 'employee' | 'employer'): number => {
+    // Scenario A: APIT Paid by Employee (Standard)
+    const employeeSlabs = [
+      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+      { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
+      { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
+      { minIncome: 275001, maxIncome: 316667, rate: 24, standardDeduction: 53500 },
+      { minIncome: 316668, maxIncome: 358333, rate: 30, standardDeduction: 72500 },
+      { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
+    ];
+
+    // Scenario B: APIT Paid by Employer
+    const employerSlabs = [
       { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
       { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
       { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
@@ -63,6 +74,8 @@ export default function Employees() {
       { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
       { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
     ];
+
+    const slabs = scenario === 'employee' ? employeeSlabs : employerSlabs;
 
     // Find applicable slab
     let applicableSlab = slabs[0];
@@ -87,7 +100,7 @@ export default function Employees() {
     const epfEmployee = (formData.basicSalary * formData.epfEmployeeRate) / 100;
     const epfEmployer = (formData.basicSalary * formData.epfEmployerRate) / 100;
     const etf = (formData.basicSalary * formData.etfRate) / 100;
-    const apit = calculateAPIT(grossSalary);
+    const apit = calculateAPIT(grossSalary, formData.apitScenario);
     const stampFee = 25;
 
     let netSalary = 0;
