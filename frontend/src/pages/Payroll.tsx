@@ -45,9 +45,13 @@ interface PayrollPreview {
 export default function Payroll() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [banks, setBanks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [pendingProcess, setPendingProcess] = useState<{id: string, totalAmount: number} | null>(null);
+  const [selectedBank, setSelectedBank] = useState('');
   const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,12 +66,14 @@ export default function Payroll() {
 
   const loadData = async () => {
     try {
-      const [runsRes, employeesRes] = await Promise.all([
+      const [runsRes, employeesRes, banksRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/payrollruns`),
-        axios.get(`${import.meta.env.VITE_API_URL}/employees`)
+        axios.get(`${import.meta.env.VITE_API_URL}/employees`),
+        axios.get(`${import.meta.env.VITE_API_URL}/banks`)
       ]);
       setRuns(runsRes.data);
       setEmployees(employeesRes.data.filter((e: Employee) => e.status === 'active'));
+      setBanks(banksRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -110,9 +116,24 @@ export default function Payroll() {
   };
 
   const handleProcess = async (id: string) => {
-    if (!confirm('Process this payroll run? This will create expense transactions and mark as paid.')) return;
+    const run = runs.find(r => r._id === id);
+    if (!run) return;
+    
+    // Show bank selection modal
+    setPendingProcess({ id, totalAmount: run.totalNetSalary });
+    setShowBankModal(true);
+  };
+
+  const confirmProcess = async () => {
+    if (!selectedBank || !pendingProcess) return;
+    
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/process`);
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${pendingProcess.id}/process`, {
+        bankId: selectedBank
+      });
+      setShowBankModal(false);
+      setPendingProcess(null);
+      setSelectedBank('');
       loadData();
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to process payroll');
@@ -497,6 +518,55 @@ export default function Payroll() {
               >
                 Confirm & Generate
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Selection Modal */}
+      {showBankModal && pendingProcess && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Select Bank Account</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Which bank account will pay the total payroll amount of Rs. {pendingProcess.totalAmount.toLocaleString()}?
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">Bank Account</label>
+                <select
+                  value={selectedBank}
+                  onChange={(e) => setSelectedBank(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                >
+                  <option value="">Select bank account</option>
+                  {banks.map((bank) => (
+                    <option key={bank._id} value={bank._id}>
+                      {bank.name} - {bank.accountNumber} ({bank.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowBankModal(false);
+                    setPendingProcess(null);
+                    setSelectedBank('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmProcess}
+                  disabled={!selectedBank}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm & Process
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -41,13 +41,29 @@ router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
 });
 
 router.put('/:id', auditLog('update', 'expense'), async (req, res) => {
-  const expense = await Expense.findByIdAndUpdate(
+  const expense = await Expense.findById(req.params.id);
+  if (!expense) return res.status(404).json({ error: 'Not found' });
+  
+  // If approving expense with bank payment method, update bank balance
+  if (req.body.status === 'approved' && (req.body.bank || expense.bank)) {
+    const bankId = req.body.bank || expense.bank;
+    const Bank = require('../models/Bank').default;
+    const bank = await Bank.findById(bankId);
+    
+    if (bank) {
+      // Decrease bank balance for expense payment
+      bank.balance -= expense.amount;
+      bank.updatedAt = new Date();
+      await bank.save();
+    }
+  }
+  
+  const updatedExpense = await Expense.findByIdAndUpdate(
     req.params.id,
     { ...req.body, updatedAt: new Date() },
     { new: true }
   );
-  if (!expense) return res.status(404).json({ error: 'Not found' });
-  res.json(expense);
+  res.json(updatedExpense);
 });
 
 router.delete('/:id', auditLog('delete', 'expense'), async (req, res) => {

@@ -18,9 +18,13 @@ interface Invoice {
 export default function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [banks, setBanks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<any>(null);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{id: string, status: string, amount: number} | null>(null);
+  const [selectedBank, setSelectedBank] = useState('');
   const [formData, setFormData] = useState({
     client: '',
     issueDate: new Date().toISOString().split('T')[0],
@@ -45,16 +49,20 @@ export default function Invoices() {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [invoicesRes, clientsRes] = await Promise.all([
+      const [invoicesRes, clientsRes, banksRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/clients`, {
           headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/banks`, {
+          headers: { Authorization: `Bearer ${token}` }
         })
       ]);
       setInvoices(invoicesRes.data);
       setClients(clientsRes.data);
+      setBanks(banksRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -91,6 +99,17 @@ export default function Invoices() {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    // If changing to "paid", show bank selection modal
+    if (newStatus === 'paid') {
+      const invoice = invoices.find(inv => inv._id === id);
+      if (invoice) {
+        setPendingStatusChange({ id, status: newStatus, amount: invoice.total });
+        setShowBankModal(true);
+        return;
+      }
+    }
+    
+    // For other status changes, proceed normally
     try {
       const token = localStorage.getItem('token');
       await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${id}`, 
@@ -100,6 +119,25 @@ export default function Invoices() {
       loadData();
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const confirmBankUpdate = async () => {
+    if (!selectedBank || !pendingStatusChange) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${pendingStatusChange.id}`, 
+        { status: pendingStatusChange.status, bankId: selectedBank },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setShowBankModal(false);
+      setPendingStatusChange(null);
+      setSelectedBank('');
+      loadData();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      alert('Failed to update invoice status');
     }
   };
 
@@ -634,6 +672,55 @@ export default function Invoices() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Selection Modal */}
+      {showBankModal && pendingStatusChange && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 m-4 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Select Bank Account</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Which bank account received the payment of {invoices.find(inv => inv._id === pendingStatusChange.id)?.currency} {pendingStatusChange.amount.toLocaleString()}?
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">Bank Account</label>
+                <select
+                  value={selectedBank}
+                  onChange={(e) => setSelectedBank(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  required
+                >
+                  <option value="">Select bank account</option>
+                  {banks.map((bank) => (
+                    <option key={bank._id} value={bank._id}>
+                      {bank.name} - {bank.accountNumber} ({bank.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowBankModal(false);
+                    setPendingStatusChange(null);
+                    setSelectedBank('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBankUpdate}
+                  disabled={!selectedBank}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>

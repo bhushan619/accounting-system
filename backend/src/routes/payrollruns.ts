@@ -220,6 +220,12 @@ router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {
 
 router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, res) => {
   try {
+    const { bankId } = req.body;
+    
+    if (!bankId) {
+      return res.status(400).json({ error: 'Bank account is required' });
+    }
+    
     const run = await PayrollRun.findById(req.params.id).populate({
       path: 'payrollEntries',
       populate: { path: 'employee' }
@@ -227,6 +233,10 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
     
     if (!run) return res.status(404).json({ error: 'Not found' });
     if (run.status === 'paid') return res.status(400).json({ error: 'Already processed' });
+    
+    const Bank = require('../models/Bank').default;
+    const bank = await Bank.findById(bankId);
+    if (!bank) return res.status(404).json({ error: 'Bank not found' });
     
     const Expense = require('../models/Expense').default;
     const { getNextSequence } = require('../services/counterService');
@@ -243,10 +253,16 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
         currency: 'LKR',
         date: new Date(),
         paymentMethod: 'bank',
+        bank: bankId,
         status: 'approved',
         createdBy: req.user._id
       });
     }
+    
+    // Update bank balance - decrease for payroll payment
+    bank.balance -= run.totalNetSalary;
+    bank.updatedAt = new Date();
+    await bank.save();
     
     // Update run status
     run.status = 'paid';
