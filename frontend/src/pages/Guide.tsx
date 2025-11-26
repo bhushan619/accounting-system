@@ -9,27 +9,59 @@ interface Section {
 const sections: Section[] = [
   {
     title: 'Getting Started',
-    content: 'Welcome to VeloSync! This guide will help you navigate the system and manage your accounting operations effectively.'
+    content: 'Welcome to VeloSync! This comprehensive accounting system helps you manage all financial operations including clients, invoices, expenses, payroll, and reporting. Use the navigation menu to access different modules based on your role permissions.'
   },
   {
     title: 'Managing Clients',
-    content: 'Create and manage client records. Navigate to Clients page to add new clients with their contact information.'
+    content: 'Create and manage client records with complete contact information including name, email, phone, address, and tax ID. Navigate to Clients page to add new clients, edit existing records, or delete clients no longer needed. Client records are used when creating invoices.'
+  },
+  {
+    title: 'Managing Vendors',
+    content: 'Maintain vendor records for all suppliers and service providers. Add vendor details including name, contact person, email, phone, and address. Vendors can be linked to expenses for better expense tracking and reporting.'
+  },
+  {
+    title: 'Bank Accounts',
+    content: 'Set up and manage multiple bank accounts with account numbers, bank names, and branch details. Track opening balances (set only during creation). Bank balances are automatically updated when processing invoices, expenses, and payroll. View all bank transactions including debits and credits in the Transactions page.'
   },
   {
     title: 'Creating Invoices',
-    content: 'Generate professional invoices with line items, tax calculations, and automatic serial numbers. Attach supporting documents as needed.'
+    content: 'Generate professional invoices with automatic serial numbers (INV-XXXX). Add multiple line items with descriptions, quantities, rates, and tax percentages. Attach supporting documents like quotations and receipts. When marking an invoice as paid, select the bank account to credit - the system automatically updates the bank balance.'
   },
   {
     title: 'Tracking Expenses',
-    content: 'Record business expenses with receipt uploads. Categorize expenses and link them to vendors for better tracking.'
+    content: 'Record business expenses with automatic serial numbers (EXP-XXXX). Categorize expenses, link to vendors, specify payment method (cash/bank/card), and upload bills and receipts. When approving expenses with bank payment, select the bank account - the balance is automatically debited. All approved expenses appear in financial reports.'
   },
   {
-    title: 'Payroll Management',
-    content: 'Calculate employee payroll with Sri Lankan compliance including EPF (8% employee, 12% employer), ETF (3%), APIT, and stamp fees.'
+    title: 'Employee Management (Admin Only)',
+    content: 'Manage employee records including personal details, employment information, and salary components. Set basic salary, allowances, EPF rates (employee and employer), ETF rate, and APIT scenario. APIT Scenario A: employee pays APIT tax. APIT Scenario B: employer pays APIT tax. Employee records are used for payroll processing.'
   },
   {
-    title: 'Reports and Analytics',
-    content: 'Generate comprehensive financial reports including profit & loss statements, expense breakdowns, and overview summaries.'
+    title: 'Payroll Processing (Admin Only)',
+    content: 'Process payroll for multiple employees in bulk. Select employees and preview calculations before processing. Payroll includes EPF (8% employee, 12% employer on basic salary), ETF (3% on basic salary), APIT (calculated on gross salary using slab system), and stamp fees. When processing payroll, select a bank account - net salaries are automatically debited. Processed payroll appears in Transactions and Financial Reports.'
+  },
+  {
+    title: 'Tax Configuration (Admin Only)',
+    content: 'Configure tax rates including EPF employee rate, EPF employer rate, ETF rate, stamp fee, and APIT tax slabs. APIT uses slab-based calculation with standard deductions: 0-150K LKR (0%), 150K-250K (6%), 250K-323K (12%), 323K+ (56.25%). Tax configurations apply to all payroll calculations unless employee has custom rates.'
+  },
+  {
+    title: 'Transactions Tracking',
+    content: 'View all financial transactions in one place with two tabs: All Transactions shows invoices, expenses, and payroll summary. Bank Transactions tab displays all bank debits and credits with details including transaction type, bank account, date, category, description, and amount. Filter and track cash flow across all bank accounts.'
+  },
+  {
+    title: 'Financial Reports',
+    content: 'Access three comprehensive report views: Overview (total income, expenses, profit), Profit & Loss Statement (detailed income vs expenses breakdown), and Expenses Breakdown (category-wise expense analysis with charts). Reports include only confirmed transactions: paid invoices, approved expenses, and processed payroll. Export reports to PDF or Excel.'
+  },
+  {
+    title: 'User Management (Admin Only)',
+    content: 'Manage system users with role-based access control. Create users with Admin or Accountant roles. Admin users have full access to all features. Accountant users have restricted access and cannot view/manage: Users, Tax Configurations, Employees, and Payroll modules.'
+  },
+  {
+    title: 'File Attachments',
+    content: 'Upload supporting documents for invoices (attachments and receipts) and expenses (bills and receipts). Files are stored securely in the local filesystem. When deleting invoices or expenses, associated files are automatically removed from storage.'
+  },
+  {
+    title: 'Audit Logs',
+    content: 'All create, update, and delete operations are automatically logged with user information and timestamps. Audit logs help track changes and maintain accountability across the system.'
   }
 ];
 
