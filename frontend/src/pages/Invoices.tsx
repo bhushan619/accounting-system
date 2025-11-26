@@ -36,9 +36,14 @@ export default function Invoices() {
 
   const loadData = async () => {
     try {
+      const token = localStorage.getItem('token');
       const [invoicesRes, clientsRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/invoices`),
-        axios.get(`${import.meta.env.VITE_API_URL}/clients`)
+        axios.get(`${import.meta.env.VITE_API_URL}/api/invoices`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/clients`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
       ]);
       setInvoices(invoicesRes.data);
       setClients(clientsRes.data);
@@ -52,7 +57,10 @@ export default function Invoices() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/invoices`, formData);
+      const token = localStorage.getItem('token');
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/invoices`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setShowModal(false);
       resetForm();
       loadData();
@@ -64,10 +72,26 @@ export default function Invoices() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this invoice?')) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/invoices/${id}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       loadData();
     } catch (error) {
       console.error('Failed to delete invoice:', error);
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, 
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      loadData();
+    } catch (error) {
+      console.error('Failed to update status:', error);
     }
   };
 
@@ -151,9 +175,16 @@ export default function Invoices() {
                   {invoice.currency} {invoice.total.toLocaleString()}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                    {invoice.status}
-                  </span>
+                  <select
+                    value={invoice.status}
+                    onChange={(e) => handleStatusChange(invoice._id, e.target.value)}
+                    className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${getStatusColor(invoice.status)}`}
+                  >
+                    <option value="draft">draft</option>
+                    <option value="sent">sent</option>
+                    <option value="paid">paid</option>
+                    <option value="overdue">overdue</option>
+                  </select>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80">
