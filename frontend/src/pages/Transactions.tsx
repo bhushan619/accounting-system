@@ -25,13 +25,19 @@ interface BankTransaction {
   category: string;
 }
 
+const getMonthName = (month: number) => {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  return months[month - 1];
+};
+
 export default function Transactions() {
   const { loading: authLoading, token } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'transactions' | 'bank'>('transactions');
-  const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'payroll'>('all');
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -97,16 +103,16 @@ export default function Transactions() {
       const bankIncomeTransactions = invoicesRes.data
         .filter((inv: any) => inv.status === 'paid' && inv.bank)
         .map((inv: any) => {
-          const bank = bankMap.get(inv.bank);
+          const bank = inv.bank?._id ? inv.bank : bankMap.get(inv.bank);
           return {
             _id: inv._id,
             type: 'credit' as const,
             amount: inv.total,
-            bankName: bank?.bankName || 'Unknown Bank',
+            bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
-            description: `Invoice ${inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
+            description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
             date: inv.issueDate,
-            reference: inv.invoiceNumber,
+            reference: inv.serialNumber || inv.invoiceNumber,
             category: 'Invoice Payment'
           };
         });
@@ -114,16 +120,16 @@ export default function Transactions() {
       const bankExpenseTransactions = expensesRes.data
         .filter((exp: any) => exp.status === 'approved' && exp.bank)
         .map((exp: any) => {
-          const bank = bankMap.get(exp.bank);
+          const bank = exp.bank?._id ? exp.bank : bankMap.get(exp.bank);
           return {
             _id: exp._id,
             type: 'debit' as const,
             amount: exp.amount,
-            bankName: bank?.bankName || 'Unknown Bank',
+            bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
             description: exp.description || 'Expense',
             date: exp.date,
-            reference: exp.receiptNumber,
+            reference: exp.serialNumber,
             category: exp.category || 'Expense'
           };
         });
@@ -131,14 +137,14 @@ export default function Transactions() {
       const bankPayrollTransactions = payrollRes.data
         .filter((pay: any) => pay.status === 'paid' && pay.bank)
         .map((pay: any) => {
-          const bank = bankMap.get(pay.bank);
+          const bank = pay.bank?._id ? pay.bank : bankMap.get(pay.bank);
           return {
             _id: pay._id,
             type: 'debit' as const,
             amount: pay.netSalary,
-            bankName: bank?.bankName || 'Unknown Bank',
+            bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
-            description: `Payroll - ${pay.employee?.fullName || 'Employee'} (${pay.month}/${pay.year})`,
+            description: `Salary payment - ${pay.employee?.fullName || 'Employee'} (${getMonthName(pay.month)} ${pay.year})`,
             date: pay.createdAt,
             reference: pay.serialNumber,
             category: 'Payroll'
