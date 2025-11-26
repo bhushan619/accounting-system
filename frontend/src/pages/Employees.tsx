@@ -88,9 +88,9 @@ export default function Employees() {
   // Recalculate whenever salary or rates change
   useEffect(() => {
     const grossSalary = formData.basicSalary + formData.allowances;
-    const epfEmployee = (grossSalary * formData.epfEmployeeRate) / 100;
-    const epfEmployer = (grossSalary * formData.epfEmployerRate) / 100;
-    const etf = (grossSalary * formData.etfRate) / 100;
+    const epfEmployee = (formData.basicSalary * formData.epfEmployeeRate) / 100;
+    const epfEmployer = (formData.basicSalary * formData.epfEmployerRate) / 100;
+    const etf = (formData.basicSalary * formData.etfRate) / 100;
     const apit = calculateAPIT(grossSalary);
     const stampFee = 25;
 
