@@ -13,6 +13,7 @@ interface Expense {
   date: string;
   paymentMethod: string;
   status: string;
+  billUrl?: string;
   receiptUrl?: string;
 }
 
@@ -185,6 +186,7 @@ export default function Expenses() {
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Date</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Amount</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Files</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
             </tr>
           </thead>
@@ -210,6 +212,37 @@ export default function Expenses() {
                     <option value="approved">approved</option>
                     <option value="rejected">rejected</option>
                   </select>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <div className="flex gap-2">
+                    {expense.billUrl && (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}${expense.billUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        title="View Bill"
+                      >
+                        <FileDown size={14} />
+                        Bill
+                      </a>
+                    )}
+                    {expense.receiptUrl && (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}${expense.receiptUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        title="View Receipt"
+                      >
+                        <Receipt size={14} />
+                        Receipt
+                      </a>
+                    )}
+                    {!expense.billUrl && !expense.receiptUrl && (
+                      <span className="text-muted-foreground text-xs">No files</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
