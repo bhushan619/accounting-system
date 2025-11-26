@@ -38,10 +38,10 @@ export default function Invoices() {
     try {
       const token = localStorage.getItem('token');
       const [invoicesRes, clientsRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/invoices`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/clients`, {
+        axios.get(`${import.meta.env.VITE_API_URL}/clients`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -58,7 +58,7 @@ export default function Invoices() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/invoices`, formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/invoices`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setShowModal(false);
@@ -73,7 +73,7 @@ export default function Invoices() {
     if (!confirm('Are you sure you want to delete this invoice?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/invoices/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadData();
@@ -85,7 +85,7 @@ export default function Invoices() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, 
+      await axios.put(`${import.meta.env.VITE_API_URL}/invoices/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
