@@ -61,12 +61,12 @@ export async function getActiveTaxRates(): Promise<TaxRates> {
   if (rates.apitBrackets.length === 0) {
     rates.apitBrackets = [
       { minIncome: 0, maxIncome: 100000, rate: 0 },
-      { minIncome: 100001, maxIncome: 141667, rate: 6 },
-      { minIncome: 141668, maxIncome: 183333, rate: 12 },
-      { minIncome: 183334, maxIncome: 225000, rate: 18 },
-      { minIncome: 225001, maxIncome: 266667, rate: 24 },
-      { minIncome: 266668, maxIncome: 308333, rate: 30 },
-      { minIncome: 308334, maxIncome: null, rate: 36 }
+      { minIncome: 100000, maxIncome: 141667, rate: 6 },
+      { minIncome: 141667, maxIncome: 183333, rate: 12 },
+      { minIncome: 183333, maxIncome: 225000, rate: 18 },
+      { minIncome: 225000, maxIncome: 266667, rate: 24 },
+      { minIncome: 266667, maxIncome: 308333, rate: 30 },
+      { minIncome: 308333, maxIncome: null, rate: 36 }
     ];
   }
 
@@ -75,19 +75,25 @@ export async function getActiveTaxRates(): Promise<TaxRates> {
 
 export function calculateAPIT(grossSalary: number, brackets: { minIncome: number; maxIncome: number | null; rate: number }[]): number {
   let totalTax = 0;
+  let previousMax = 0;
   
   for (const bracket of brackets) {
-    if (grossSalary <= bracket.minIncome) {
+    // Skip if gross salary doesn't reach this bracket
+    if (grossSalary <= previousMax) {
       break;
     }
     
-    const taxableInBracket = bracket.maxIncome 
-      ? Math.min(grossSalary, bracket.maxIncome) - bracket.minIncome + 1
-      : grossSalary - bracket.minIncome;
+    // Calculate income that falls within this bracket
+    const upperBound = bracket.maxIncome ? Math.min(grossSalary, bracket.maxIncome) : grossSalary;
+    const lowerBound = previousMax;
+    const taxableInBracket = upperBound - lowerBound;
     
     if (taxableInBracket > 0) {
       totalTax += (taxableInBracket * bracket.rate) / 100;
     }
+    
+    // Update previousMax for next bracket
+    previousMax = bracket.maxIncome || grossSalary;
   }
   
   return Math.round(totalTax * 100) / 100;
