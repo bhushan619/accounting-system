@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, FileText, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, Upload, FileDown } from 'lucide-react';
 
 interface Invoice {
   _id: string;
@@ -28,8 +28,12 @@ export default function Invoices() {
     tax: 0,
     discount: 0,
     notes: '',
-    status: 'draft'
+    status: 'draft',
+    attachmentUrl: '',
+    receiptUrl: ''
   });
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -108,6 +112,34 @@ export default function Invoices() {
     }
   };
 
+  const handleFileUpload = async (file: File, type: 'invoice' | 'receipt') => {
+    const setUploading = type === 'invoice' ? setUploadingInvoice : setUploadingReceipt;
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/uploads/${type}`, formDataUpload, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (type === 'invoice') {
+        setFormData({ ...formData, attachmentUrl: res.data.url });
+      } else {
+        setFormData({ ...formData, receiptUrl: res.data.url });
+      }
+    } catch (error) {
+      console.error(`Failed to upload ${type}:`, error);
+      alert(`Failed to upload ${type}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       client: '',
@@ -118,7 +150,9 @@ export default function Invoices() {
       tax: 0,
       discount: 0,
       notes: '',
-      status: 'draft'
+      status: 'draft',
+      attachmentUrl: '',
+      receiptUrl: ''
     });
   };
 
@@ -353,6 +387,63 @@ export default function Invoices() {
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   rows={3}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Invoice Document</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
+                      <Upload size={16} />
+                      {uploadingInvoice ? 'Uploading...' : 'Upload Invoice'}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'invoice')}
+                        className="hidden"
+                        disabled={uploadingInvoice}
+                      />
+                    </label>
+                    {formData.attachmentUrl && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL}${formData.attachmentUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <FileDown size={14} />
+                        View
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Receipt</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
+                      <Upload size={16} />
+                      {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt')}
+                        className="hidden"
+                        disabled={uploadingReceipt}
+                      />
+                    </label>
+                    {formData.receiptUrl && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL}${formData.receiptUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <FileDown size={14} />
+                        View
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end">

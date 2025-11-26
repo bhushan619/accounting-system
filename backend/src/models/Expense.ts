@@ -8,6 +8,7 @@ const ExpenseSchema = new Schema({
   amount: { type: Number, required: true },
   currency: { type: String, enum: ['LKR', 'AED'], default: 'LKR' },
   date: { type: Date, default: Date.now },
+  billUrl: String,
   receiptUrl: String,
   paymentMethod: { type: String, enum: ['cash', 'bank', 'card'], default: 'cash' },
   bank: { type: Schema.Types.ObjectId, ref: 'Bank' },
