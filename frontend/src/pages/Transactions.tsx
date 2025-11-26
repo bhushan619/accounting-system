@@ -34,18 +34,20 @@ export default function Transactions() {
         axios.get(`${import.meta.env.VITE_API_URL}/payroll`)
       ]);
 
-      const incomeTransactions = invoicesRes.data.map((inv: any) => ({
-        _id: inv._id,
-        type: 'income',
-        amount: inv.total,
-        category: 'Invoice',
-        description: `Invoice ${inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
-        date: inv.issueDate,
-        reference: inv.invoiceNumber
-      }));
+      const incomeTransactions = invoicesRes.data
+        .filter((inv: any) => inv.status === 'paid')
+        .map((inv: any) => ({
+          _id: inv._id,
+          type: 'income',
+          amount: inv.total,
+          category: 'Invoice',
+          description: `Invoice ${inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
+          date: inv.issueDate,
+          reference: inv.invoiceNumber
+        }));
 
       const expenseTransactions = expensesRes.data
-        .filter((exp: any) => exp.category?.toLowerCase() !== 'payroll')
+        .filter((exp: any) => exp.category?.toLowerCase() !== 'payroll' && exp.status === 'approved')
         .map((exp: any) => ({
           _id: exp._id,
           type: 'expense',
@@ -56,15 +58,17 @@ export default function Transactions() {
           reference: exp.receiptNumber
         }));
 
-      const payrollTransactions = payrollRes.data.map((pay: any) => ({
-        _id: pay._id,
-        type: 'payroll',
-        amount: pay.netSalary,
-        category: 'Payroll',
-        description: `Payroll - ${pay.employee?.fullName || 'Employee'} (${pay.month}/${pay.year})`,
-        date: pay.createdAt,
-        reference: pay.serialNumber
-      }));
+      const payrollTransactions = payrollRes.data
+        .filter((pay: any) => pay.status === 'paid')
+        .map((pay: any) => ({
+          _id: pay._id,
+          type: 'payroll',
+          amount: pay.netSalary,
+          category: 'Payroll',
+          description: `Payroll - ${pay.employee?.fullName || 'Employee'} (${pay.month}/${pay.year})`,
+          date: pay.createdAt,
+          reference: pay.serialNumber
+        }));
 
       const allTransactions = [...incomeTransactions, ...expenseTransactions, ...payrollTransactions]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
