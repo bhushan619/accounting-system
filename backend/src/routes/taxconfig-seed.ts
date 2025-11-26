@@ -52,12 +52,12 @@ router.post('/seed', async (req, res) => {
         taxType: 'apit',
         brackets: [
           { minIncome: 0, maxIncome: 100000, rate: 0 },
-          { minIncome: 100001, maxIncome: 141667, rate: 6 },
-          { minIncome: 141668, maxIncome: 183333, rate: 12 },
-          { minIncome: 183334, maxIncome: 225000, rate: 18 },
-          { minIncome: 225001, maxIncome: 266667, rate: 24 },
-          { minIncome: 266668, maxIncome: 308333, rate: 30 },
-          { minIncome: 308334, maxIncome: null, rate: 36 }
+          { minIncome: 100000, maxIncome: 141667, rate: 6 },
+          { minIncome: 141667, maxIncome: 183333, rate: 12 },
+          { minIncome: 183333, maxIncome: 225000, rate: 18 },
+          { minIncome: 225000, maxIncome: 266667, rate: 24 },
+          { minIncome: 266667, maxIncome: 308333, rate: 30 },
+          { minIncome: 308333, maxIncome: null, rate: 36 }
         ],
         applicableFrom: now,
         isActive: true
