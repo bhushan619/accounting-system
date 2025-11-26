@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2, Download } from 'lucide-react';
+
+interface TaxBracket {
+  minIncome: number;
+  maxIncome?: number;
+  rate: number;
+}
 
 interface TaxConfig {
   _id: string;
   name: string;
-  taxType: 'vat' | 'income' | 'withholding';
-  rate: number;
+  taxType: 'apit' | 'epf_employee' | 'epf_employer' | 'etf' | 'stamp_fee' | 'vat' | 'income' | 'withholding';
+  rate?: number;
+  brackets?: TaxBracket[];
   applicableFrom: string;
   applicableTo?: string;
   isActive: boolean;
@@ -17,11 +24,12 @@ export default function TaxConfigurations() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingConfig, setEditingConfig] = useState<TaxConfig | null>(null);
+  const [seeding, setSeeding] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    taxType: 'vat' as 'vat' | 'income' | 'withholding',
+    taxType: 'epf_employee' as TaxConfig['taxType'],
     rate: 0,
-    applicableFrom: '',
+    applicableFrom: new Date().toISOString().split('T')[0],
     applicableTo: '',
     isActive: true
   });
@@ -32,9 +40,7 @@ export default function TaxConfigurations() {
 
   const fetchConfigs = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/taxconfig`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`);
       setConfigs(response.data);
     } catch (error) {
       console.error('Error fetching tax configs:', error);
@@ -43,20 +49,33 @@ export default function TaxConfigurations() {
     }
   };
 
+  const handleSeed = async () => {
+    if (!confirm('This will create default Sri Lankan tax configurations. Continue?')) return;
+    setSeeding(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/taxconfig/seed`);
+      alert('Tax configurations seeded successfully!');
+      fetchConfigs();
+    } catch (error: any) {
+      console.error('Error seeding configs:', error);
+      alert(error.response?.data?.error || 'Failed to seed configurations');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingConfig) {
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/taxconfig/${editingConfig._id}`,
-          formData,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          `${import.meta.env.VITE_API_URL}/taxconfig/${editingConfig._id}`,
+          formData
         );
       } else {
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/taxconfig`,
-          formData,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          `${import.meta.env.VITE_API_URL}/taxconfig`,
+          formData
         );
       }
       fetchConfigs();
@@ -71,7 +90,7 @@ export default function TaxConfigurations() {
     setFormData({
       name: config.name,
       taxType: config.taxType,
-      rate: config.rate,
+      rate: config.rate || 0,
       applicableFrom: config.applicableFrom.split('T')[0],
       applicableTo: config.applicableTo ? config.applicableTo.split('T')[0] : '',
       isActive: config.isActive
@@ -82,9 +101,7 @@ export default function TaxConfigurations() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this tax configuration?')) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/taxconfig/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/taxconfig/${id}`);
       fetchConfigs();
     } catch (error) {
       console.error('Error deleting tax config:', error);
@@ -94,14 +111,28 @@ export default function TaxConfigurations() {
   const resetForm = () => {
     setFormData({
       name: '',
-      taxType: 'vat',
+      taxType: 'epf_employee',
       rate: 0,
-      applicableFrom: '',
+      applicableFrom: new Date().toISOString().split('T')[0],
       applicableTo: '',
       isActive: true
     });
     setEditingConfig(null);
     setShowModal(false);
+  };
+
+  const formatTaxType = (type: string) => {
+    const types: Record<string, string> = {
+      'apit': 'APIT',
+      'epf_employee': 'EPF Employee',
+      'epf_employer': 'EPF Employer',
+      'etf': 'ETF',
+      'stamp_fee': 'Stamp Fee',
+      'vat': 'VAT',
+      'income': 'Income Tax',
+      'withholding': 'Withholding Tax'
+    };
+    return types[type] || type;
   };
 
   if (loading) return <div className="text-foreground">Loading...</div>;
@@ -113,13 +144,25 @@ export default function TaxConfigurations() {
           <Settings className="text-primary" />
           Tax Configurations
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus size={20} />
-          Add Tax Config
-        </button>
+        <div className="flex gap-2">
+          {configs.length === 0 && (
+            <button
+              onClick={handleSeed}
+              disabled={seeding}
+              className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-secondary/80 transition-colors disabled:opacity-50"
+            >
+              <Download size={20} />
+              {seeding ? 'Seeding...' : 'Seed Default Configs'}
+            </button>
+          )}
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={20} />
+            Add Tax Config
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg shadow overflow-hidden">
@@ -128,7 +171,7 @@ export default function TaxConfigurations() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rate (%)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rate/Brackets</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">From</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">To</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
@@ -139,8 +182,16 @@ export default function TaxConfigurations() {
             {configs.map((config) => (
               <tr key={config._id} className="hover:bg-accent/50">
                 <td className="px-6 py-4 text-sm text-foreground">{config.name}</td>
-                <td className="px-6 py-4 text-sm text-foreground capitalize">{config.taxType}</td>
-                <td className="px-6 py-4 text-sm text-foreground">{config.rate}%</td>
+                <td className="px-6 py-4 text-sm text-foreground">{formatTaxType(config.taxType)}</td>
+                <td className="px-6 py-4 text-sm text-foreground">
+                  {config.brackets ? (
+                    <span className="text-xs bg-accent px-2 py-1 rounded">
+                      {config.brackets.length} brackets
+                    </span>
+                  ) : (
+                    `${config.rate}${config.taxType === 'stamp_fee' ? ' LKR' : '%'}`
+                  )}
+                </td>
                 <td className="px-6 py-4 text-sm text-foreground">
                   {new Date(config.applicableFrom).toLocaleDateString()}
                 </td>
@@ -168,6 +219,11 @@ export default function TaxConfigurations() {
             ))}
           </tbody>
         </table>
+        {configs.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            No tax configurations found. Click "Seed Default Configs" to load Sri Lankan defaults.
+          </div>
+        )}
       </div>
 
       {showModal && (
@@ -193,14 +249,26 @@ export default function TaxConfigurations() {
                   value={formData.taxType}
                   onChange={(e) => setFormData({ ...formData, taxType: e.target.value as any })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  disabled={!!editingConfig && editingConfig.taxType === 'apit'}
                 >
+                  <option value="epf_employee">EPF Employee</option>
+                  <option value="epf_employer">EPF Employer</option>
+                  <option value="etf">ETF</option>
+                  <option value="stamp_fee">Stamp Fee</option>
                   <option value="vat">VAT</option>
                   <option value="income">Income Tax</option>
                   <option value="withholding">Withholding Tax</option>
                 </select>
+                {editingConfig?.taxType === 'apit' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    APIT brackets cannot be edited through this form. Please delete and reseed if needed.
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Rate (%)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Rate {formData.taxType === 'stamp_fee' ? '(LKR)' : '(%)'}
+                </label>
                 <input
                   type="number"
                   step="0.01"

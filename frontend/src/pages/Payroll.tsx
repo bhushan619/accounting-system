@@ -10,6 +10,8 @@ interface Payroll {
   year: number;
   grossSalary: number;
   netSalary: number;
+  totalCTC: number;
+  apitEmployer?: number;
   status: string;
 }
 
@@ -24,18 +26,21 @@ export default function Payroll() {
     year: new Date().getFullYear(),
     basicSalary: 0,
     allowances: 0,
-    apit: 0,
     notes: '',
     status: 'draft'
   });
-  const [calculations, setCalculations] = useState({
+  const [calculations, setCalculations] = useState<any>({
     grossSalary: 0,
     epfEmployee: 0,
     epfEmployer: 0,
     etf: 0,
+    apit: 0,
+    apitEmployer: 0,
     stampFee: 25,
     totalDeductions: 0,
-    netSalary: 0
+    netSalary: 0,
+    totalCTC: 0,
+    apitScenario: 'employee'
   });
 
   useEffect(() => {
@@ -46,33 +51,67 @@ export default function Payroll() {
     if (formData.employee) {
       const employee = employees.find(e => e._id === formData.employee);
       if (employee) {
-        setFormData(prev => ({
-          ...prev,
-          basicSalary: employee.basicSalary,
-          allowances: employee.allowances || 0
-        }));
+        // Fetch calculations from backend
+        axios.post(`${import.meta.env.VITE_API_URL}/payroll/calculate`, {
+          employeeId: formData.employee,
+          month: formData.month,
+          year: formData.year,
+          allowances: formData.allowances
+        }).then(response => {
+          const calc = response.data;
+          setFormData(prev => ({
+            ...prev,
+            basicSalary: calc.basicSalary,
+            allowances: calc.allowances
+          }));
+          setCalculations({
+            grossSalary: calc.grossSalary,
+            epfEmployee: calc.epfEmployee,
+            epfEmployer: calc.epfEmployer,
+            etf: calc.etf,
+            apit: calc.apit,
+            apitEmployer: calc.apitEmployer || 0,
+            stampFee: calc.stampFee,
+            totalDeductions: calc.totalDeductions,
+            netSalary: calc.netSalary,
+            totalCTC: calc.totalCTC,
+            apitScenario: calc.apitScenario
+          });
+        }).catch(error => {
+          console.error('Failed to calculate:', error);
+        });
       }
     }
   }, [formData.employee, employees]);
 
   useEffect(() => {
-    const grossSalary = formData.basicSalary + formData.allowances;
-    const epfEmployee = grossSalary * 0.08;
-    const epfEmployer = grossSalary * 0.12;
-    const etf = grossSalary * 0.03;
-    const totalDeductions = epfEmployee + formData.apit + 25;
-    const netSalary = grossSalary - totalDeductions;
-
-    setCalculations({
-      grossSalary,
-      epfEmployee,
-      epfEmployer,
-      etf,
-      stampFee: 25,
-      totalDeductions,
-      netSalary
-    });
-  }, [formData.basicSalary, formData.allowances, formData.apit]);
+    // Recalculate when allowances change
+    if (formData.employee && formData.allowances !== undefined) {
+      axios.post(`${import.meta.env.VITE_API_URL}/payroll/calculate`, {
+        employeeId: formData.employee,
+        month: formData.month,
+        year: formData.year,
+        allowances: formData.allowances
+      }).then(response => {
+        const calc = response.data;
+        setCalculations({
+          grossSalary: calc.grossSalary,
+          epfEmployee: calc.epfEmployee,
+          epfEmployer: calc.epfEmployer,
+          etf: calc.etf,
+          apit: calc.apit,
+          apitEmployer: calc.apitEmployer || 0,
+          stampFee: calc.stampFee,
+          totalDeductions: calc.totalDeductions,
+          netSalary: calc.netSalary,
+          totalCTC: calc.totalCTC,
+          apitScenario: calc.apitScenario
+        });
+      }).catch(error => {
+        console.error('Failed to recalculate:', error);
+      });
+    }
+  }, [formData.allowances, formData.employee, formData.month, formData.year]);
 
   const loadData = async () => {
     try {
@@ -111,9 +150,21 @@ export default function Payroll() {
       year: new Date().getFullYear(),
       basicSalary: 0,
       allowances: 0,
-      apit: 0,
       notes: '',
       status: 'draft'
+    });
+    setCalculations({
+      grossSalary: 0,
+      epfEmployee: 0,
+      epfEmployer: 0,
+      etf: 0,
+      apit: 0,
+      apitEmployer: 0,
+      stampFee: 25,
+      totalDeductions: 0,
+      netSalary: 0,
+      totalCTC: 0,
+      apitScenario: 'employee'
     });
   };
 
@@ -258,21 +309,14 @@ export default function Payroll() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">APIT</label>
-                  <input
-                    type="number"
-                    value={formData.apit}
-                    onChange={(e) => setFormData({ ...formData, apit: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
               </div>
 
               <div className="bg-muted p-4 rounded-lg space-y-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Calculator className="text-primary" size={20} />
-                  <h3 className="font-semibold text-foreground">Calculations (Sri Lankan Compliance)</h3>
+                  <h3 className="font-semibold text-foreground">
+                    Calculations (Sri Lankan Compliance - {calculations.apitScenario === 'employer' ? 'Scenario B' : 'Scenario A'})
+                  </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex justify-between">
@@ -280,29 +324,50 @@ export default function Payroll() {
                     <span className="font-medium text-foreground">LKR {calculations.grossSalary.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">EPF Employee (8%):</span>
+                    <span className="text-muted-foreground">EPF Employee:</span>
                     <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">EPF Employer (12%):</span>
-                    <span className="font-medium text-foreground">LKR {calculations.epfEmployer.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">ETF (3%):</span>
-                    <span className="font-medium text-foreground">LKR {calculations.etf.toFixed(2)}</span>
+                    <span className="text-muted-foreground">APIT {calculations.apitScenario === 'employer' ? '(Employer)' : '(Employee)'}:</span>
+                    <span className="font-medium text-foreground">LKR {(calculations.apitScenario === 'employer' ? calculations.apitEmployer : calculations.apit).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Stamp Fee:</span>
-                    <span className="font-medium text-foreground">LKR 25.00</span>
+                    <span className="font-medium text-foreground">LKR {calculations.stampFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Deductions:</span>
                     <span className="font-medium text-red-600">LKR {calculations.totalDeductions.toFixed(2)}</span>
                   </div>
                 </div>
-                <div className="pt-3 border-t border-border flex justify-between">
-                  <span className="font-semibold text-foreground">Net Salary:</span>
-                  <span className="font-bold text-lg text-green-600">LKR {calculations.netSalary.toFixed(2)}</span>
+                <div className="pt-3 border-t border-border">
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-foreground">Net Salary:</span>
+                    <span className="font-bold text-lg text-green-600">LKR {calculations.netSalary.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="bg-accent p-3 rounded">
+                  <div className="text-xs text-muted-foreground mb-1">Employer Contributions</div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">EPF Employer:</span>
+                      <span className="font-medium text-foreground">LKR {calculations.epfEmployer.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">ETF:</span>
+                      <span className="font-medium text-foreground">LKR {calculations.etf.toFixed(2)}</span>
+                    </div>
+                    {calculations.apitScenario === 'employer' && calculations.apitEmployer > 0 && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="text-muted-foreground">APIT (Employer Pays):</span>
+                        <span className="font-medium text-foreground">LKR {calculations.apitEmployer.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 mt-2 border-t border-border flex justify-between">
+                    <span className="font-semibold text-foreground">Total CTC:</span>
+                    <span className="font-bold text-primary">LKR {calculations.totalCTC.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 

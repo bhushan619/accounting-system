@@ -5,6 +5,7 @@ import Employee from '../models/Employee';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import { getActiveTaxRates, calculateAPIT } from '../services/taxService';
 
 const router = express.Router();
 
@@ -31,73 +32,109 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res) => {
-  const { month, year, employeeIds } = req.body;
-  
-  const runNumber = await getNextSequence('payrollrun', 'RUN');
-  
-  const employees = await Employee.find({ 
-    _id: { $in: employeeIds },
-    status: 'active'
-  });
-  
-  const payrollEntries = [];
-  let totalGross = 0;
-  let totalNet = 0;
-  let totalDeductions = 0;
-  
-  for (const employee of employees) {
-    const serialNumber = await getNextSequence('payroll', 'PAY');
-    const basicSalary = employee.basicSalary;
-    const allowances = employee.allowances || 0;
-    const grossSalary = basicSalary + allowances;
+  try {
+    const { month, year, employeeIds } = req.body;
     
-    const epfEmployee = grossSalary * (employee.epfEmployeeRate / 100);
-    const epfEmployer = grossSalary * (employee.epfEmployerRate / 100);
-    const etf = grossSalary * (employee.etfRate / 100);
-    const stampFee = 25;
+    const runNumber = await getNextSequence('payrollrun', 'RUN');
     
-    const deductions = epfEmployee + stampFee;
-    const netSalary = grossSalary - deductions;
+    const employees = await Employee.find({ 
+      _id: { $in: employeeIds },
+      status: 'active'
+    });
     
-    const payroll = await Payroll.create({
-      serialNumber,
-      employee: employee._id,
+    // Get active tax rates
+    const taxRates = await getActiveTaxRates();
+    
+    const payrollEntries = [];
+    let totalGross = 0;
+    let totalNet = 0;
+    let totalDeductions = 0;
+    let totalCTC = 0;
+    
+    for (const employee of employees) {
+      const serialNumber = await getNextSequence('payroll', 'PAY');
+      const basicSalary = employee.basicSalary;
+      const allowances = employee.allowances || 0;
+      const grossSalary = basicSalary + allowances;
+      
+      // Use rates from TaxConfig, fall back to employee-specific rates if set
+      const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
+      const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
+      const etfRate = employee.etfRate || taxRates.etf;
+      const stampFee = taxRates.stampFee;
+      
+      const epfEmployee = Math.round((grossSalary * epfEmployeeRate / 100) * 100) / 100;
+      const epfEmployer = Math.round((grossSalary * epfEmployerRate / 100) * 100) / 100;
+      const etf = Math.round((grossSalary * etfRate / 100) * 100) / 100;
+      
+      // Calculate APIT based on progressive brackets
+      const apit = calculateAPIT(grossSalary, taxRates.apitBrackets);
+      
+      // Calculate based on APIT scenario
+      let deductions: number;
+      let netSalary: number;
+      let apitEmployer = 0;
+      let ctc: number;
+      
+      if (employee.apitScenario === 'employer') {
+        // Scenario B: Employer pays APIT
+        deductions = epfEmployee + stampFee;
+        netSalary = grossSalary - deductions;
+        apitEmployer = apit;
+        ctc = grossSalary + epfEmployer + etf + apitEmployer;
+      } else {
+        // Scenario A: Employee pays APIT (default)
+        deductions = epfEmployee + apit + stampFee;
+        netSalary = grossSalary - deductions;
+        ctc = grossSalary + epfEmployer + etf;
+      }
+      
+      const payroll = await Payroll.create({
+        serialNumber,
+        employee: employee._id,
+        month,
+        year,
+        basicSalary,
+        allowances,
+        grossSalary,
+        epfEmployee,
+        epfEmployer,
+        etf,
+        apit,
+        apitEmployer,
+        stampFee,
+        totalDeductions: deductions,
+        netSalary,
+        totalCTC: ctc,
+        status: 'draft',
+        createdBy: req.user._id
+      });
+      
+      payrollEntries.push(payroll._id);
+      totalGross += grossSalary;
+      totalNet += netSalary;
+      totalDeductions += deductions;
+      totalCTC += ctc;
+    }
+    
+    const run = await PayrollRun.create({
+      runNumber,
       month,
       year,
-      basicSalary,
-      allowances,
-      grossSalary,
-      epfEmployee,
-      epfEmployer,
-      etf,
-      apit: 0,
-      stampFee,
-      totalDeductions: deductions,
-      netSalary,
+      totalEmployees: employees.length,
+      totalGrossSalary: totalGross,
+      totalNetSalary: totalNet,
+      totalDeductions,
+      payrollEntries,
       status: 'draft',
       createdBy: req.user._id
     });
     
-    payrollEntries.push(payroll._id);
-    totalGross += grossSalary;
-    totalNet += netSalary;
-    totalDeductions += deductions;
+    res.json(run);
+  } catch (error) {
+    console.error('Generate payroll run error:', error);
+    res.status(500).json({ error: 'Failed to generate payroll run' });
   }
-  
-  const run = await PayrollRun.create({
-    runNumber,
-    month,
-    year,
-    totalEmployees: employees.length,
-    totalGrossSalary: totalGross,
-    totalNetSalary: totalNet,
-    totalDeductions,
-    payrollEntries,
-    status: 'draft',
-    createdBy: req.user._id
-  });
-  
-  res.json(run);
 });
 
 router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {

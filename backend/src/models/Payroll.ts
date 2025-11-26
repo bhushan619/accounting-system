@@ -12,9 +12,11 @@ const PayrollSchema = new Schema({
   epfEmployer: { type: Number, required: true },
   etf: { type: Number, required: true },
   apit: { type: Number, default: 0 },
+  apitEmployer: { type: Number, default: 0 }, // For Scenario B
   stampFee: { type: Number, default: 25 },
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
+  totalCTC: { type: Number, required: true },
   status: { type: String, enum: ['draft', 'approved', 'paid'], default: 'draft' },
   paidDate: Date,
   notes: String,
