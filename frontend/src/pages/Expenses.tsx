@@ -176,9 +176,9 @@ export default function Expenses() {
       } else {
         // Update form data for new expense
         if (type === 'bill') {
-          setFormData({ ...formData, billUrl: res.data.url });
+          setFormData(prev => ({ ...prev, billUrl: res.data.url }));
         } else {
-          setFormData({ ...formData, receiptUrl: res.data.url });
+          setFormData(prev => ({ ...prev, receiptUrl: res.data.url }));
         }
       }
     } catch (error) {
