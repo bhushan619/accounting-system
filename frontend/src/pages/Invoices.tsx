@@ -11,6 +11,8 @@ interface Invoice {
   total: number;
   currency: string;
   status: string;
+  attachmentUrl?: string;
+  receiptUrl?: string;
 }
 
 export default function Invoices() {
@@ -207,6 +209,7 @@ export default function Invoices() {
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Date</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Amount</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Files</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
             </tr>
           </thead>
@@ -232,6 +235,37 @@ export default function Invoices() {
                     <option value="paid">paid</option>
                     <option value="overdue">overdue</option>
                   </select>
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <div className="flex gap-2">
+                    {invoice.attachmentUrl && (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}${invoice.attachmentUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        title="View Invoice"
+                      >
+                        <FileText size={14} />
+                        Invoice
+                      </a>
+                    )}
+                    {invoice.receiptUrl && (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}${invoice.receiptUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        title="View Receipt"
+                      >
+                        <Receipt size={14} />
+                        Receipt
+                      </a>
+                    )}
+                    {!invoice.attachmentUrl && !invoice.receiptUrl && (
+                      <span className="text-muted-foreground text-xs">No files</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button 
