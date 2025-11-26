@@ -217,27 +217,18 @@ export default function Banks() {
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Currency</label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="LKR">LKR</option>
-                    <option value="AED">AED</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Balance</label>
-                  <input
-                    type="number"
-                    value={formData.balance}
-                    onChange={(e) => setFormData({ ...formData, balance: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">Balance</label>
+                <input
+                  type="number"
+                  value={formData.balance}
+                  onChange={(e) => setFormData({ ...formData, balance: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  readOnly={!!editingBank}
+                />
+                {editingBank && (
+                  <p className="text-xs text-muted-foreground mt-1">Balance is readonly when editing. Update through transactions.</p>
+                )}
               </div>
               <div className="flex gap-2 justify-end">
                 <button
