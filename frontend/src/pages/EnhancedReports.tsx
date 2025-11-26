@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, Calendar } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function EnhancedReports() {
+  const { loading: authLoading, token } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'profitloss' | 'expenses'>('overview');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
@@ -14,23 +16,24 @@ export default function EnhancedReports() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadReports();
-  }, [dateRange, activeTab]);
+    if (!authLoading && token) {
+      loadReports();
+    }
+  }, [dateRange, activeTab, authLoading, token]);
 
   const loadReports = async () => {
     setLoading(true);
     try {
       const params = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-      const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
       
       if (activeTab === 'overview') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/overview${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/overview${params}`);
         setOverviewData(res.data);
       } else if (activeTab === 'profitloss') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/profit-loss${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/profit-loss${params}`);
         setProfitLossData(res.data);
       } else if (activeTab === 'expenses') {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/expenses-breakdown${params}`, { headers });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/reports/expenses-breakdown${params}`);
         setExpensesData(res.data);
       }
     } catch (error) {
