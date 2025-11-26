@@ -5,6 +5,9 @@ import { validateRequest } from '../middleware/validateRequest';
 import { createInvoiceSchema } from '../validation/invoice';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import fs from 'fs';
+import path from 'path';
+import config from '../config';
 
 const router = express.Router();
 
@@ -82,8 +85,29 @@ router.put('/:id', validateRequest(createInvoiceSchema), auditLog('update', 'inv
 });
 
 router.delete('/:id', auditLog('delete', 'invoice'), async (req, res) => {
-  const invoice = await Invoice.findByIdAndDelete(req.params.id);
+  // First, fetch the invoice to get file URLs
+  const invoice = await Invoice.findById(req.params.id);
   if (!invoice) return res.status(404).json({ error: 'Not found' });
+  
+  // Delete associated files
+  const filesToDelete = [];
+  if (invoice.attachmentUrl) filesToDelete.push(invoice.attachmentUrl);
+  if (invoice.receiptUrl) filesToDelete.push(invoice.receiptUrl);
+  
+  for (const fileUrl of filesToDelete) {
+    try {
+      // fileUrl format: /uploads/invoice/timestamp-filename.ext
+      const filePath = path.join(process.cwd(), fileUrl.replace(/^\//, ''));
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.error(`Failed to delete file ${fileUrl}:`, error);
+    }
+  }
+  
+  // Delete the database record
+  await Invoice.findByIdAndDelete(req.params.id);
   res.json({ message: 'Deleted' });
 });
 
