@@ -269,24 +269,8 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
     let totalETF = 0;
     let totalAPITEmployer = 0;
     
-    // Create expense entries for each payroll entry
+    // Accumulate statutory contributions from payroll entries
     for (const payrollEntry of run.payrollEntries as any[]) {
-      const serialNumber = await getNextSequence('expense', 'EXP');
-      
-      await Expense.create({
-        serialNumber,
-        category: 'Payroll',
-        description: `Salary payment - ${payrollEntry.employee.fullName} (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
-        amount: payrollEntry.netSalary,
-        currency: 'LKR',
-        date: new Date(),
-        paymentMethod: 'bank',
-        bank: bankId,
-        status: 'approved',
-        createdBy: req.user._id
-      });
-      
-      // Accumulate statutory contributions
       totalEPFEmployer += payrollEntry.epfEmployer || 0;
       totalETF += payrollEntry.etf || 0;
       totalAPITEmployer += payrollEntry.apitEmployer || 0;
