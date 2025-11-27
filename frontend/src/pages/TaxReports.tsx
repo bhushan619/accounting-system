@@ -295,8 +295,8 @@ export default function TaxReports() {
     doc.text(`ETF - Employer Contribution (3%): LKR ${data.payroll.totalETF.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
     yPos += 6;
     
-    // APIT Total
-    doc.text(`APIT - Total to remit (Employee ${data.payroll.totalAPIT_Employee.toLocaleString('en-US', { minimumFractionDigits: 2 })} + Employer ${data.payroll.totalAPIT_Employer.toLocaleString('en-US', { minimumFractionDigits: 2 })}): LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    // APIT Total - Only employer portion is remitted by employer
+    doc.text(`APIT - Employer to remit: LKR ${data.payroll.totalAPIT_Employer.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
     yPos += 6;
     
     // Stamp Fee
@@ -307,8 +307,8 @@ export default function TaxReports() {
     doc.text(`Net VAT Payable: LKR ${netVAT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
     yPos += 8;
     
-    // Grand Total
-    const totalTaxPayable = totalEPF + data.payroll.totalETF + data.payroll.totalAPIT + data.payroll.totalStampFee + netVAT;
+    // Grand Total - Only employer portions
+    const totalTaxPayable = totalEPF + data.payroll.totalETF + data.payroll.totalAPIT_Employer + data.payroll.totalStampFee + netVAT;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(`TOTAL AMOUNT PAYABLE TO ALL AUTHORITIES: LKR ${totalTaxPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
