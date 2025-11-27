@@ -112,7 +112,7 @@ router.post('/preview', async (req: any, res) => {
 
 router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res) => {
   try {
-    const { month, year, employeeIds } = req.body;
+    const { month, year, employeeIds, employeeData } = req.body;
     
     const runNumber = await getNextSequence('payrollrun', 'RUN');
     
@@ -120,6 +120,14 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
       _id: { $in: employeeIds },
       status: 'active'
     });
+    
+    // Create a map of employee allowances from employeeData
+    const allowancesMap = new Map();
+    if (employeeData && Array.isArray(employeeData)) {
+      employeeData.forEach((data: any) => {
+        allowancesMap.set(data.employeeId, data.allowances);
+      });
+    }
     
     // Get active tax rates
     const taxRates = await getActiveTaxRates();
@@ -133,7 +141,10 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
     for (const employee of employees) {
       const serialNumber = await getNextSequence('payroll', 'PAY');
       const basicSalary = employee.basicSalary;
-      const allowances = employee.allowances || 0;
+      // Use custom allowances from request if provided, otherwise use employee's default
+      const allowances = allowancesMap.has(employee._id.toString()) 
+        ? allowancesMap.get(employee._id.toString()) 
+        : (employee.allowances || 0);
       const grossSalary = basicSalary + allowances;
       
       // Use rates from TaxConfig, fall back to employee-specific rates if set
