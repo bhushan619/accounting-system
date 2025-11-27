@@ -71,8 +71,18 @@ export default function TaxReports() {
 
       // Filter paid payroll
       const paidPayroll = payrollRes.data.filter((pay: any) => {
-        const payDate = new Date(pay.year, pay.month - 1);
-        return pay.status === 'paid' && payDate >= start && payDate <= end;
+        if (pay.status !== 'paid') return false;
+        
+        // Use paidDate if available, otherwise use month/year
+        let payDate: Date;
+        if (pay.paidDate) {
+          payDate = new Date(pay.paidDate);
+        } else {
+          // Create date at the end of the month for better range matching
+          payDate = new Date(pay.year, pay.month, 0); // Last day of the month
+        }
+        
+        return payDate >= start && payDate <= end;
       });
 
       const totalRevenue = paidInvoices.reduce((sum: number, inv: any) => sum + inv.total, 0);
