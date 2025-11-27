@@ -58,6 +58,7 @@ export default function Payroll() {
   const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [taxRates, setTaxRates] = useState<any>(null);
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear()
@@ -69,19 +70,126 @@ export default function Payroll() {
 
   const loadData = async () => {
     try {
-      const [runsRes, employeesRes, banksRes] = await Promise.all([
+      const [runsRes, employeesRes, banksRes, taxRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/payrollruns`),
         axios.get(`${import.meta.env.VITE_API_URL}/employees`),
-        axios.get(`${import.meta.env.VITE_API_URL}/banks`)
+        axios.get(`${import.meta.env.VITE_API_URL}/banks`),
+        axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`)
       ]);
       setRuns(runsRes.data);
       setEmployees(employeesRes.data.filter((e: Employee) => e.status === 'active'));
       setBanks(banksRes.data);
+      
+      // Extract tax rates from tax config
+      const rates = {
+        epfEmployee: 8,
+        epfEmployer: 12,
+        etf: 3,
+        stampFee: 25
+      };
+      
+      taxRes.data.forEach((config: any) => {
+        if (config.taxType === 'epf_employee' && config.isActive) rates.epfEmployee = config.rate;
+        if (config.taxType === 'epf_employer' && config.isActive) rates.epfEmployer = config.rate;
+        if (config.taxType === 'etf' && config.isActive) rates.etf = config.rate;
+        if (config.taxType === 'stamp_fee' && config.isActive) rates.stampFee = config.rate;
+      });
+      
+      setTaxRates(rates);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateAPIT = (grossSalary: number, scenario: string = 'employee'): number => {
+    const employeeSlabs = [
+      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+      { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
+      { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
+      { minIncome: 275001, maxIncome: 316667, rate: 24, standardDeduction: 53500 },
+      { minIncome: 316668, maxIncome: 358333, rate: 30, standardDeduction: 72500 },
+      { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
+    ];
+
+    const employerSlabs = [
+      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+      { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
+      { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
+      { minIncome: 262501, maxIncome: 294167, rate: 32.56, standardDeduction: 73000 },
+      { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
+      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
+    ];
+
+    const slabs = scenario === 'employee' ? employeeSlabs : employerSlabs;
+    let applicableSlab = slabs[0];
+    
+    for (const slab of slabs) {
+      if (grossSalary >= slab.minIncome) {
+        if (slab.maxIncome === null || grossSalary <= slab.maxIncome) {
+          applicableSlab = slab;
+          break;
+        }
+      }
+    }
+
+    const apit = (grossSalary * applicableSlab.rate / 100) - applicableSlab.standardDeduction;
+    return Math.max(0, Math.round(apit * 100) / 100);
+  };
+
+  const recalculatePayroll = (entry: PayrollPreview, newAllowances: number): PayrollPreview => {
+    if (!taxRates) return entry;
+    
+    const basicSalary = entry.basicSalary;
+    const allowances = newAllowances;
+    const grossSalary = basicSalary + allowances;
+    
+    const epfEmployee = Math.round((basicSalary * taxRates.epfEmployee / 100) * 100) / 100;
+    const epfEmployer = Math.round((basicSalary * taxRates.epfEmployer / 100) * 100) / 100;
+    const etf = Math.round((basicSalary * taxRates.etf / 100) * 100) / 100;
+    const stampFee = taxRates.stampFee;
+    
+    const apit = calculateAPIT(grossSalary, entry.employee.apitScenario || 'employee');
+    
+    let deductions: number;
+    let netSalary: number;
+    let apitEmployer = 0;
+    let ctc: number;
+    
+    if (entry.employee.apitScenario === 'employer') {
+      deductions = epfEmployee + stampFee;
+      netSalary = grossSalary - deductions;
+      apitEmployer = apit;
+      ctc = grossSalary + epfEmployer + etf + apitEmployer;
+    } else {
+      deductions = epfEmployee + apit + stampFee;
+      netSalary = grossSalary - deductions;
+      apitEmployer = 0;
+      ctc = grossSalary + epfEmployer + etf;
+    }
+    
+    return {
+      ...entry,
+      allowances,
+      grossSalary,
+      epfEmployee,
+      epfEmployer,
+      etf,
+      apit,
+      apitEmployer,
+      stampFee,
+      totalDeductions: deductions,
+      netSalary,
+      totalCTC: ctc
+    };
+  };
+
+  const handleAllowanceChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedPreview = [...previewData];
+    updatedPreview[index] = recalculatePayroll(updatedPreview[index], numValue);
+    setPreviewData(updatedPreview);
   };
 
   const handlePreview = async (e: React.FormEvent) => {
@@ -105,9 +213,16 @@ export default function Payroll() {
 
   const handleGenerate = async () => {
     try {
+      // Send preview data with updated allowances
+      const employeeData = previewData.map(entry => ({
+        employeeId: entry.employee._id,
+        allowances: entry.allowances
+      }));
+      
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
         ...formData,
-        employeeIds: selectedEmployees
+        employeeIds: selectedEmployees,
+        employeeData
       });
       loadData();
       resetForm();
@@ -466,7 +581,16 @@ export default function Payroll() {
                     <tr key={idx} className="hover:bg-accent/50">
                       <td className="px-3 py-2 text-foreground">{entry.employee.fullName}</td>
                       <td className="px-3 py-2 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right">
+                        <input
+                          type="number"
+                          value={entry.allowances}
+                          onChange={(e) => handleAllowanceChange(idx, e.target.value)}
+                          className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
+                          min="0"
+                          step="0.01"
+                        />
+                      </td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                       {/* APIT shown here is only the portion deducted from employee salary (0 when employer pays) */}
