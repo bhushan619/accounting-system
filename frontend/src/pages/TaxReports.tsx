@@ -20,6 +20,8 @@ interface TaxReportData {
     totalEPFEmployer: number;
     totalETF: number;
     totalAPIT: number;
+    totalAPIT_Employee: number;
+    totalAPIT_Employer: number;
     totalStampFee: number;
     payrollEntries: any[];
   };
@@ -95,6 +97,8 @@ export default function TaxReports() {
         totalEPFEmployee: acc.totalEPFEmployee + pay.epfEmployee,
         totalEPFEmployer: acc.totalEPFEmployer + pay.epfEmployer,
         totalETF: acc.totalETF + pay.etf,
+        totalAPIT_Employee: acc.totalAPIT_Employee + (pay.apit || 0),
+        totalAPIT_Employer: acc.totalAPIT_Employer + (pay.apitEmployer || 0),
         totalAPIT: acc.totalAPIT + (pay.apit || 0) + (pay.apitEmployer || 0),
         totalStampFee: acc.totalStampFee + pay.stampFee
       }), {
@@ -102,6 +106,8 @@ export default function TaxReports() {
         totalEPFEmployee: 0,
         totalEPFEmployer: 0,
         totalETF: 0,
+        totalAPIT_Employee: 0,
+        totalAPIT_Employer: 0,
         totalAPIT: 0,
         totalStampFee: 0
       });
@@ -235,8 +241,14 @@ export default function TaxReports() {
     doc.text('Tax Withholdings (calculated on Gross Salary):', 20, yPos);
     yPos += 6;
     doc.setFont('helvetica', 'normal');
+    doc.text(`  APIT - Employee Withholding: LKR ${data.payroll.totalAPIT_Employee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 5;
+    doc.text(`  APIT - Employer Payment (Scenario B): LKR ${data.payroll.totalAPIT_Employer.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
     doc.text(`  APIT - Total: LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
     yPos += 5;
+    doc.setFont('helvetica', 'normal');
     doc.text(`  Stamp Fee: LKR ${data.payroll.totalStampFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
 
     // Total Tax Obligations
@@ -259,7 +271,7 @@ export default function TaxReports() {
     yPos += 6;
     
     // APIT Total
-    doc.text(`APIT - Total to remit: LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    doc.text(`APIT - Total to remit (Employee ${data.payroll.totalAPIT_Employee.toLocaleString('en-US', { minimumFractionDigits: 2 })} + Employer ${data.payroll.totalAPIT_Employer.toLocaleString('en-US', { minimumFractionDigits: 2 })}): LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
     yPos += 6;
     
     // Stamp Fee
@@ -369,7 +381,13 @@ export default function TaxReports() {
     yPos += 6;
     doc.text('2. ETF is 3% employer contribution calculated on basic salary only', 25, yPos);
     yPos += 6;
-    doc.text('3. APIT includes both employee withholding and employer payments (if Scenario B applies)', 25, yPos);
+    doc.text('3. APIT breakdown:', 25, yPos);
+    yPos += 5;
+    doc.text('   - Employee Withholding: Deducted from employee salary (Scenario A)', 25, yPos);
+    yPos += 5;
+    doc.text('   - Employer Payment: Paid by employer on behalf of employee (Scenario B)', 25, yPos);
+    yPos += 5;
+    doc.text('   - Total APIT remitted to IRD = Employee Withholding + Employer Payment', 25, yPos);
     yPos += 6;
     doc.text('4. All supporting documents are available for inspection upon request', 25, yPos);
     
