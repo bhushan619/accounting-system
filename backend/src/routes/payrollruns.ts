@@ -86,7 +86,8 @@ router.post('/preview', async (req: any, res) => {
         employee: {
           _id: employee._id,
           employeeId: employee.employeeId,
-          fullName: employee.fullName
+          fullName: employee.fullName,
+          apitScenario: employee.apitScenario
         },
         basicSalary,
         allowances,
