@@ -14,11 +14,20 @@ interface Employee {
   status: string;
 }
 
+interface TaxConfig {
+  _id: string;
+  name: string;
+  taxType: string;
+  rate?: number;
+  isActive: boolean;
+}
+
 export default function Employees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
     fullName: '',
@@ -51,7 +60,30 @@ export default function Employees() {
 
   useEffect(() => {
     loadEmployees();
+    loadTaxConfigs();
   }, []);
+
+  const loadTaxConfigs = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`);
+      const configs = response.data.filter((c: TaxConfig) => c.isActive);
+      setTaxConfigs(configs);
+      
+      // Auto-populate rates from tax configs
+      const epfEmployee = configs.find((c: TaxConfig) => c.taxType === 'epf_employee')?.rate || 8;
+      const epfEmployer = configs.find((c: TaxConfig) => c.taxType === 'epf_employer')?.rate || 12;
+      const etf = configs.find((c: TaxConfig) => c.taxType === 'etf')?.rate || 3;
+      
+      setFormData(prev => ({
+        ...prev,
+        epfEmployeeRate: epfEmployee,
+        epfEmployerRate: epfEmployer,
+        etfRate: etf
+      }));
+    } catch (error) {
+      console.error('Failed to load tax configurations:', error);
+    }
+  };
 
   // Calculate APIT based on slab system with standard deductions
   const calculateAPIT = (grossSalary: number, scenario: 'employee' | 'employer'): number => {
@@ -421,46 +453,13 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Allowances</label>
                   <input
                     type="number"
                     value={formData.allowances}
                     onChange={(e) => setFormData({ ...formData, allowances: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">EPF Employee %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.epfEmployeeRate}
-                    onChange={(e) => setFormData({ ...formData, epfEmployeeRate: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">EPF Employer %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.epfEmployerRate}
-                    onChange={(e) => setFormData({ ...formData, epfEmployerRate: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">ETF %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.etfRate}
-                    onChange={(e) => setFormData({ ...formData, etfRate: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
@@ -474,6 +473,25 @@ export default function Employees() {
                     <option value="employee">Employee Pays APIT</option>
                     <option value="employer">Employer Pays APIT</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Tax Configuration Info */}
+              <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                <h3 className="text-sm font-semibold mb-3 text-foreground">Tax Rates (from Tax Configurations)</h3>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">EPF Employee:</span>
+                    <span className="ml-2 font-medium text-foreground">{formData.epfEmployeeRate}%</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">EPF Employer:</span>
+                    <span className="ml-2 font-medium text-foreground">{formData.epfEmployerRate}%</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">ETF:</span>
+                    <span className="ml-2 font-medium text-foreground">{formData.etfRate}%</span>
+                  </div>
                 </div>
               </div>
 
