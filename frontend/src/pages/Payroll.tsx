@@ -469,13 +469,17 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-destructive">{entry.apit.toLocaleString()}</td>
+                      {/* APIT shown here is only the portion deducted from employee salary (0 when employer pays) */}
+                      <td className="px-3 py-2 text-right text-destructive">
+                        {(entry.totalDeductions - entry.epfEmployee - entry.stampFee).toLocaleString()}
+                      </td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-orange-600">{entry.apit.toLocaleString()}</td>
+                      {/* APIT(ER) shows only employer-paid APIT */}
+                      <td className="px-3 py-2 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
                     </tr>
                   ))}
@@ -495,8 +499,11 @@ export default function Payroll() {
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
                     </td>
+                    {/* Total APIT deducted from employees (0 when employer pays) */}
                     <td className="px-3 py-2 text-right text-destructive">
-                      {previewData.reduce((sum, e) => sum + e.apit, 0).toLocaleString()}
+                      {previewData
+                        .reduce((sum, e) => sum + (e.totalDeductions - e.epfEmployee - e.stampFee), 0)
+                        .toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}
@@ -513,8 +520,9 @@ export default function Payroll() {
                     <td className="px-3 py-2 text-right text-orange-600">
                       {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}
                     </td>
+                    {/* Total APIT paid by employer */}
                     <td className="px-3 py-2 text-right text-orange-600">
-                      {previewData.reduce((sum, e) => sum + e.apit, 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.apitEmployer, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}
@@ -677,13 +685,17 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-destructive">{entry.apit.toLocaleString()}</td>
+                          {/* APIT here is only what is deducted from employee salary (0 when employer pays) */}
+                          <td className="px-3 py-3 text-right text-destructive">
+                            {(entry.totalDeductions - entry.epfEmployee - entry.stampFee).toLocaleString()}
+                          </td>
                           <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-orange-600">{entry.apit.toLocaleString()}</td>
+                          {/* Employer-paid APIT only */}
+                          <td className="px-3 py-3 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
                         </tr>
                       ))
@@ -711,8 +723,14 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-destructive">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.epfEmployee, 0).toLocaleString()}
                         </td>
+                        {/* Total APIT deducted from employees (0 when employer pays) */}
                         <td className="px-3 py-3 text-right text-destructive">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apit, 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce(
+                              (sum: number, e: any) => sum + (e.totalDeductions - e.epfEmployee - e.stampFee),
+                              0
+                            )
+                            .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-destructive">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.stampFee, 0).toLocaleString()}
@@ -729,8 +747,9 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-orange-600">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.etf, 0).toLocaleString()}
                         </td>
+                        {/* Total APIT paid by employer */}
                         <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apit, 0).toLocaleString()}
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apitEmployer, 0).toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalCTC, 0).toLocaleString()}
