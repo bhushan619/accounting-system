@@ -56,22 +56,30 @@ router.post('/preview', async (req: any, res) => {
       const epfEmployee = Math.round((basicSalary * epfEmployeeRate / 100) * 100) / 100;
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
+      
+      // Calculate APIT once - this is the actual tax amount calculated based on gross salary
       const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
       
+      // APIT Scenarios:
+      // Scenario A (employee): Employee pays APIT - deducted from their salary
+      // Scenario B (employer): Employer pays APIT - NOT deducted from employee, added to CTC
       let deductions: number;
       let netSalary: number;
-      let apitEmployer = 0;
+      let apitEmployer = 0; // Tracks employer's APIT burden (for Scenario B only)
       let ctc: number;
       
       if (employee.apitScenario === 'employer') {
-        deductions = epfEmployee + stampFee;
+        // Scenario B: Employer pays APIT on behalf of employee
+        deductions = epfEmployee + stampFee; // APIT NOT deducted
         netSalary = grossSalary - deductions;
-        apitEmployer = apit;
-        ctc = grossSalary + epfEmployer + etf + apitEmployer;
+        apitEmployer = apit; // Employer bears this cost
+        ctc = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
       } else {
-        deductions = epfEmployee + apit + stampFee;
+        // Scenario A: Employee pays APIT (default)
+        deductions = epfEmployee + apit + stampFee; // APIT deducted from salary
         netSalary = grossSalary - deductions;
-        ctc = grossSalary + epfEmployer + etf;
+        apitEmployer = 0; // Employer doesn't bear APIT cost
+        ctc = grossSalary + epfEmployer + etf; // Employer costs only
       }
       
       previewData.push({
@@ -138,26 +146,29 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
-      // Calculate APIT based on slab system with standard deductions
+      // Calculate APIT once - this is the actual tax amount calculated based on gross salary
       const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
       
-      // Calculate based on APIT scenario
+      // APIT Scenarios:
+      // Scenario A (employee): Employee pays APIT - deducted from their salary
+      // Scenario B (employer): Employer pays APIT - NOT deducted from employee, added to CTC
       let deductions: number;
       let netSalary: number;
-      let apitEmployer = 0;
+      let apitEmployer = 0; // Tracks employer's APIT burden (for Scenario B only)
       let ctc: number;
       
       if (employee.apitScenario === 'employer') {
-        // Scenario B: Employer pays APIT
-        deductions = epfEmployee + stampFee;
+        // Scenario B: Employer pays APIT on behalf of employee
+        deductions = epfEmployee + stampFee; // APIT NOT deducted
         netSalary = grossSalary - deductions;
-        apitEmployer = apit;
-        ctc = grossSalary + epfEmployer + etf + apitEmployer;
+        apitEmployer = apit; // Employer bears this cost
+        ctc = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
       } else {
         // Scenario A: Employee pays APIT (default)
-        deductions = epfEmployee + apit + stampFee;
+        deductions = epfEmployee + apit + stampFee; // APIT deducted from salary
         netSalary = grossSalary - deductions;
-        ctc = grossSalary + epfEmployer + etf;
+        apitEmployer = 0; // Employer doesn't bear APIT cost
+        ctc = grossSalary + epfEmployer + etf; // Employer costs only
       }
       
       const payroll = await Payroll.create({

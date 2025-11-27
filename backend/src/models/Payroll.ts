@@ -11,8 +11,8 @@ const PayrollSchema = new Schema({
   epfEmployee: { type: Number, required: true },
   epfEmployer: { type: Number, required: true },
   etf: { type: Number, required: true },
-  apit: { type: Number, default: 0 },
-  apitEmployer: { type: Number, default: 0 }, // For Scenario B
+  apit: { type: Number, default: 0 }, // The actual APIT tax calculated once per employee
+  apitEmployer: { type: Number, default: 0 }, // Amount employer pays (Scenario B only). 0 for Scenario A, equals apit for Scenario B
   stampFee: { type: Number, default: 25 },
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
