@@ -40,21 +40,26 @@ router.get('/overview', async (req, res) => {
   const expenses = await Expense.find({ ...expenseFilter, status: 'approved' });
   const payrolls = await Payroll.find({ ...payrollFilter, status: 'paid' });
   
+  // Separate payroll category expenses
+  const payrollExpenses = expenses.filter(exp => exp.category === 'Payroll');
+  const regularExpenses = expenses.filter(exp => exp.category !== 'Payroll');
+  
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpenses = regularExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const totalPayroll = payrolls.reduce((sum, pay) => sum + pay.netSalary, 0);
-  const totalCosts = totalExpenses + totalPayroll;
+  const totalPayrollExpenses = payrollExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalCosts = totalExpenses + totalPayroll + totalPayrollExpenses;
   const profit = totalRevenue - totalCosts;
   
   res.json({
     totalRevenue,
     totalExpenses,
-    totalPayroll,
+    totalPayroll: totalPayroll + totalPayrollExpenses,
     totalCosts,
     profit,
     invoiceCount: invoices.length,
-    expenseCount: expenses.length,
-    payrollCount: payrolls.length
+    expenseCount: regularExpenses.length,
+    payrollCount: payrolls.length + payrollExpenses.length
   });
 });
 
@@ -84,20 +89,26 @@ router.get('/profit-loss', async (req, res) => {
   const expenses = await Expense.find({ ...expenseFilter, status: 'approved' }).populate('vendor');
   const payrolls = await Payroll.find({ ...payrollFilter, status: 'paid' }).populate('employee');
   
+  // Separate expenses: Payroll category goes to payroll section, others to expenses section
+  const payrollExpenses = expenses.filter(exp => exp.category === 'Payroll');
+  const regularExpenses = expenses.filter(exp => exp.category !== 'Payroll');
+  
   res.json({
     revenue: {
       invoices: invoices.map(inv => ({
         id: inv._id,
         client: inv.client,
+        description: inv.lines?.[0]?.description || inv.client?.name || 'Initial Balance',
         amount: inv.total,
         date: inv.issueDate
       })),
       total: invoices.reduce((sum, inv) => sum + inv.total, 0)
     },
     costs: {
-      expenses: expenses.map(exp => ({
+      expenses: regularExpenses.map(exp => ({
         id: exp._id,
         vendor: exp.vendor,
+        description: exp.description,
         category: exp.category,
         amount: exp.amount,
         date: exp.date
@@ -109,8 +120,15 @@ router.get('/profit-loss', async (req, res) => {
         month: pay.month,
         year: pay.year
       })),
-      totalExpenses: expenses.reduce((sum, exp) => sum + exp.amount, 0),
-      totalPayroll: payrolls.reduce((sum, pay) => sum + pay.netSalary, 0)
+      payrollExpenses: payrollExpenses.map(exp => ({
+        id: exp._id,
+        description: exp.description,
+        amount: exp.amount,
+        date: exp.date
+      })),
+      totalExpenses: regularExpenses.reduce((sum, exp) => sum + exp.amount, 0),
+      totalPayroll: payrolls.reduce((sum, pay) => sum + pay.netSalary, 0),
+      totalPayrollExpenses: payrollExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     }
   });
 });

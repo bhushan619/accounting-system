@@ -189,7 +189,7 @@ export default function EnhancedReports() {
               <tbody className="divide-y divide-border">
                 {profitLossData.revenue?.invoices?.map((item: any) => (
                   <tr key={item.id}>
-                    <td className="px-6 py-4 text-sm text-foreground">{item.client?.name || 'Unknown'}</td>
+                    <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-sm text-foreground text-right">Rs. {item.amount.toLocaleString()}</td>
                   </tr>
@@ -220,7 +220,7 @@ export default function EnhancedReports() {
               <tbody className="divide-y divide-border">
                 {profitLossData.costs?.expenses?.map((item: any) => (
                   <tr key={item.id}>
-                    <td className="px-6 py-4 text-sm text-foreground">{item.vendor?.name || 'Unknown'}</td>
+                    <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{item.category}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
@@ -243,7 +243,7 @@ export default function EnhancedReports() {
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Period</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
                 </tr>
@@ -256,10 +256,17 @@ export default function EnhancedReports() {
                     <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
                   </tr>
                 ))}
+                {profitLossData.costs?.payrollExpenses?.map((item: any) => (
+                  <tr key={item.id}>
+                    <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
+                  </tr>
+                ))}
                 <tr className="bg-muted/30 font-semibold">
                   <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>Total Payroll</td>
                   <td className="px-6 py-4 text-sm text-destructive text-right">
-                    Rs. {profitLossData.costs?.totalPayroll?.toLocaleString()}
+                    Rs. {((profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0)).toLocaleString()}
                   </td>
                 </tr>
               </tbody>
@@ -269,8 +276,8 @@ export default function EnhancedReports() {
           <div className="bg-card rounded-lg shadow p-6">
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-semibold text-foreground">Net Profit/Loss</h3>
-              <p className={`text-3xl font-bold ${(profitLossData.revenue?.total - (profitLossData.costs?.totalExpenses + profitLossData.costs?.totalPayroll)) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                Rs. {((profitLossData.revenue?.total || 0) - ((profitLossData.costs?.totalExpenses || 0) + (profitLossData.costs?.totalPayroll || 0))).toLocaleString()}
+              <p className={`text-3xl font-bold ${(profitLossData.revenue?.total - (profitLossData.costs?.totalExpenses + profitLossData.costs?.totalPayroll + profitLossData.costs?.totalPayrollExpenses)) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                Rs. {((profitLossData.revenue?.total || 0) - ((profitLossData.costs?.totalExpenses || 0) + (profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0))).toLocaleString()}
               </p>
             </div>
           </div>
