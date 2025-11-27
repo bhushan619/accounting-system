@@ -281,7 +281,7 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
       const epfSerial = await getNextSequence('expense', 'EXP');
       await Expense.create({
         serialNumber: epfSerial,
-        category: 'Statutory Contribution',
+        category: 'Payroll',
         description: `EPF Employer Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
         amount: totalEPFEmployer,
         currency: 'LKR',
@@ -298,7 +298,7 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
       const etfSerial = await getNextSequence('expense', 'EXP');
       await Expense.create({
         serialNumber: etfSerial,
-        category: 'Statutory Contribution',
+        category: 'Payroll',
         description: `ETF Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
         amount: totalETF,
         currency: 'LKR',
@@ -315,7 +315,7 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
       const apitSerial = await getNextSequence('expense', 'EXP');
       await Expense.create({
         serialNumber: apitSerial,
-        category: 'Statutory Contribution',
+        category: 'Payroll',
         description: `APIT Employer Payment (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
         amount: totalAPITEmployer,
         currency: 'LKR',
