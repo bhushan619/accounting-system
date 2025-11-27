@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronRight,
   Wallet,
-  PieChart
+  PieChart,
+  FileSpreadsheet
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -185,6 +186,17 @@ export default function Layout({ children }: LayoutProps) {
                 >
                   <PieChart size={20} />
                   <span>Financial Reports</span>
+                </Link>
+                <Link
+                  to="/tax-reports"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/tax-reports')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <FileSpreadsheet size={20} />
+                  <span>Tax Reports (IRD)</span>
                 </Link>
               </div>
             )}

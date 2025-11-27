@@ -18,6 +18,7 @@ import Settings from './pages/Settings';
 import Guide from './pages/Guide';
 import TaxConfigurations from './pages/TaxConfigurations';
 import Transactions from './pages/Transactions';
+import TaxReports from './pages/TaxReports';
 import './styles.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ function App() {
           <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><EnhancedReports /></ProtectedRoute>} />
+          <Route path="/tax-reports" element={<ProtectedRoute><TaxReports /></ProtectedRoute>} />
           <Route path="/tax-configurations" element={<ProtectedRoute><TaxConfigurations /></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
