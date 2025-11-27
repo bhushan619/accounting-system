@@ -62,9 +62,9 @@ export default function Transactions() {
           type: 'income',
           amount: inv.total,
           category: 'Invoice',
-          description: `Invoice ${inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
+          description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
           date: inv.issueDate,
-          reference: inv.invoiceNumber
+          reference: inv.serialNumber || inv.invoiceNumber
         }));
 
       const expenseTransactions = expensesRes.data
