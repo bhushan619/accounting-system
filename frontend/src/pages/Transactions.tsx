@@ -68,7 +68,7 @@ export default function Transactions() {
         }));
 
       const expenseTransactions = expensesRes.data
-        .filter((exp: any) => exp.category?.toLowerCase() !== 'payroll' && exp.status === 'approved')
+        .filter((exp: any) => exp.status === 'approved')
         .map((exp: any) => ({
           _id: exp._id,
           type: 'expense',
