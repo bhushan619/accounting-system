@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X, Eye } from 'lucide-react';
 
 interface PayrollRun {
   _id: string;
@@ -14,6 +14,7 @@ interface PayrollRun {
   totalDeductions: number;
   totalCTC?: number;
   createdAt: string;
+  payrollEntries?: any[];
 }
 
 interface Employee {
@@ -50,6 +51,8 @@ export default function Payroll() {
   const [showModal, setShowModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
   const [pendingProcess, setPendingProcess] = useState<{id: string, totalAmount: number} | null>(null);
   const [selectedBank, setSelectedBank] = useState('');
   const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
@@ -122,6 +125,17 @@ export default function Payroll() {
     // Show bank selection modal
     setPendingProcess({ id, totalAmount: run.totalNetSalary });
     setShowBankModal(true);
+  };
+
+  const handleViewDetails = async (id: string) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
+      setSelectedRun(response.data);
+      setShowViewModal(true);
+    } catch (error) {
+      console.error('Failed to load run details:', error);
+      alert('Failed to load payroll run details');
+    }
   };
 
   const confirmProcess = async () => {
@@ -266,6 +280,13 @@ export default function Payroll() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleViewDetails(run._id)}
+                          className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 flex items-center gap-1"
+                        >
+                          <Eye size={14} />
+                          View
+                        </button>
                         {(run.status === 'draft' || run.status === 'completed') && (
                           <button
                             onClick={() => handleProcess(run._id)}
@@ -567,6 +588,170 @@ export default function Payroll() {
                   Confirm & Process
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Payroll Run Details Modal */}
+      {showViewModal && selectedRun && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Payroll Run Details - {selectedRun.runNumber}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {getMonthName(selectedRun.month)} {selectedRun.year} • Status: <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(selectedRun.status)}`}>{selectedRun.status}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setSelectedRun(null);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Employees</p>
+                <p className="text-2xl font-bold text-foreground">{selectedRun.totalEmployees}</p>
+              </div>
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Gross Salary</p>
+                <p className="text-2xl font-bold text-foreground">Rs. {selectedRun.totalGrossSalary.toLocaleString()}</p>
+              </div>
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Deductions</p>
+                <p className="text-2xl font-bold text-destructive">Rs. {selectedRun.totalDeductions.toLocaleString()}</p>
+              </div>
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Net Salary</p>
+                <p className="text-2xl font-bold text-primary">Rs. {selectedRun.totalNetSalary.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Employee Payroll Details Table */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted px-4 py-3 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">Employee Payroll Breakdown</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Serial</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Basic</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Allowances</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Gross</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (E)</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Stamp</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Deductions</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Net Salary</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (ER)</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">ETF</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT (ER)</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Total CTC</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {selectedRun.payrollEntries && selectedRun.payrollEntries.length > 0 ? (
+                      selectedRun.payrollEntries.map((entry: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-accent/50">
+                          <td className="px-3 py-3 text-foreground">{entry.serialNumber}</td>
+                          <td className="px-3 py-3 text-foreground">
+                            <div>
+                              <p className="font-medium">{entry.employee?.fullName || 'N/A'}</p>
+                              <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ''}</p>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-destructive">{entry.apit.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-orange-600">{(entry.apitEmployer || 0).toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={14} className="px-3 py-8 text-center text-muted-foreground">
+                          No payroll entries found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                  {selectedRun.payrollEntries && selectedRun.payrollEntries.length > 0 && (
+                    <tfoot className="bg-muted font-semibold">
+                      <tr>
+                        <td colSpan={2} className="px-3 py-3 text-foreground">Total</td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.basicSalary, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.allowances, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.grossSalary, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.epfEmployee, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apit, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.stampFee, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalDeductions, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-primary">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.netSalary, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-orange-600">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.epfEmployer, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-orange-600">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.etf, 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-orange-600">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + (e.apitEmployer || 0), 0).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalCTC, 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setSelectedRun(null);
+                }}
+                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
