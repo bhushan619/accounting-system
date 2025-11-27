@@ -475,7 +475,7 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-orange-600">{entry.apit.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
                     </tr>
                   ))}
@@ -514,7 +514,7 @@ export default function Payroll() {
                       {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-orange-600">
-                      {previewData.reduce((sum, e) => sum + e.apitEmployer, 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.apit, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}
@@ -683,7 +683,7 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-orange-600">{(entry.apitEmployer || 0).toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-orange-600">{entry.apit.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
                         </tr>
                       ))
@@ -730,7 +730,7 @@ export default function Payroll() {
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.etf, 0).toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + (e.apitEmployer || 0), 0).toLocaleString()}
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apit, 0).toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalCTC, 0).toLocaleString()}
