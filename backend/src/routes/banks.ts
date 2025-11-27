@@ -32,7 +32,7 @@ router.post('/', auditLog('create', 'bank'), async (req, res) => {
       issueDate: new Date(),
       dueDate: new Date(),
       lines: [{
-        description: `Initial balance for ${bank.bankName} - ${bank.accountName}`,
+        description: `Initial balance (${bank.accountNumber})`,
         quantity: 1,
         unitPrice: bank.balance
       }],
