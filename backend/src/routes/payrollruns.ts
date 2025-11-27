@@ -252,6 +252,11 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
     const Expense = require('../models/Expense').default;
     const { getNextSequence } = require('../services/counterService');
     
+    // Calculate total statutory contributions
+    let totalEPFEmployer = 0;
+    let totalETF = 0;
+    let totalAPITEmployer = 0;
+    
     // Create expense entries for each payroll entry
     for (const payrollEntry of run.payrollEntries as any[]) {
       const serialNumber = await getNextSequence('expense', 'EXP');
@@ -268,10 +273,67 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
         status: 'approved',
         createdBy: req.user._id
       });
+      
+      // Accumulate statutory contributions
+      totalEPFEmployer += payrollEntry.epfEmployer || 0;
+      totalETF += payrollEntry.etf || 0;
+      totalAPITEmployer += payrollEntry.apitEmployer || 0;
     }
     
-    // Update bank balance - decrease for payroll payment
-    bank.balance -= run.totalNetSalary;
+    // Create expense entry for EPF employer contribution
+    if (totalEPFEmployer > 0) {
+      const epfSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: epfSerial,
+        category: 'Statutory Contribution',
+        description: `EPF Employer Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        amount: totalEPFEmployer,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Create expense entry for ETF
+    if (totalETF > 0) {
+      const etfSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: etfSerial,
+        category: 'Statutory Contribution',
+        description: `ETF Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        amount: totalETF,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Create expense entry for APIT employer paid
+    if (totalAPITEmployer > 0) {
+      const apitSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: apitSerial,
+        category: 'Statutory Contribution',
+        description: `APIT Employer Payment (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        amount: totalAPITEmployer,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Update bank balance - decrease for payroll payment and statutory contributions
+    const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF + totalAPITEmployer;
+    bank.balance -= totalDeduction;
     bank.updatedAt = new Date();
     await bank.save();
     
