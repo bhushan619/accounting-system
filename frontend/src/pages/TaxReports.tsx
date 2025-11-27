@@ -97,9 +97,10 @@ export default function TaxReports() {
         totalEPFEmployee: acc.totalEPFEmployee + pay.epfEmployee,
         totalEPFEmployer: acc.totalEPFEmployer + pay.epfEmployer,
         totalETF: acc.totalETF + pay.etf,
-        totalAPIT_Employee: acc.totalAPIT_Employee + (pay.apit || 0),
+        // APIT is calculated once per employee. "apit" is the tax amount; "apitEmployer" is who bears the cost.
+        totalAPIT_Employee: acc.totalAPIT_Employee + (pay.apitEmployer ? 0 : (pay.apit || 0)),
         totalAPIT_Employer: acc.totalAPIT_Employer + (pay.apitEmployer || 0),
-        totalAPIT: acc.totalAPIT + (pay.apit || 0) + (pay.apitEmployer || 0),
+        totalAPIT: acc.totalAPIT + (pay.apit || 0),
         totalStampFee: acc.totalStampFee + pay.stampFee
       }), {
         totalGross: 0,
