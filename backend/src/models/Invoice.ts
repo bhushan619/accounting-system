@@ -8,7 +8,7 @@ const InvoiceLineSchema = new Schema({
 
 const InvoiceSchema = new Schema({
   serialNumber: { type: String, required: true, unique: true },
-  client: { type: Schema.Types.ObjectId, ref: 'Client', required: true },
+  client: { type: Schema.Types.ObjectId, ref: 'Client', required: false },
   issueDate: { type: Date, default: Date.now },
   dueDate: { type: Date },
   currency: { type: String, enum: ['LKR', 'AED'], default: 'LKR' },
