@@ -200,35 +200,71 @@ export default function TaxReports() {
     yPos += 12;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('4. PAYROLL TAX OBLIGATIONS', 20, yPos);
+    doc.text('4. PAYROLL TAX BREAKDOWN', 20, yPos);
     
     yPos += 8;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total Gross Salary: LKR ${data.payroll.totalGross.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    doc.text(`Number of Employees Paid: ${data.payroll.payrollEntries.length}`, 20, yPos);
     yPos += 6;
-    doc.text(`EPF - Employee Contribution (8%): LKR ${data.payroll.totalEPFEmployee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    doc.text(`Total Gross Salary (Basic + Allowances): LKR ${data.payroll.totalGross.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 10;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Statutory Contributions (calculated on Basic Salary):', 20, yPos);
     yPos += 6;
-    doc.text(`EPF - Employer Contribution (12%): LKR ${data.payroll.totalEPFEmployer.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`  EPF - Employee Share (8%): LKR ${data.payroll.totalEPFEmployee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 5;
+    doc.text(`  EPF - Employer Share (12%): LKR ${data.payroll.totalEPFEmployer.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 5;
+    doc.text(`  ETF - Employer Share (3%): LKR ${data.payroll.totalETF.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 8;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tax Withholdings (calculated on Gross Salary):', 20, yPos);
     yPos += 6;
-    doc.text(`ETF - Employer Contribution (3%): LKR ${data.payroll.totalETF.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
-    yPos += 6;
-    doc.text(`APIT (Advanced Personal Income Tax): LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
-    yPos += 6;
-    doc.text(`Stamp Fee: LKR ${data.payroll.totalStampFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
-    yPos += 6;
-    doc.text(`Number of Employees: ${data.payroll.payrollEntries.length}`, 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`  APIT - Total: LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 5;
+    doc.text(`  Stamp Fee: LKR ${data.payroll.totalStampFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
 
     // Total Tax Obligations
     yPos += 12;
-    const totalTaxPayable = data.payroll.totalEPFEmployer + data.payroll.totalETF + data.payroll.totalAPIT + netVAT;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('5. TOTAL TAX OBLIGATIONS', 20, yPos);
+    doc.text('5. TOTAL TAX OBLIGATIONS TO GOVERNMENT', 20, yPos);
     
     yPos += 8;
-    doc.setFontSize(11);
-    doc.text(`Total Amount Payable to IRD: LKR ${totalTaxPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    // EPF Total (Employee + Employer)
+    const totalEPF = data.payroll.totalEPFEmployee + data.payroll.totalEPFEmployer;
+    doc.text(`EPF - Total to remit (Employee 8% + Employer 12%): LKR ${totalEPF.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 6;
+    
+    // ETF Total
+    doc.text(`ETF - Employer Contribution (3%): LKR ${data.payroll.totalETF.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 6;
+    
+    // APIT Total
+    doc.text(`APIT - Total to remit: LKR ${data.payroll.totalAPIT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 6;
+    
+    // Stamp Fee
+    doc.text(`Stamp Fee: LKR ${data.payroll.totalStampFee.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 6;
+    
+    // VAT
+    doc.text(`Net VAT Payable: LKR ${netVAT.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
+    yPos += 8;
+    
+    // Grand Total
+    const totalTaxPayable = totalEPF + data.payroll.totalETF + data.payroll.totalAPIT + data.payroll.totalStampFee + netVAT;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL AMOUNT PAYABLE TO ALL AUTHORITIES: LKR ${totalTaxPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 20, yPos);
 
     // Supporting Documents
     doc.addPage();
@@ -313,12 +349,28 @@ export default function TaxReports() {
     doc.text('- Employees\' Trust Fund Act', 25, yPos);
     
     yPos += 12;
-    doc.text('All supporting documents (invoices, receipts, and bills) are available for inspection.', 20, yPos);
-    yPos += 8;
-    doc.text('This report should be submitted to the nearest IRD office or via the online portal at:', 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Important Notes:', 20, yPos);
+    yPos += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.text('1. EPF payments include both employee deductions (8%) and employer contributions (12%)', 25, yPos);
+    yPos += 5;
+    doc.text('   Total to be remitted to EPF: Employee share + Employer share', 25, yPos);
+    yPos += 6;
+    doc.text('2. ETF is 3% employer contribution calculated on basic salary only', 25, yPos);
+    yPos += 6;
+    doc.text('3. APIT includes both employee withholding and employer payments (if Scenario B applies)', 25, yPos);
+    yPos += 6;
+    doc.text('4. All supporting documents are available for inspection upon request', 25, yPos);
+    
+    yPos += 10;
+    doc.text('Submit this report to the Inland Revenue Department via:', 20, yPos);
     yPos += 6;
     doc.setFont('helvetica', 'bold');
-    doc.text('https://www.ird.gov.lk/en/eservices/', 25, yPos);
+    doc.text('Online Portal: https://www.ird.gov.lk/en/eservices/', 25, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Or nearest IRD office with all supporting documents', 25, yPos);
 
     yPos += 12;
     doc.setFont('helvetica', 'normal');
