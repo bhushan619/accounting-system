@@ -71,7 +71,7 @@ export default function Transactions() {
         .filter((exp: any) => exp.status === 'approved')
         .map((exp: any) => ({
           _id: exp._id,
-          type: 'expense',
+          type: exp.category === 'Payroll' ? 'payroll' : 'expense',
           amount: exp.amount,
           category: exp.category,
           description: exp.description || 'Expense',
