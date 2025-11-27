@@ -62,7 +62,7 @@ export default function Transactions() {
           type: 'income',
           amount: inv.total,
           category: 'Invoice',
-          description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
+          description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Initial Payment'}`,
           date: inv.issueDate,
           reference: inv.serialNumber || inv.invoiceNumber
         }));
@@ -110,7 +110,7 @@ export default function Transactions() {
             amount: inv.total,
             bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
-            description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Unknown'}`,
+            description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Initial Payment'}`,
             date: inv.issueDate,
             reference: inv.serialNumber || inv.invoiceNumber,
             category: 'Invoice Payment'
