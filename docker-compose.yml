@@ -1,11 +1,17 @@
 version: '3.8'
 services:
+  # mongo:
+  #   image: mongo:6.0
+  #   command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+  #   volumes:
+  #     - mongo-data:/data/db
+  #     - ./backend/docker/mongo-init-replica.js:/docker-entrypoint-initdb.d/init.js:ro
+  #   ports:
+  #     - 27017:27017
   mongo:
     image: mongo:6.0
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     volumes:
       - mongo-data:/data/db
-      - ./backend/docker/mongo-init-replica.js:/docker-entrypoint-initdb.d/init.js:ro
     ports:
       - 27017:27017
     

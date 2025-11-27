@@ -1,9 +1,8 @@
 import { Schema, model } from 'mongoose';
 
 const BankSchema = new Schema({
-  name: { type: String, required: true },
   accountNumber: { type: String, required: true },
-  accountHolder: { type: String, required: true },
+  accountName: { type: String, required: true },
   bankName: { type: String, required: true },
   branch: String,
   swiftCode: String,
