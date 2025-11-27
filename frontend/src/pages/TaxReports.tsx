@@ -24,6 +24,7 @@ interface TaxReportData {
     totalAPIT_Employer: number;
     totalStampFee: number;
     payrollEntries: any[];
+    payrollExpenses: any[];
   };
   vat: {
     totalVATCollected: number;
@@ -65,11 +66,15 @@ export default function TaxReports() {
         return inv.status === 'paid' && invDate >= start && invDate <= end;
       });
 
-      // Filter approved expenses
-      const approvedExpenses = expensesRes.data.filter((exp: any) => {
+      // Filter approved expenses - separate regular expenses from payroll expenses
+      const allApprovedExpenses = expensesRes.data.filter((exp: any) => {
         const expDate = new Date(exp.date);
         return exp.status === 'approved' && expDate >= start && expDate <= end;
       });
+      
+      // Separate payroll expenses (EPF, ETF, APIT) from regular business expenses
+      const approvedExpenses = allApprovedExpenses.filter((exp: any) => exp.category !== 'Payroll');
+      const payrollExpenses = allApprovedExpenses.filter((exp: any) => exp.category === 'Payroll');
 
       // Filter paid payroll
       const paidPayroll = payrollRes.data.filter((pay: any) => {
@@ -91,6 +96,19 @@ export default function TaxReports() {
       const totalExpenses = approvedExpenses.reduce((sum: number, exp: any) => sum + exp.amount, 0);
       const totalVATCollected = paidInvoices.reduce((sum: number, inv: any) => sum + inv.tax, 0);
       const totalVATPaid = approvedExpenses.reduce((sum: number, exp: any) => sum + (exp.tax || 0), 0);
+
+      // Calculate payroll statutory contributions from expense records
+      const payrollExpenseSummary = payrollExpenses.reduce((acc: any, exp: any) => {
+        const desc = exp.description.toLowerCase();
+        if (desc.includes('epf employer')) {
+          return { ...acc, epfEmployer: acc.epfEmployer + exp.amount };
+        } else if (desc.includes('etf')) {
+          return { ...acc, etf: acc.etf + exp.amount };
+        } else if (desc.includes('apit employer')) {
+          return { ...acc, apitEmployer: acc.apitEmployer + exp.amount };
+        }
+        return acc;
+      }, { epfEmployer: 0, etf: 0, apitEmployer: 0 });
 
       const payrollSummary = paidPayroll.reduce((acc: any, pay: any) => ({
         totalGross: acc.totalGross + pay.grossSalary,
@@ -120,7 +138,11 @@ export default function TaxReports() {
         company: { name: companyName, tin: companyTIN, address: companyAddress },
         income: { totalRevenue, paidInvoices },
         expenses: { totalExpenses, approvedExpenses },
-        payroll: { ...payrollSummary, payrollEntries: paidPayroll },
+        payroll: { 
+          ...payrollSummary, 
+          payrollEntries: paidPayroll,
+          payrollExpenses: payrollExpenses // Include payroll statutory expenses
+        },
         vat: { totalVATCollected, totalVATPaid }
       };
     } catch (err: any) {
@@ -310,8 +332,8 @@ export default function TaxReports() {
         doc.addPage();
         yPos = 20;
       }
-      const clientName = inv.client?.name || 'Unknown';
-      doc.text(`${idx + 1}. ${inv.serialNumber} - ${clientName} - LKR ${inv.total.toLocaleString()} - ${new Date(inv.issueDate).toLocaleDateString()}`, 25, yPos);
+      const description = inv.lines?.[0]?.description || inv.client?.name || 'Initial Balance';
+      doc.text(`${idx + 1}. ${inv.serialNumber} - ${description} - LKR ${inv.total.toLocaleString()} - ${new Date(inv.issueDate).toLocaleDateString()}`, 25, yPos);
       yPos += 5;
       if (inv.attachmentUrl) {
         doc.text(`   Attachment: ${inv.attachmentUrl}`, 25, yPos);
@@ -340,8 +362,7 @@ export default function TaxReports() {
         doc.addPage();
         yPos = 20;
       }
-      const vendorName = exp.vendor?.name || 'N/A';
-      doc.text(`${idx + 1}. ${exp.serialNumber} - ${vendorName} - ${exp.category} - LKR ${exp.amount.toLocaleString()} - ${new Date(exp.date).toLocaleDateString()}`, 25, yPos);
+      doc.text(`${idx + 1}. ${exp.serialNumber} - ${exp.description} - ${exp.category} - LKR ${exp.amount.toLocaleString()} - ${new Date(exp.date).toLocaleDateString()}`, 25, yPos);
       yPos += 5;
       if (exp.billUrl) {
         doc.text(`   Bill: ${exp.billUrl}`, 25, yPos);
