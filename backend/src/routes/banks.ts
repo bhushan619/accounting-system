@@ -1,7 +1,9 @@
 import express from 'express';
 import Bank from '../models/Bank';
+import Invoice from '../models/Invoice';
 import { requireAuth } from '../middleware/auth';
 import { auditLog } from '../middleware/auditLog';
+import { getNextSequence } from '../services/counterService';
 
 const router = express.Router();
 
@@ -20,6 +22,29 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auditLog('create', 'bank'), async (req, res) => {
   const bank = await Bank.create(req.body);
+  
+  // If bank has initial balance, create an income transaction
+  if (bank.balance && bank.balance > 0) {
+    const serialNumber = await getNextSequence('invoice', 'INV');
+    await Invoice.create({
+      serialNumber,
+      client: null,
+      issueDate: new Date(),
+      dueDate: new Date(),
+      lines: [{
+        description: `Initial balance for ${bank.bankName} - ${bank.accountName}`,
+        quantity: 1,
+        unitPrice: bank.balance
+      }],
+      subtotal: bank.balance,
+      tax: 0,
+      total: bank.balance,
+      status: 'paid',
+      currency: bank.currency || 'LKR',
+      bank: bank._id
+    });
+  }
+  
   res.json(bank);
 });
 
