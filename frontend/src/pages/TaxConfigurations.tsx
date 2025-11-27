@@ -171,7 +171,6 @@ export default function TaxConfigurations() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rate/Brackets</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">From</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">To</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
@@ -183,15 +182,6 @@ export default function TaxConfigurations() {
               <tr key={config._id} className="hover:bg-accent/50">
                 <td className="px-6 py-4 text-sm text-foreground">{config.name}</td>
                 <td className="px-6 py-4 text-sm text-foreground">{formatTaxType(config.taxType)}</td>
-                <td className="px-6 py-4 text-sm text-foreground">
-                  {config.brackets ? (
-                    <span className="text-xs bg-accent px-2 py-1 rounded">
-                      {config.brackets.length} brackets
-                    </span>
-                  ) : (
-                    `${config.rate}${config.taxType === 'stamp_fee' ? ' LKR' : '%'}`
-                  )}
-                </td>
                 <td className="px-6 py-4 text-sm text-foreground">
                   {new Date(config.applicableFrom).toLocaleDateString()}
                 </td>
