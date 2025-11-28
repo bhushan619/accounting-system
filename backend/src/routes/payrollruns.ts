@@ -122,11 +122,15 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
       status: 'active'
     });
     
-    // Create a map of employee allowances from employeeData
-    const allowancesMap = new Map();
+    // Create a map of employee data from employeeData (allowances and deductions)
+    const employeeDataMap = new Map();
     if (employeeData && Array.isArray(employeeData)) {
       employeeData.forEach((data: any) => {
-        allowancesMap.set(data.employeeId, data.allowances);
+        employeeDataMap.set(data.employeeId, {
+          allowances: data.allowances,
+          deductionAmount: data.deductionAmount || 0,
+          deductionReason: data.deductionReason || ''
+        });
       });
     }
     
@@ -142,10 +146,13 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
     for (const employee of employees) {
       const serialNumber = await getNextSequence('payroll', 'PAY');
       const basicSalary = employee.basicSalary;
-      // Use custom allowances from request if provided, otherwise use employee's default
-      const allowances = allowancesMap.has(employee._id.toString()) 
-        ? allowancesMap.get(employee._id.toString()) 
-        : (employee.allowances || 0);
+      
+      // Get employee-specific data from the map
+      const empData = employeeDataMap.get(employee._id.toString());
+      const allowances = empData?.allowances ?? (employee.allowances || 0);
+      const deductionAmount = empData?.deductionAmount || 0;
+      const deductionReason = empData?.deductionReason || '';
+      
       const grossSalary = basicSalary + allowances;
       
       // Use rates from TaxConfig, fall back to employee-specific rates if set
@@ -171,13 +178,13 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
       
       if (employee.apitScenario === 'employer') {
         // Scenario B: Employer pays APIT on behalf of employee
-        deductions = epfEmployee + stampFee; // APIT NOT deducted
+        deductions = epfEmployee + stampFee + deductionAmount; // APIT NOT deducted, but other deductions included
         netSalary = grossSalary - deductions;
         apitEmployer = apit; // Employer bears this cost
         ctc = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
       } else {
         // Scenario A: Employee pays APIT (default)
-        deductions = epfEmployee + apit + stampFee; // APIT deducted from salary
+        deductions = epfEmployee + apit + stampFee + deductionAmount; // APIT deducted from salary + other deductions
         netSalary = grossSalary - deductions;
         apitEmployer = 0; // Employer doesn't bear APIT cost
         ctc = grossSalary + epfEmployer + etf; // Employer costs only
@@ -197,6 +204,8 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
         apit,
         apitEmployer,
         stampFee,
+        deductionAmount,
+        deductionReason,
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,

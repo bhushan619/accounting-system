@@ -5,6 +5,7 @@
     "build:dev": "cd frontend && npm run build:dev"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^5.2.2",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-react": "^5.1.1",
