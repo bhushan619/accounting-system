@@ -98,7 +98,7 @@ router.get('/profit-loss', async (req, res) => {
       invoices: invoices.map(inv => ({
         id: inv._id,
         client: inv.client,
-        description: inv.lines?.[0]?.description || inv.client?.name || 'Initial Balance',
+        description: inv.lines?.[0]?.description || (inv.client as any)?.name || 'Initial Balance',
         amount: inv.total,
         date: inv.issueDate
       })),
