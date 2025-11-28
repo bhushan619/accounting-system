@@ -10,15 +10,29 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Receipt,
-  Loader2
+  Loader2,
+  Users,
+  Calendar,
+  Filter
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
-  const { loading: authLoading, token } = useAuth();
+  const { loading: authLoading, token, user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Date filter state
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 1);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [filterApplied, setFilterApplied] = useState(false);
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -26,15 +40,37 @@ export default function Dashboard() {
     }
   }, [authLoading, token]);
 
-  const loadStats = async () => {
+  const loadStats = async (applyFilter = false) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/reports/overview`);
+      setLoading(true);
+      let url = `${import.meta.env.VITE_API_URL}/reports/overview`;
+      
+      if (applyFilter && startDate && endDate) {
+        url += `?startDate=${startDate}&endDate=${endDate}`;
+        setFilterApplied(true);
+      } else if (!applyFilter) {
+        setFilterApplied(false);
+      }
+      
+      const response = await axios.get(url);
       setStats(response.data);
     } catch (error) {
       console.error('Failed to load stats:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyFilter = () => {
+    loadStats(true);
+  };
+
+  const handleClearFilter = () => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 1);
+    setStartDate(date.toISOString().split('T')[0]);
+    setEndDate(new Date().toISOString().split('T')[0]);
+    loadStats(false);
   };
 
   if (authLoading || loading) {
@@ -44,6 +80,8 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const isAdmin = user?.role === 'admin';
 
   const statCards = [
     {
@@ -93,6 +131,22 @@ export default function Dashboard() {
     },
   ];
 
+  // Add payroll card for admin users
+  if (isAdmin) {
+    statCards.push({
+      title: 'Total Payroll',
+      value: stats?.totalPayroll || 0,
+      icon: Users,
+      trend: 'neutral',
+      color: 'warning',
+      bgColor: 'bg-orange-50',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600',
+      valueColor: 'text-orange-600',
+      isCount: false,
+    });
+  }
+
   return (
     <div className="animate-fade-in">
       {/* Page Header */}
@@ -112,8 +166,67 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Date Filters */}
+      <div className="card mb-6">
+        <div className="card-body">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter size={18} />
+              <span className="font-medium">Filter by Date:</span>
+            </div>
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Start Date</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="pl-9 pr-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">End Date</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="pl-9 pr-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleApplyFilter}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+                >
+                  Apply Filter
+                </button>
+                {filterApplied && (
+                  <button
+                    onClick={handleClearFilter}
+                    className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent text-sm"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          {filterApplied && (
+            <div className="mt-3 text-sm text-primary">
+              Showing data from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-6 mb-8`}>
         {statCards.map((stat, index) => (
           <div 
             key={stat.title}
@@ -183,6 +296,22 @@ export default function Dashboard() {
               <ArrowUpRight className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
             
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/payroll')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-50 hover:bg-orange-100/80 border border-orange-100 transition-all duration-200 group"
+              >
+                <div className="icon-container bg-orange-100 text-orange-600">
+                  <Users size={20} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-medium text-foreground">Process Payroll</p>
+                  <p className="text-sm text-muted-foreground">Generate and manage employee payroll</p>
+                </div>
+                <ArrowUpRight className="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
+              </button>
+            )}
+            
             <button 
               onClick={() => navigate('/reports')}
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-all duration-200 group"
@@ -230,6 +359,20 @@ export default function Dashboard() {
                     LKR {stats.totalExpenses?.toLocaleString() || 0}
                   </span>
                 </div>
+                
+                {isAdmin && (
+                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="icon-container bg-orange-100 text-orange-600">
+                        <Users size={18} />
+                      </div>
+                      <span className="text-sm text-foreground">Payroll</span>
+                    </div>
+                    <span className="font-semibold text-orange-600">
+                      LKR {stats.totalPayroll?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                )}
                 
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/20">

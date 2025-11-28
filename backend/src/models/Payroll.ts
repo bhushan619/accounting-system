@@ -14,6 +14,8 @@ const PayrollSchema = new Schema({
   apit: { type: Number, default: 0 }, // The actual APIT tax calculated once per employee
   apitEmployer: { type: Number, default: 0 }, // Amount employer pays (Scenario B only). 0 for Scenario A, equals apit for Scenario B
   stampFee: { type: Number, default: 25 },
+  deductionAmount: { type: Number, default: 0 }, // Additional salary deduction amount
+  deductionReason: { type: String, default: '' }, // Reason for the deduction
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
   totalCTC: { type: Number, required: true },
