@@ -107,17 +107,6 @@ export default function Dashboard() {
       valueColor: "text-red-600",
     },
     {
-      title: "Net Profit",
-      value: stats?.profit || 0,
-      icon: TrendingUp,
-      trend: "up",
-      color: "primary",
-      bgColor: "bg-blue-50",
-      iconBg: "bg-primary/10",
-      iconColor: "text-primary",
-      valueColor: "text-primary",
-    },
-    {
       title: "Total Payroll",
       value: stats?.totalPayroll || 0,
       icon: Users,
@@ -128,6 +117,18 @@ export default function Dashboard() {
       iconColor: "text-orange-600",
       valueColor: "text-orange-600",
     },
+    {
+      title: "Net Profit",
+      value: stats?.profit || 0,
+      icon: TrendingUp,
+      trend: "up",
+      color: "primary",
+      bgColor: "bg-blue-50",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      valueColor: "text-primary",
+    },
+    
   ];
 
   // Add payroll card for admin users
