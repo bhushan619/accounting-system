@@ -380,9 +380,24 @@ export default function Payroll() {
   };
 
   const sendPayrollEmails = async () => {
-    if (!selectedRun || !selectedRun.payrollEntries) return;
+    console.log("=== SEND PAYROLL EMAILS STARTED ===");
+    console.log("selectedRun:", selectedRun);
+    console.log("selectedRun.payrollEntries:", selectedRun?.payrollEntries);
+    
+    if (!selectedRun || !selectedRun.payrollEntries) {
+      console.error("ABORT: No selectedRun or payrollEntries");
+      return;
+    }
+
+    console.log("EmailJS Config Check:", {
+      serviceId: emailConfig.serviceId,
+      templateId: emailConfig.templateId,
+      publicKey: emailConfig.publicKey,
+      publicKeyLength: emailConfig.publicKey?.length,
+    });
 
     if (!emailConfig.publicKey) {
+      console.error("ABORT: No publicKey configured");
       alert("EmailJS is not configured. Please set up your EmailJS credentials in the environment variables.");
       return;
     }
@@ -392,17 +407,19 @@ export default function Payroll() {
     let failCount = 0;
 
     try {
-      console.log("Initializing EmailJS with config:", {
-        serviceId: emailConfig.serviceId,
-        templateId: emailConfig.templateId,
-        publicKey: emailConfig.publicKey ? "***configured***" : "missing",
-      });
-
+      console.log("Initializing EmailJS with publicKey:", emailConfig.publicKey);
       emailjs.init(emailConfig.publicKey);
+      console.log("EmailJS initialized successfully");
 
-      for (const entry of selectedRun.payrollEntries as any[]) {
+      const entries = selectedRun.payrollEntries as any[];
+      console.log("Total entries to process:", entries.length);
+
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        console.log(`Processing entry ${i + 1}/${entries.length}:`, entry);
+        
         if (!entry.employee?.email) {
-          console.warn("Skipping entry - no employee email:", entry);
+          console.warn(`Entry ${i + 1}: No employee email found`, entry.employee);
           failCount++;
           continue;
         }
@@ -415,29 +432,43 @@ export default function Payroll() {
           PERIOD_TEXT: `${getMonthName(selectedRun.month)} ${selectedRun.year}`,
         };
 
-        console.log("Sending email to:", entry.employee.email, "with params:", templateParams);
+        console.log(`Entry ${i + 1}: Sending email to ${entry.employee.email}`);
+        console.log(`Entry ${i + 1}: Template params:`, templateParams);
 
         try {
-          const response = await emailjs.send(emailConfig.serviceId, emailConfig.templateId, templateParams);
-          console.log("Email sent successfully:", response);
+          console.log(`Entry ${i + 1}: Calling emailjs.send()...`);
+          const response = await emailjs.send(
+            emailConfig.serviceId, 
+            emailConfig.templateId, 
+            templateParams
+          );
+          console.log(`Entry ${i + 1}: Email sent successfully!`, response);
           successCount++;
         } catch (emailError: any) {
-          console.error(`Failed to send email to ${entry.employee.email}:`, emailError);
-          console.error("Error details:", emailError.text || emailError.message || emailError);
+          console.error(`Entry ${i + 1}: FAILED to send email`);
+          console.error("Error object:", emailError);
+          console.error("Error text:", emailError?.text);
+          console.error("Error message:", emailError?.message);
+          console.error("Error status:", emailError?.status);
           failCount++;
         }
       }
 
+      console.log(`=== EMAIL SENDING COMPLETE: ${successCount} success, ${failCount} failed ===`);
       alert(`Emails sent: ${successCount} successful, ${failCount} failed`);
       setShowEmailModal(false);
       setShowEmailConfirm(false);
       setSelectedRun(null);
     } catch (error: any) {
-      console.error("Email sending error:", error);
-      console.error("Error details:", error.text || error.message || error);
-      alert(`Failed to send emails: ${error.text || error.message || "Check console for details"}`);
+      console.error("=== CRITICAL ERROR IN sendPayrollEmails ===");
+      console.error("Error object:", error);
+      console.error("Error text:", error?.text);
+      console.error("Error message:", error?.message);
+      console.error("Error stack:", error?.stack);
+      alert(`Failed to send emails: ${error?.text || error?.message || "Check console for details"}`);
     } finally {
       setSendingEmails(false);
+      console.log("=== SEND PAYROLL EMAILS ENDED ===");
     }
   };
 
