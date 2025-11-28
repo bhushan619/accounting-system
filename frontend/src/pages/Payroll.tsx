@@ -69,9 +69,9 @@ interface EditEntry {
 }
 
 // EmailJS Configuration - loads from environment variables with fallbacks
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_ForEmails";
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_vssalary";
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "mSb2J3Gl_6XLrVKBV";
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 export default function Payroll() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
@@ -383,7 +383,7 @@ export default function Payroll() {
     console.log("=== SEND PAYROLL EMAILS STARTED ===");
     console.log("selectedRun:", selectedRun);
     console.log("selectedRun.payrollEntries:", selectedRun?.payrollEntries);
-    
+
     if (!selectedRun || !selectedRun.payrollEntries) {
       console.error("ABORT: No selectedRun or payrollEntries");
       return;
@@ -417,7 +417,7 @@ export default function Payroll() {
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
         console.log(`Processing entry ${i + 1}/${entries.length}:`, entry);
-        
+
         if (!entry.employee?.email) {
           console.warn(`Entry ${i + 1}: No employee email found`, entry.employee);
           failCount++;
@@ -437,11 +437,7 @@ export default function Payroll() {
 
         try {
           console.log(`Entry ${i + 1}: Calling emailjs.send()...`);
-          const response = await emailjs.send(
-            emailConfig.serviceId, 
-            emailConfig.templateId, 
-            templateParams
-          );
+          const response = await emailjs.send(emailConfig.serviceId, emailConfig.templateId, templateParams);
           console.log(`Entry ${i + 1}: Email sent successfully!`, response);
           successCount++;
         } catch (emailError: any) {
@@ -1145,7 +1141,8 @@ export default function Payroll() {
                     <strong>Run:</strong> {selectedRun.runNumber} • {getMonthName(selectedRun.month)} {selectedRun.year}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email notifications
+                    <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email
+                    notifications
                   </p>
                 </div>
 
