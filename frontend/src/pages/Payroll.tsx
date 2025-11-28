@@ -391,40 +391,53 @@ export default function Payroll() {
     let failCount = 0;
     
     try {
+      console.log('Initializing EmailJS with config:', {
+        serviceId: emailConfig.serviceId,
+        templateId: emailConfig.templateId,
+        publicKey: emailConfig.publicKey ? '***configured***' : 'missing'
+      });
+      
       emailjs.init(emailConfig.publicKey);
       
       for (const entry of selectedRun.payrollEntries as any[]) {
         if (!entry.employee?.email) {
+          console.warn('Skipping entry - no employee email:', entry);
           failCount++;
           continue;
         }
         
+        const templateParams = {
+          to_email: entry.employee.email,
+          to_name: entry.employee.fullName,
+          employee_id: entry.employee.employeeId,
+          month: getMonthName(selectedRun.month),
+          year: selectedRun.year,
+          basic_salary: entry.basicSalary.toLocaleString(),
+          allowances: entry.allowances.toLocaleString(),
+          gross_salary: entry.grossSalary.toLocaleString(),
+          epf_employee: entry.epfEmployee.toLocaleString(),
+          apit: (entry.apit || 0).toLocaleString(),
+          stamp_fee: entry.stampFee.toLocaleString(),
+          other_deductions: (entry.deductionAmount || 0).toLocaleString(),
+          deduction_reason: entry.deductionReason || 'N/A',
+          total_deductions: entry.totalDeductions.toLocaleString(),
+          net_salary: entry.netSalary.toLocaleString(),
+          run_number: selectedRun.runNumber
+        };
+        
+        console.log('Sending email to:', entry.employee.email, 'with params:', templateParams);
+        
         try {
-          await emailjs.send(
+          const response = await emailjs.send(
             emailConfig.serviceId,
             emailConfig.templateId,
-            {
-              to_email: entry.employee.email,
-              EMPLOYEE_NAME: entry.employee.fullName,
-              // employee_id: entry.employee.employeeId,
-              PERIOD_TEXT: getMonthName(selectedRun.month) + " " + selectedRun.year,
-              // year: ,
-              // basic_salary: entry.basicSalary.toLocaleString(),
-              // allowances: entry.allowances.toLocaleString(),
-              // gross_salary: entry.grossSalary.toLocaleString(),
-              // epf_employee: entry.epfEmployee.toLocaleString(),
-              // apit: (entry.apit || 0).toLocaleString(),
-              // stamp_fee: entry.stampFee.toLocaleString(),
-              // other_deductions: (entry.deductionAmount || 0).toLocaleString(),
-              // deduction_reason: entry.deductionReason || 'N/A',
-              // total_deductions: entry.totalDeductions.toLocaleString(),
-              AMOUNT: entry.netSalary.toLocaleString(),
-              // run_number: selectedRun.runNumber
-            }
+            templateParams
           );
+          console.log('Email sent successfully:', response);
           successCount++;
-        } catch (emailError) {
+        } catch (emailError: any) {
           console.error(`Failed to send email to ${entry.employee.email}:`, emailError);
+          console.error('Error details:', emailError.text || emailError.message || emailError);
           failCount++;
         }
       }
@@ -432,9 +445,10 @@ export default function Payroll() {
       alert(`Emails sent: ${successCount} successful, ${failCount} failed`);
       setShowEmailModal(false);
       setSelectedRun(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email sending error:', error);
-      alert('Failed to send emails. Please check your EmailJS configuration.');
+      console.error('Error details:', error.text || error.message || error);
+      alert(`Failed to send emails: ${error.text || error.message || 'Check console for details'}`);
     } finally {
       setSendingEmails(false);
     }
