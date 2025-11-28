@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
     .populate('createdBy', 'email')
     .populate({
       path: 'payrollEntries',
-      populate: { path: 'employee', select: 'fullName employeeId' }
+      populate: { path: 'employee', select: 'fullName employeeId email' }
     });
   if (!run) return res.status(404).json({ error: 'Not found' });
   res.json(run);
