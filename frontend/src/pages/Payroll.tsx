@@ -31,6 +31,7 @@ interface PayrollPreview {
   employee: Employee;
   basicSalary: number;
   allowances: number;
+  performanceBonus: number;
   grossSalary: number;
   epfEmployee: number;
   epfEmployer: number;
@@ -138,12 +139,14 @@ export default function Payroll() {
     return Math.max(0, Math.round(apit * 100) / 100);
   };
 
-  const recalculatePayroll = (entry: PayrollPreview, newAllowances: number): PayrollPreview => {
+  const recalculatePayroll = (entry: PayrollPreview, newAllowances: number, newPerformanceBonus: number): PayrollPreview => {
     if (!taxRates) return entry;
     
     const basicSalary = entry.basicSalary;
     const allowances = newAllowances;
-    const grossSalary = basicSalary + allowances;
+    const performanceBonus = newPerformanceBonus;
+    const totalAllowances = allowances + performanceBonus;
+    const grossSalary = basicSalary + totalAllowances;
     
     const epfEmployee = Math.round((basicSalary * taxRates.epfEmployee / 100) * 100) / 100;
     const epfEmployer = Math.round((basicSalary * taxRates.epfEmployer / 100) * 100) / 100;
@@ -172,6 +175,7 @@ export default function Payroll() {
     return {
       ...entry,
       allowances,
+      performanceBonus,
       grossSalary,
       epfEmployee,
       epfEmployer,
@@ -188,7 +192,14 @@ export default function Payroll() {
   const handleAllowanceChange = (index: number, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
-    updatedPreview[index] = recalculatePayroll(updatedPreview[index], numValue);
+    updatedPreview[index] = recalculatePayroll(updatedPreview[index], numValue, updatedPreview[index].performanceBonus);
+    setPreviewData(updatedPreview);
+  };
+
+  const handlePerformanceBonusChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedPreview = [...previewData];
+    updatedPreview[index] = recalculatePayroll(updatedPreview[index], updatedPreview[index].allowances, numValue);
     setPreviewData(updatedPreview);
   };
 
@@ -204,7 +215,12 @@ export default function Payroll() {
         ...formData,
         employeeIds: selectedEmployees
       });
-      setPreviewData(response.data);
+      // Add performanceBonus field to preview data (defaults to 0)
+      const dataWithBonus = response.data.map((entry: PayrollPreview) => ({
+        ...entry,
+        performanceBonus: 0
+      }));
+      setPreviewData(dataWithBonus);
       setShowPreview(true);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to preview payroll');
@@ -213,10 +229,10 @@ export default function Payroll() {
 
   const handleGenerate = async () => {
     try {
-      // Send preview data with updated allowances
+      // Send preview data with updated allowances (combine allowances + performanceBonus)
       const employeeData = previewData.map(entry => ({
         employeeId: entry.employee._id,
-        allowances: entry.allowances
+        allowances: entry.allowances + entry.performanceBonus
       }));
       
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
@@ -563,7 +579,8 @@ export default function Payroll() {
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Employee</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Basic</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allow.</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allowances</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Bonus</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
@@ -586,6 +603,16 @@ export default function Payroll() {
                           type="number"
                           value={entry.allowances}
                           onChange={(e) => handleAllowanceChange(idx, e.target.value)}
+                          className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
+                          min="0"
+                          step="0.01"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <input
+                          type="number"
+                          value={entry.performanceBonus}
+                          onChange={(e) => handlePerformanceBonusChange(idx, e.target.value)}
                           className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
                           min="0"
                           step="0.01"
@@ -616,6 +643,9 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.allowances, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.performanceBonus, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
