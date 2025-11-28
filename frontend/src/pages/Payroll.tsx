@@ -1157,27 +1157,52 @@ export default function Payroll() {
                 </p>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col gap-3 pt-2">
                 <button
-                  onClick={() => {
-                    setShowEmailModal(false);
-                    setSelectedRun(null);
+                  onClick={async () => {
+                    try {
+                      emailjs.init(emailConfig.publicKey);
+                      const testParams = {
+                        to_email: prompt("Enter your test email address:"),
+                        EMPLOYEE_NAME: "Test Employee",
+                        AMOUNT: "100,000",
+                        PROCESSING_DATE: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
+                        PERIOD_TEXT: "November 2025",
+                      };
+                      if (!testParams.to_email) return;
+                      const response = await emailjs.send(emailConfig.serviceId, emailConfig.templateId, testParams);
+                      alert("Test email sent successfully! Check your inbox.");
+                      console.log("Test email response:", response);
+                    } catch (error: any) {
+                      console.error("Test email error:", error);
+                      alert(`Test email failed: ${error.text || error.message || JSON.stringify(error)}`);
+                    }
                   }}
-                  className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                  className="w-full px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50"
                 >
-                  Skip
+                  Send Test Email
                 </button>
-                <button
-                  onClick={sendPayrollEmails}
-                  disabled={sendingEmails || emailConfig.publicKey === "YOUR_PUBLIC_KEY"}
-                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {sendingEmails ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowEmailModal(false);
+                      setSelectedRun(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={sendPayrollEmails}
+                    disabled={sendingEmails || emailConfig.publicKey === "YOUR_PUBLIC_KEY"}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {sendingEmails ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
                     <>
                       <Mail size={18} />
                       Send Emails
