@@ -117,18 +117,6 @@ export default function Dashboard() {
       iconColor: 'text-primary',
       valueColor: 'text-primary',
     },
-    {
-      title: 'Total Invoices',
-      value: stats?.invoiceCount || 0,
-      icon: FileText,
-      trend: 'neutral',
-      color: 'info',
-      bgColor: 'bg-slate-50',
-      iconBg: 'bg-slate-100',
-      iconColor: 'text-slate-600',
-      valueColor: 'text-foreground',
-      isCount: true,
-    },
   ];
 
   // Add payroll card for admin users
@@ -226,7 +214,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-6 mb-8`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6 mb-8`}>
         {statCards.map((stat, index) => (
           <div 
             key={stat.title}

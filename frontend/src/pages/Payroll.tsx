@@ -390,7 +390,7 @@ export default function Payroll() {
               allowances: entry.allowances.toLocaleString(),
               gross_salary: entry.grossSalary.toLocaleString(),
               epf_employee: entry.epfEmployee.toLocaleString(),
-              apit: (entry.totalDeductions - entry.epfEmployee - entry.stampFee - (entry.deductionAmount || 0)).toLocaleString(),
+              apit: (entry.apit || 0).toLocaleString(),
               stamp_fee: entry.stampFee.toLocaleString(),
               other_deductions: (entry.deductionAmount || 0).toLocaleString(),
               deduction_reason: entry.deductionReason || 'N/A',
@@ -768,7 +768,7 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">
-                        {(entry.totalDeductions - entry.epfEmployee - entry.stampFee - entry.deductionAmount).toLocaleString()}
+                        {(entry.apit || 0).toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right bg-orange-50/50">
@@ -820,7 +820,7 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData
-                        .reduce((sum, e) => sum + (e.totalDeductions - e.epfEmployee - e.stampFee - e.deductionAmount), 0)
+                        .reduce((sum, e) => sum + (e.apit || 0), 0)
                         .toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
@@ -1109,7 +1109,7 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-destructive">
-                            {(entry.totalDeductions - entry.epfEmployee - entry.stampFee - (entry.deductionAmount || 0)).toLocaleString()}
+                            {(entry.apit || 0).toLocaleString()}
                           </td>
                           <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600" title={entry.deductionReason || 'N/A'}>
@@ -1150,7 +1150,7 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-destructive">
                           {selectedRun.payrollEntries
                             .reduce(
-                              (sum: number, e: any) => sum + (e.totalDeductions - e.epfEmployee - e.stampFee - (e.deductionAmount || 0)),
+                              (sum: number, e: any) => sum + (e.apit || 0),
                               0
                             )
                             .toLocaleString()}
