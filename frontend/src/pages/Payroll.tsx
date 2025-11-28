@@ -95,9 +95,9 @@ export default function Payroll() {
   const [taxRates, setTaxRates] = useState<any>(null);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [emailConfig, setEmailConfig] = useState({
-    serviceId: EMAILJS_SERVICE_ID,
-    templateId: EMAILJS_TEMPLATE_ID,
-    publicKey: EMAILJS_PUBLIC_KEY
+    serviceId: "mSb2J3Gl_6XLrVKBV",
+    templateId: "template_vssalary",
+    publicKey: "mSb2J3Gl_6XLrVKBV"
   });
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
@@ -873,7 +873,7 @@ export default function Payroll() {
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-8xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">
                 Payroll Preview - {getMonthName(formData.month)} {formData.year}
@@ -1191,7 +1191,7 @@ export default function Payroll() {
       {/* View Payroll Run Details Modal */}
       {showViewModal && selectedRun && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-8xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">
@@ -1369,7 +1369,7 @@ export default function Payroll() {
       {/* Edit Draft Payroll Modal */}
       {showEditModal && selectedRun && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-8xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">
