@@ -68,10 +68,10 @@ interface EditEntry {
   totalCTC: number;
 }
 
-// EmailJS Configuration - User should update these with their own keys
-const EMAILJS_SERVICE_ID = "service_velosync";
-const EMAILJS_TEMPLATE_ID = "template_payroll";
-const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // User must replace this
+// EmailJS Configuration loaded from environment variables
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "";
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
 
 export default function Payroll() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
@@ -84,6 +84,7 @@ export default function Payroll() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
   const [editData, setEditData] = useState<EditEntry[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -95,9 +96,9 @@ export default function Payroll() {
   const [taxRates, setTaxRates] = useState<any>(null);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [emailConfig, setEmailConfig] = useState({
-    serviceId: "service_ForEmails",
-    templateId: "template_vssalary",
-    publicKey: "mSb2J3Gl_6XLrVKBV",
+    serviceId: EMAILJS_SERVICE_ID,
+    templateId: EMAILJS_TEMPLATE_ID,
+    publicKey: EMAILJS_PUBLIC_KEY,
   });
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
@@ -381,8 +382,8 @@ export default function Payroll() {
   const sendPayrollEmails = async () => {
     if (!selectedRun || !selectedRun.payrollEntries) return;
 
-    if (emailConfig.publicKey === "YOUR_PUBLIC_KEY") {
-      alert("Please configure your EmailJS public key first. Go to https://www.emailjs.com to get your credentials.");
+    if (!emailConfig.publicKey) {
+      alert("EmailJS is not configured. Please set up your EmailJS credentials in the environment variables.");
       return;
     }
 
@@ -429,6 +430,7 @@ export default function Payroll() {
 
       alert(`Emails sent: ${successCount} successful, ${failCount} failed`);
       setShowEmailModal(false);
+      setShowEmailConfirm(false);
       setSelectedRun(null);
     } catch (error: any) {
       console.error("Email sending error:", error);
@@ -1097,6 +1099,7 @@ export default function Payroll() {
                 onClick={() => {
                   setShowEmailModal(false);
                   setSelectedRun(null);
+                  setShowEmailConfirm(false);
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -1104,85 +1107,24 @@ export default function Payroll() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  <strong>EmailJS Setup Required:</strong> To send emails, you need to configure EmailJS. Visit{" "}
-                  <a href="https://www.emailjs.com" target="_blank" rel="noopener noreferrer" className="underline">
-                    emailjs.com
-                  </a>{" "}
-                  to create a free account and get your credentials.
-                </p>
-              </div>
+            {!showEmailConfirm ? (
+              <div className="space-y-4">
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    <strong>Run:</strong> {selectedRun.runNumber} • {getMonthName(selectedRun.month)} {selectedRun.year}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email notifications
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Service ID</label>
-                <input
-                  type="text"
-                  value={emailConfig.serviceId}
-                  onChange={(e) => setEmailConfig({ ...emailConfig, serviceId: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  placeholder="service_xxxxx"
-                />
-              </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    Email notifications will be sent to all employees in this payroll run with their salary details.
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Template ID</label>
-                <input
-                  type="text"
-                  value={emailConfig.templateId}
-                  onChange={(e) => setEmailConfig({ ...emailConfig, templateId: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  placeholder="template_xxxxx"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Public Key</label>
-                <input
-                  type="text"
-                  value={emailConfig.publicKey}
-                  onChange={(e) => setEmailConfig({ ...emailConfig, publicKey: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  placeholder="Your EmailJS public key"
-                />
-              </div>
-
-              <div className="bg-muted rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  <strong>Run:</strong> {selectedRun.runNumber} • {getMonthName(selectedRun.month)} {selectedRun.year}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email notifications
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 pt-2">
-                <button
-                  onClick={async () => {
-                    try {
-                      emailjs.init(emailConfig.publicKey);
-                      const testParams = {
-                        to_email: prompt("Enter your test email address:"),
-                        EMPLOYEE_NAME: "Test Employee",
-                        AMOUNT: "100,000",
-                        PROCESSING_DATE: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
-                        PERIOD_TEXT: "November 2025",
-                      };
-                      if (!testParams.to_email) return;
-                      const response = await emailjs.send(emailConfig.serviceId, emailConfig.templateId, testParams);
-                      alert("Test email sent successfully! Check your inbox.");
-                      console.log("Test email response:", response);
-                    } catch (error: any) {
-                      console.error("Test email error:", error);
-                      alert(`Test email failed: ${error.text || error.message || JSON.stringify(error)}`);
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50"
-                >
-                  Send Test Email
-                </button>
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => {
                       setShowEmailModal(false);
@@ -1190,11 +1132,47 @@ export default function Payroll() {
                     }}
                     className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
                   >
-                    Skip
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setShowEmailConfirm(true)}
+                    disabled={!emailConfig.publicKey}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Mail size={18} />
+                    Continue
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-sm text-amber-800 font-medium mb-2">⚠️ Confirm Email Send</p>
+                  <p className="text-sm text-amber-700">
+                    You are about to send payroll notification emails to{" "}
+                    <strong>{selectedRun.payrollEntries?.length || 0} employees</strong>. This action cannot be undone.
+                  </p>
+                </div>
+
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    <strong>Payroll Period:</strong> {getMonthName(selectedRun.month)} {selectedRun.year}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Total Net Salary:</strong> LKR {selectedRun.totalNetSalary?.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowEmailConfirm(false)}
+                    className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                  >
+                    Back
                   </button>
                   <button
                     onClick={sendPayrollEmails}
-                    disabled={sendingEmails || emailConfig.publicKey === "YOUR_PUBLIC_KEY"}
+                    disabled={sendingEmails}
                     className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {sendingEmails ? (
@@ -1205,13 +1183,13 @@ export default function Payroll() {
                     ) : (
                       <>
                         <Mail size={18} />
-                        Send Emails
+                        Confirm & Send
                       </>
                     )}
                   </button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
