@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Trash2, Plus, X, Eye, Mail, Loader2 } from 'lucide-react';
+import { Trash2, Plus, X, Eye, Mail, Loader2, Edit } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface PayrollRun {
@@ -48,6 +48,26 @@ interface PayrollPreview {
   totalCTC: number;
 }
 
+interface EditEntry {
+  _id: string;
+  serialNumber: string;
+  employee: any;
+  basicSalary: number;
+  allowances: number;
+  deductionAmount: number;
+  deductionReason: string;
+  grossSalary: number;
+  epfEmployee: number;
+  epfEmployer: number;
+  etf: number;
+  apit: number;
+  apitEmployer: number;
+  stampFee: number;
+  totalDeductions: number;
+  netSalary: number;
+  totalCTC: number;
+}
+
 // EmailJS Configuration - User should update these with their own keys
 const EMAILJS_SERVICE_ID = 'service_velosync';
 const EMAILJS_TEMPLATE_ID = 'template_payroll';
@@ -63,7 +83,10 @@ export default function Payroll() {
   const [showBankModal, setShowBankModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
+  const [editData, setEditData] = useState<EditEntry[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [pendingProcess, setPendingProcess] = useState<{id: string, totalAmount: number} | null>(null);
   const [selectedBank, setSelectedBank] = useState('');
   const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
@@ -427,6 +450,139 @@ export default function Payroll() {
     }
   };
 
+  const handleEditPayroll = async (id: string) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
+      const run = response.data;
+      
+      if (run.status !== 'draft') {
+        alert('Can only edit draft payroll runs');
+        return;
+      }
+      
+      setSelectedRun(run);
+      setEditData(run.payrollEntries.map((entry: any) => ({
+        _id: entry._id,
+        serialNumber: entry.serialNumber,
+        employee: entry.employee,
+        basicSalary: entry.basicSalary,
+        allowances: entry.allowances,
+        deductionAmount: entry.deductionAmount || 0,
+        deductionReason: entry.deductionReason || '',
+        grossSalary: entry.grossSalary,
+        epfEmployee: entry.epfEmployee,
+        epfEmployer: entry.epfEmployer,
+        etf: entry.etf,
+        apit: entry.apit || 0,
+        apitEmployer: entry.apitEmployer || 0,
+        stampFee: entry.stampFee,
+        totalDeductions: entry.totalDeductions,
+        netSalary: entry.netSalary,
+        totalCTC: entry.totalCTC
+      })));
+      setShowEditModal(true);
+    } catch (error) {
+      console.error('Failed to load payroll for editing:', error);
+      alert('Failed to load payroll run details');
+    }
+  };
+
+  const recalculateEditEntry = (entry: EditEntry, newAllowances: number, newDeductionAmount: number): EditEntry => {
+    if (!taxRates) return entry;
+    
+    const basicSalary = entry.basicSalary;
+    const allowances = newAllowances;
+    const deductionAmount = newDeductionAmount;
+    const grossSalary = basicSalary + allowances;
+    
+    const epfEmployee = Math.round((basicSalary * taxRates.epfEmployee / 100) * 100) / 100;
+    const epfEmployer = Math.round((basicSalary * taxRates.epfEmployer / 100) * 100) / 100;
+    const etf = Math.round((basicSalary * taxRates.etf / 100) * 100) / 100;
+    const stampFee = taxRates.stampFee;
+    
+    const apit = calculateAPIT(grossSalary, entry.employee?.apitScenario || 'employee');
+    
+    let deductions: number;
+    let netSalary: number;
+    let apitEmployer = 0;
+    let ctc: number;
+    
+    if (entry.employee?.apitScenario === 'employer') {
+      deductions = epfEmployee + stampFee + deductionAmount;
+      netSalary = grossSalary - deductions;
+      apitEmployer = apit;
+      ctc = grossSalary + epfEmployer + etf + apitEmployer;
+    } else {
+      deductions = epfEmployee + apit + stampFee + deductionAmount;
+      netSalary = grossSalary - deductions;
+      apitEmployer = 0;
+      ctc = grossSalary + epfEmployer + etf;
+    }
+    
+    return {
+      ...entry,
+      allowances,
+      deductionAmount,
+      grossSalary,
+      epfEmployee,
+      epfEmployer,
+      etf,
+      apit,
+      apitEmployer,
+      stampFee,
+      totalDeductions: deductions,
+      netSalary,
+      totalCTC: ctc
+    };
+  };
+
+  const handleEditAllowanceChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedData = [...editData];
+    updatedData[index] = recalculateEditEntry(updatedData[index], numValue, updatedData[index].deductionAmount);
+    setEditData(updatedData);
+  };
+
+  const handleEditDeductionAmountChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedData = [...editData];
+    updatedData[index] = recalculateEditEntry(updatedData[index], updatedData[index].allowances, numValue);
+    setEditData(updatedData);
+  };
+
+  const handleEditDeductionReasonChange = (index: number, value: string) => {
+    const updatedData = [...editData];
+    updatedData[index] = { ...updatedData[index], deductionReason: value };
+    setEditData(updatedData);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedRun) return;
+    
+    setSavingEdit(true);
+    try {
+      const entries = editData.map(entry => ({
+        _id: entry._id,
+        allowances: entry.allowances,
+        deductionAmount: entry.deductionAmount,
+        deductionReason: entry.deductionReason
+      }));
+      
+      await axios.put(`${import.meta.env.VITE_API_URL}/payrollruns/${selectedRun._id}/entries`, { entries });
+      
+      setShowEditModal(false);
+      setSelectedRun(null);
+      setEditData([]);
+      loadData();
+      alert('Payroll run updated successfully');
+    } catch (error: any) {
+      console.error('Failed to save edit:', error);
+      alert(error.response?.data?.error || 'Failed to save changes');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const toggleEmployee = (id: string) => {
     setSelectedEmployees(prev =>
       prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
@@ -550,6 +706,15 @@ export default function Payroll() {
                           <Eye size={14} />
                           View
                         </button>
+                        {run.status === 'draft' && (
+                          <button
+                            onClick={() => handleEditPayroll(run._id)}
+                            className="px-3 py-1 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 flex items-center gap-1"
+                          >
+                            <Edit size={14} />
+                            Edit
+                          </button>
+                        )}
                         {run.status === 'paid' && (
                           <button
                             onClick={async () => {
@@ -1195,6 +1360,164 @@ export default function Payroll() {
                 className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Draft Payroll Modal */}
+      {showEditModal && selectedRun && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Edit Payroll Run - {selectedRun.runNumber}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {getMonthName(selectedRun.month)} {selectedRun.year} • Edit allowances and deductions
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedRun(null);
+                  setEditData([]);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Basic</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Allowances</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Gross</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (E)</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Stamp</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-orange-50">Deduction</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase bg-orange-50">Reason</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Total Ded.</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Net Salary</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {editData.map((entry, idx) => (
+                      <tr key={entry._id} className="hover:bg-accent/50">
+                        <td className="px-3 py-3 text-foreground">
+                          <div>
+                            <p className="font-medium">{entry.employee?.fullName || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ''}</p>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right">
+                          <input
+                            type="number"
+                            value={entry.allowances}
+                            onChange={(e) => handleEditAllowanceChange(idx, e.target.value)}
+                            className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
+                            min="0"
+                            step="0.01"
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right bg-orange-50/50">
+                          <input
+                            type="number"
+                            value={entry.deductionAmount}
+                            onChange={(e) => handleEditDeductionAmountChange(idx, e.target.value)}
+                            className="w-24 px-2 py-1 text-right border border-orange-200 rounded bg-background text-foreground focus:ring-1 focus:ring-orange-400"
+                            min="0"
+                            step="0.01"
+                          />
+                        </td>
+                        <td className="px-3 py-3 bg-orange-50/50">
+                          <input
+                            type="text"
+                            value={entry.deductionReason}
+                            onChange={(e) => handleEditDeductionReasonChange(idx, e.target.value)}
+                            className="w-32 px-2 py-1 border border-orange-200 rounded bg-background text-foreground focus:ring-1 focus:ring-orange-400 text-xs"
+                            placeholder="Reason..."
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-muted font-semibold">
+                    <tr>
+                      <td className="px-3 py-3 text-foreground">Total</td>
+                      <td className="px-3 py-3 text-right text-foreground">
+                        {editData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-foreground">
+                        {editData.reduce((sum, e) => sum + e.allowances, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-foreground">
+                        {editData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-destructive">
+                        {editData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-destructive">
+                        {editData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-destructive">
+                        {editData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-orange-600 bg-orange-50/50">
+                        {editData.reduce((sum, e) => sum + e.deductionAmount, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 bg-orange-50/50"></td>
+                      <td className="px-3 py-3 text-right text-destructive">
+                        {editData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-primary">
+                        {editData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedRun(null);
+                  setEditData([]);
+                }}
+                className="px-6 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
+              >
+                {savingEdit ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </div>
           </div>
