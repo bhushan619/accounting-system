@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Users, Loader2, Search, X } from 'lucide-react';
 
 interface Client {
   _id: string;
@@ -15,6 +15,7 @@ export default function Clients() {
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '' });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadClients();
@@ -70,107 +71,166 @@ export default function Clients() {
     setShowModal(true);
   };
 
-  if (loading) return <div>Loading...</div>;
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Clients</h1>
-        <button
-          onClick={openNewModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-        >
-          <Plus size={20} />
-          Add Client
+    <div className="animate-fade-in">
+      {/* Page Header */}
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Clients</h1>
+          <p className="page-description">Manage your client information</p>
+        </div>
+        <button onClick={openNewModal} className="btn btn-primary btn-md">
+          <Plus size={18} />
+          <span>Add Client</span>
         </button>
       </div>
 
-      <div className="bg-card rounded-lg shadow border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Created</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {clients.map((client) => (
-              <tr key={client._id} className="hover:bg-accent/50">
-                <td className="px-6 py-4 text-sm text-foreground">{client.name}</td>
-                <td className="px-6 py-4 text-sm text-muted-foreground flex items-center gap-2">
-                  <Mail size={16} />
-                  {client.email}
-                </td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {new Date(client.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button
-                    onClick={() => handleEdit(client)}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-                  >
-                    <Edit size={14} />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(client._id)}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </td>
+      {/* Search & Stats */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <input
+            type="text"
+            placeholder="Search clients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input pl-11"
+          />
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-xl">
+          <Users className="text-primary" size={18} />
+          <span className="text-sm font-medium text-foreground">{clients.length} Clients</span>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Created</th>
+                <th className="text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {clients.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">No clients found</div>
+            </thead>
+            <tbody>
+              {filteredClients.map((client) => (
+                <tr key={client._id}>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="icon-container icon-primary">
+                        <Users size={16} />
+                      </div>
+                      <span className="font-medium text-foreground">{client.name}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail size={14} />
+                      <span>{client.email}</span>
+                    </div>
+                  </td>
+                  <td className="text-muted-foreground">
+                    {new Date(client.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(client)}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        <Edit size={14} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(client._id)}
+                        className="btn btn-sm text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 size={14} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filteredClients.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="mx-auto text-muted-foreground mb-3" size={40} />
+            <p className="text-muted-foreground">
+              {searchTerm ? 'No clients match your search' : 'No clients found'}
+            </p>
+          </div>
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 border border-border">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">
-              {editingClient ? 'Edit Client' : 'Add New Client'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  required
-                />
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="modal-header flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">
+                {editingClient ? 'Edit Client' : 'Add New Client'}
+              </h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body space-y-4">
+                <div className="form-group">
+                  <label className="input-label">Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input"
+                    placeholder="Enter client name"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="input-label">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="input"
+                    placeholder="client@company.com"
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  required
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+                  className="btn btn-secondary btn-md"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                >
-                  {editingClient ? 'Update' : 'Create'}
+                <button type="submit" className="btn btn-primary btn-md">
+                  {editingClient ? 'Update Client' : 'Add Client'}
                 </button>
               </div>
             </form>

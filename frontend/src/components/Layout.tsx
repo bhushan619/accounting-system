@@ -10,7 +10,6 @@ import {
   Landmark, 
   UserCog, 
   DollarSign, 
-  BarChart3, 
   Settings as SettingsIcon, 
   BookOpen,
   LogOut,
@@ -20,7 +19,8 @@ import {
   ChevronRight,
   Wallet,
   PieChart,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Zap
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -36,9 +36,6 @@ export default function Layout({ children }: LayoutProps) {
   const [bookkeepingOpen, setBookkeepingOpen] = useState(true);
   const [salaryOpen, setSalaryOpen] = useState(true);
 
-  // Debug: print current authenticated user details
-  console.log('Layout current user:', user);
-
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -46,244 +43,152 @@ export default function Layout({ children }: LayoutProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const NavLink = ({ to, icon: Icon, children: linkChildren }: { to: string; icon: React.ElementType; children: React.ReactNode }) => (
+    <Link
+      to={to}
+      className={`nav-link ${isActive(to) ? 'nav-link-active' : 'nav-link-inactive'}`}
+    >
+      <Icon size={18} />
+      {sidebarOpen && <span>{linkChildren}</span>}
+    </Link>
+  );
+
+  const NavGroup = ({ 
+    title, 
+    icon: Icon, 
+    isOpen, 
+    onToggle, 
+    children: groupChildren 
+  }: { 
+    title: string; 
+    icon: React.ElementType; 
+    isOpen: boolean; 
+    onToggle: () => void; 
+    children: React.ReactNode 
+  }) => (
+    <div className="space-y-1">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-all duration-200"
+      >
+        <Icon size={18} />
+        {sidebarOpen && (
+          <>
+            <span className="flex-1 text-left text-sm font-medium">{title}</span>
+            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </>
+        )}
+      </button>
+      {isOpen && sidebarOpen && (
+        <div className="ml-4 pl-3 border-l border-sidebar-muted space-y-1 animate-fade-in">
+          {groupChildren}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-card shadow-lg transition-all duration-300`}>
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          {sidebarOpen && <h1 className="text-xl font-bold text-primary">VeloSync</h1>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-accent rounded">
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      <aside 
+        className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-sidebar-bg flex flex-col transition-all duration-300 ease-in-out`}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-muted">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+            <Zap className="text-white" size={20} />
+          </div>
+          {sidebarOpen && (
+            <div className="animate-fade-in">
+              <h1 className="text-lg font-bold text-sidebar-foreground">VeloSync</h1>
+              <p className="text-xs text-sidebar-foreground/50">Accounts</p>
+            </div>
+          )}
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="ml-auto p-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-colors"
+          >
+            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
         
-        <nav className="p-4 space-y-1 overflow-y-auto flex-1">
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin">
           {/* Dashboard */}
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              isActive('/dashboard')
-                ? 'bg-primary text-primary-foreground'
-                : 'text-foreground hover:bg-accent'
-            }`}
-          >
-            <Home size={20} />
-            {sidebarOpen && <span>Dashboard</span>}
-          </Link>
+          <NavLink to="/dashboard" icon={Home}>Dashboard</NavLink>
 
           {/* Masters Group */}
-          <div className="space-y-1">
-            <button
-              onClick={() => setMastersOpen(!mastersOpen)}
-              className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
-            >
-              {mastersOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-              {sidebarOpen && <span className="font-medium">Masters</span>}
-            </button>
-            {mastersOpen && sidebarOpen && (
-              <div className="ml-6 space-y-1">
-                <Link
-                  to="/clients"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/clients')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Users size={20} />
-                  <span>Clients</span>
-                </Link>
-                <Link
-                  to="/vendors"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/vendors')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Building2 size={20} />
-                  <span>Vendors</span>
-                </Link>
-                <Link
-                  to="/banks"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/banks')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Landmark size={20} />
-                  <span>Banks</span>
-                </Link>
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/tax-configurations"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      isActive('/tax-configurations')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    <SettingsIcon size={20} />
-                    <span>Tax Configurations</span>
-                  </Link>
-                )}
-              </div>
+          <NavGroup 
+            title="Masters" 
+            icon={Building2}
+            isOpen={mastersOpen} 
+            onToggle={() => setMastersOpen(!mastersOpen)}
+          >
+            <NavLink to="/clients" icon={Users}>Clients</NavLink>
+            <NavLink to="/vendors" icon={Building2}>Vendors</NavLink>
+            <NavLink to="/banks" icon={Landmark}>Banks</NavLink>
+            {user?.role === 'admin' && (
+              <NavLink to="/tax-configurations" icon={SettingsIcon}>Tax Config</NavLink>
             )}
-          </div>
+          </NavGroup>
 
           {/* Bookkeeping Group */}
-          <div className="space-y-1">
-            <button
-              onClick={() => setBookkeepingOpen(!bookkeepingOpen)}
-              className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
-            >
-              {bookkeepingOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-              {sidebarOpen && <span className="font-medium">Bookkeeping</span>}
-            </button>
-            {bookkeepingOpen && sidebarOpen && (
-              <div className="ml-6 space-y-1">
-                <Link
-                  to="/invoices"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/invoices')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <FileText size={20} />
-                  <span>Invoices</span>
-                </Link>
-                <Link
-                  to="/expenses"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/expenses')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Receipt size={20} />
-                  <span>Expenses</span>
-                </Link>
-                <Link
-                  to="/transactions"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/transactions')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Wallet size={20} />
-                  <span>Transactions</span>
-                </Link>
-                <Link
-                  to="/reports"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/reports')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <PieChart size={20} />
-                  <span>Financial Reports</span>
-                </Link>
-                <Link
-                  to="/tax-reports"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive('/tax-reports')
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <FileSpreadsheet size={20} />
-                  <span>Tax Reports (IRD)</span>
-                </Link>
-              </div>
-            )}
-          </div>
+          <NavGroup 
+            title="Bookkeeping" 
+            icon={FileText}
+            isOpen={bookkeepingOpen} 
+            onToggle={() => setBookkeepingOpen(!bookkeepingOpen)}
+          >
+            <NavLink to="/invoices" icon={FileText}>Invoices</NavLink>
+            <NavLink to="/expenses" icon={Receipt}>Expenses</NavLink>
+            <NavLink to="/transactions" icon={Wallet}>Transactions</NavLink>
+            <NavLink to="/reports" icon={PieChart}>Financial Reports</NavLink>
+            <NavLink to="/tax-reports" icon={FileSpreadsheet}>Tax Reports (IRD)</NavLink>
+          </NavGroup>
 
           {/* Salary Group (Admin only) */}
           {user?.role === 'admin' && (
-            <div className="space-y-1">
-              <button
-                onClick={() => setSalaryOpen(!salaryOpen)}
-                className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
-              >
-                {salaryOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                {sidebarOpen && <span className="font-medium">Salary</span>}
-              </button>
-              {salaryOpen && sidebarOpen && (
-                <div className="ml-6 space-y-1">
-                  <Link
-                    to="/employees"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      isActive('/employees')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    <UserCog size={20} />
-                    <span>Employees</span>
-                  </Link>
-                  <Link
-                    to="/payroll"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      isActive('/payroll')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    <DollarSign size={20} />
-                    <span>Payroll</span>
-                  </Link>
-                </div>
-              )}
-            </div>
+            <NavGroup 
+              title="Salary" 
+              icon={DollarSign}
+              isOpen={salaryOpen} 
+              onToggle={() => setSalaryOpen(!salaryOpen)}
+            >
+              <NavLink to="/employees" icon={UserCog}>Employees</NavLink>
+              <NavLink to="/payroll" icon={DollarSign}>Payroll</NavLink>
+            </NavGroup>
           )}
 
           {/* Users (Admin only) */}
           {user?.role === 'admin' && (
-            <Link
-              to="/users"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive('/users')
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              <Users size={20} />
-              {sidebarOpen && <span>Users</span>}
-            </Link>
+            <NavLink to="/users" icon={Users}>Users</NavLink>
           )}
 
           {/* User Guide */}
-          <Link
-            to="/guide"
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              isActive('/guide')
-                ? 'bg-primary text-primary-foreground'
-                : 'text-foreground hover:bg-accent'
-            }`}
-          >
-            <BookOpen size={20} />
-            {sidebarOpen && <span>User Guide</span>}
-          </Link>
+          <NavLink to="/guide" icon={BookOpen}>User Guide</NavLink>
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-4">
+        {/* User Info & Logout */}
+        <div className="p-4 border-t border-sidebar-muted">
+          {sidebarOpen && (
+            <div className="mb-3 px-3 animate-fade-in">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
+              <p className="text-xs text-sidebar-foreground/50 capitalize">{user?.role}</p>
+            </div>
+          )}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 w-full text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
           >
-            <LogOut size={20} />
-            {sidebarOpen && <span>Logout</span>}
+            <LogOut size={18} />
+            {sidebarOpen && <span className="text-sm font-medium">Sign Out</span>}
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
+      <main className="flex-1 overflow-auto bg-background">
+        <div className="p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
