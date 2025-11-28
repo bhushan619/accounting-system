@@ -68,10 +68,10 @@ interface EditEntry {
   totalCTC: number;
 }
 
-// EmailJS Configuration loaded from environment variables
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "";
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
+// EmailJS Configuration - loads from environment variables with fallbacks
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_ForEmails";
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_vssalary";
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "mSb2J3Gl_6XLrVKBV";
 
 export default function Payroll() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
