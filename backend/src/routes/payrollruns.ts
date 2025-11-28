@@ -250,6 +250,110 @@ router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {
   res.json(run);
 });
 
+// Update payroll entries for draft payroll run
+router.put('/:id/entries', auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const { entries } = req.body;
+    
+    const run = await PayrollRun.findById(req.params.id);
+    if (!run) return res.status(404).json({ error: 'Payroll run not found' });
+    if (run.status !== 'draft') {
+      return res.status(400).json({ error: 'Can only edit draft payroll runs' });
+    }
+    
+    const taxRates = await getActiveTaxRates();
+    
+    let totalGross = 0;
+    let totalNet = 0;
+    let totalDeductions = 0;
+    let totalCTC = 0;
+    
+    // Update each payroll entry
+    for (const entryData of entries) {
+      const payroll = await Payroll.findById(entryData._id).populate('employee');
+      if (!payroll) continue;
+      
+      const employee = payroll.employee as any;
+      const basicSalary = payroll.basicSalary;
+      const allowances = entryData.allowances ?? payroll.allowances;
+      const deductionAmount = entryData.deductionAmount ?? payroll.deductionAmount;
+      const deductionReason = entryData.deductionReason ?? payroll.deductionReason;
+      const grossSalary = basicSalary + allowances;
+      
+      const epfEmployeeRate = employee?.epfEmployeeRate || taxRates.epfEmployee;
+      const epfEmployerRate = employee?.epfEmployerRate || taxRates.epfEmployer;
+      const etfRate = employee?.etfRate || taxRates.etf;
+      const stampFee = taxRates.stampFee;
+      
+      const epfEmployee = Math.round((basicSalary * epfEmployeeRate / 100) * 100) / 100;
+      const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
+      const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
+      
+      const apit = calculateAPIT(grossSalary, employee?.apitScenario || 'employee');
+      
+      let deductions: number;
+      let netSalary: number;
+      let apitEmployer = 0;
+      let ctc: number;
+      
+      if (employee?.apitScenario === 'employer') {
+        deductions = epfEmployee + stampFee + deductionAmount;
+        netSalary = grossSalary - deductions;
+        apitEmployer = apit;
+        ctc = grossSalary + epfEmployer + etf + apitEmployer;
+      } else {
+        deductions = epfEmployee + apit + stampFee + deductionAmount;
+        netSalary = grossSalary - deductions;
+        apitEmployer = 0;
+        ctc = grossSalary + epfEmployer + etf;
+      }
+      
+      await Payroll.findByIdAndUpdate(entryData._id, {
+        allowances,
+        grossSalary,
+        epfEmployee,
+        epfEmployer,
+        etf,
+        apit,
+        apitEmployer,
+        stampFee,
+        deductionAmount,
+        deductionReason,
+        totalDeductions: deductions,
+        netSalary,
+        totalCTC: ctc,
+        updatedAt: new Date()
+      });
+      
+      totalGross += grossSalary;
+      totalNet += netSalary;
+      totalDeductions += deductions;
+      totalCTC += ctc;
+    }
+    
+    // Update payroll run totals
+    await PayrollRun.findByIdAndUpdate(req.params.id, {
+      totalGrossSalary: totalGross,
+      totalNetSalary: totalNet,
+      totalDeductions,
+      updatedAt: new Date()
+    });
+    
+    // Return updated run with populated entries
+    const updatedRun = await PayrollRun.findById(req.params.id)
+      .populate('createdBy', 'email')
+      .populate({
+        path: 'payrollEntries',
+        populate: { path: 'employee', select: 'fullName employeeId apitScenario' }
+      });
+    
+    res.json(updatedRun);
+  } catch (error) {
+    console.error('Update payroll entries error:', error);
+    res.status(500).json({ error: 'Failed to update payroll entries' });
+  }
+});
+
 router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, res) => {
   try {
     const { bankId } = req.body;
