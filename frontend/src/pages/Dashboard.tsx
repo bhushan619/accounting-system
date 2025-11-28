@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
   FileText,
   Plus,
   ArrowUpRight,
@@ -13,24 +13,24 @@ import {
   Loader2,
   Users,
   Calendar,
-  Filter
-} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+  Filter,
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Dashboard() {
   const { loading: authLoading, token, user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Date filter state
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   });
   const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   });
   const [filterApplied, setFilterApplied] = useState(false);
 
@@ -44,18 +44,18 @@ export default function Dashboard() {
     try {
       setLoading(true);
       let url = `${import.meta.env.VITE_API_URL}/reports/overview`;
-      
+
       if (applyFilter && startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
         setFilterApplied(true);
       } else if (!applyFilter) {
         setFilterApplied(false);
       }
-      
+
       const response = await axios.get(url);
       setStats(response.data);
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      console.error("Failed to load stats:", error);
     } finally {
       setLoading(false);
     }
@@ -68,8 +68,8 @@ export default function Dashboard() {
   const handleClearFilter = () => {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
-    setStartDate(date.toISOString().split('T')[0]);
-    setEndDate(new Date().toISOString().split('T')[0]);
+    setStartDate(date.toISOString().split("T")[0]);
+    setEndDate(new Date().toISOString().split("T")[0]);
     loadStats(false);
   };
 
@@ -81,59 +81,70 @@ export default function Dashboard() {
     );
   }
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   const statCards = [
     {
-      title: 'Total Revenue',
+      title: "Total Revenue",
       value: stats?.totalRevenue || 0,
       icon: DollarSign,
-      trend: 'up',
-      color: 'success',
-      bgColor: 'bg-green-50',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
-      valueColor: 'text-green-600',
+      trend: "up",
+      color: "success",
+      bgColor: "bg-green-50",
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+      valueColor: "text-green-600",
     },
     {
-      title: 'Total Expenses',
+      title: "Total Expenses",
       value: stats?.totalExpenses || 0,
       icon: TrendingDown,
-      trend: 'down',
-      color: 'danger',
-      bgColor: 'bg-red-50',
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
-      valueColor: 'text-red-600',
+      trend: "down",
+      color: "danger",
+      bgColor: "bg-red-50",
+      iconBg: "bg-red-100",
+      iconColor: "text-red-600",
+      valueColor: "text-red-600",
     },
     {
-      title: 'Net Profit',
+      title: "Net Profit",
       value: stats?.profit || 0,
       icon: TrendingUp,
-      trend: 'up',
-      color: 'primary',
-      bgColor: 'bg-blue-50',
-      iconBg: 'bg-primary/10',
-      iconColor: 'text-primary',
-      valueColor: 'text-primary',
+      trend: "up",
+      color: "primary",
+      bgColor: "bg-blue-50",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      valueColor: "text-primary",
+    },
+    {
+      title: "Total Payroll",
+      value: stats?.totalPayroll || 0,
+      icon: Users,
+      trend: "neutral",
+      color: "warning",
+      bgColor: "bg-orange-50",
+      iconBg: "bg-orange-100",
+      iconColor: "text-orange-600",
+      valueColor: "text-orange-600",
     },
   ];
 
   // Add payroll card for admin users
-  if (isAdmin) {
-    statCards.push({
-      title: 'Total Payroll',
-      value: stats?.totalPayroll || 0,
-      icon: Users,
-      trend: 'neutral',
-      color: 'warning',
-      bgColor: 'bg-orange-50',
-      iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-      valueColor: 'text-orange-600',
-      isCount: false,
-    });
-  }
+  // if (isAdmin) {
+  //   statCards.push({
+  //     title: 'Total Payroll',
+  //     value: stats?.totalPayroll || 0,
+  //     icon: Users,
+  //     trend: 'neutral',
+  //     color: 'warning',
+  //     bgColor: 'bg-orange-50',
+  //     iconBg: 'bg-orange-100',
+  //     iconColor: 'text-orange-600',
+  //     valueColor: 'text-orange-600',
+  //     isCount: false,
+  //   });
+  // }
 
   return (
     <div className="animate-fade-in">
@@ -144,10 +155,7 @@ export default function Dashboard() {
           <p className="page-description">Welcome back! Here's your financial overview.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => navigate('/invoices')}
-            className="btn btn-primary btn-md"
-          >
+          <button onClick={() => navigate("/invoices")} className="btn btn-primary btn-md">
             <Plus size={18} />
             <span>New Invoice</span>
           </button>
@@ -214,35 +222,26 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6 mb-8`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-6 mb-8`}>
         {statCards.map((stat, index) => (
-          <div 
-            key={stat.title}
-            className="stat-card animate-fade-in"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
+          <div key={stat.title} className="stat-card animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
             <div className="flex items-start justify-between mb-4">
               <div className={`stat-icon ${stat.iconBg}`}>
                 <stat.icon className={stat.iconColor} size={22} />
               </div>
-              {stat.trend !== 'neutral' && (
-                <div className={`flex items-center gap-1 text-xs font-medium ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.trend === 'up' ? (
-                    <ArrowUpRight size={14} />
-                  ) : (
-                    <ArrowDownRight size={14} />
-                  )}
+              {stat.trend !== "neutral" && (
+                <div
+                  className={`flex items-center gap-1 text-xs font-medium ${
+                    stat.trend === "up" ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {stat.trend === "up" ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                 </div>
               )}
             </div>
             <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
             <p className={`text-2xl font-bold ${stat.valueColor}`}>
-              {stat.isCount 
-                ? stat.value.toLocaleString()
-                : `LKR ${stat.value.toLocaleString()}`
-              }
+              {stat.isCount ? stat.value.toLocaleString() : `LKR ${stat.value.toLocaleString()}`}
             </p>
           </div>
         ))}
@@ -256,8 +255,8 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
           </div>
           <div className="card-body space-y-3">
-            <button 
-              onClick={() => navigate('/invoices')}
+            <button
+              onClick={() => navigate("/invoices")}
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-all duration-200 group"
             >
               <div className="icon-container icon-primary">
@@ -269,9 +268,9 @@ export default function Dashboard() {
               </div>
               <ArrowUpRight className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
-            
-            <button 
-              onClick={() => navigate('/expenses')}
+
+            <button
+              onClick={() => navigate("/expenses")}
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-red-50 hover:bg-red-100/80 border border-red-100 transition-all duration-200 group"
             >
               <div className="icon-container icon-danger">
@@ -283,10 +282,10 @@ export default function Dashboard() {
               </div>
               <ArrowUpRight className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
-            
+
             {isAdmin && (
-              <button 
-                onClick={() => navigate('/payroll')}
+              <button
+                onClick={() => navigate("/payroll")}
                 className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-50 hover:bg-orange-100/80 border border-orange-100 transition-all duration-200 group"
               >
                 <div className="icon-container bg-orange-100 text-orange-600">
@@ -296,12 +295,15 @@ export default function Dashboard() {
                   <p className="font-medium text-foreground">Process Payroll</p>
                   <p className="text-sm text-muted-foreground">Generate and manage employee payroll</p>
                 </div>
-                <ArrowUpRight className="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
+                <ArrowUpRight
+                  className="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  size={20}
+                />
               </button>
             )}
-            
-            <button 
-              onClick={() => navigate('/reports')}
+
+            <button
+              onClick={() => navigate("/reports")}
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-all duration-200 group"
             >
               <div className="icon-container bg-slate-100 text-slate-600">
@@ -331,11 +333,9 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">Revenue</span>
                   </div>
-                  <span className="font-semibold text-green-600">
-                    LKR {stats.totalRevenue?.toLocaleString() || 0}
-                  </span>
+                  <span className="font-semibold text-green-600">LKR {stats.totalRevenue?.toLocaleString() || 0}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="icon-container icon-danger">
@@ -343,11 +343,9 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">Expenses</span>
                   </div>
-                  <span className="font-semibold text-red-600">
-                    LKR {stats.totalExpenses?.toLocaleString() || 0}
-                  </span>
+                  <span className="font-semibold text-red-600">LKR {stats.totalExpenses?.toLocaleString() || 0}</span>
                 </div>
-                
+
                 {isAdmin && (
                   <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
                     <div className="flex items-center gap-3">
@@ -361,7 +359,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/20">
                     <div className="flex items-center gap-3">
@@ -370,16 +368,14 @@ export default function Dashboard() {
                       </div>
                       <span className="text-sm font-medium text-foreground">Net Profit</span>
                     </div>
-                    <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? 'text-primary' : 'text-red-600'}`}>
+                    <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
                       LKR {stats.profit?.toLocaleString() || 0}
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No financial data available
-              </p>
+              <p className="text-muted-foreground text-center py-8">No financial data available</p>
             )}
           </div>
         </div>
