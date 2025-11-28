@@ -21,35 +21,43 @@ const sections: Section[] = [
   },
   {
     title: 'Bank Accounts',
-    content: 'Set up and manage multiple bank accounts with account numbers, bank names, and branch details. Track opening balances (set only during creation). Bank balances are automatically updated when processing invoices, expenses, and payroll. View all bank transactions including debits and credits in the Transactions page.'
+    content: 'Set up and manage multiple bank accounts with account numbers, bank names, and branch details. Track opening balances (set only during creation). When a bank account is created with an initial balance, it is recorded as an income transaction with description "Initial balance ([accountNumber])". Bank balances are automatically updated when processing invoices, expenses, and payroll. View all bank transactions including debits and credits in the Transactions page.'
   },
   {
     title: 'Creating Invoices',
-    content: 'Generate professional invoices with automatic serial numbers (INV-XXXX). Add multiple line items with descriptions, quantities, rates, and tax percentages. Attach supporting documents like quotations and receipts. When marking an invoice as paid, select the bank account to credit - the system automatically updates the bank balance.'
+    content: 'Generate professional invoices with automatic serial numbers (INV-XXXX). Add multiple line items with descriptions, quantities, rates, and tax percentages. Attach supporting documents like quotations and receipts. When marking an invoice as paid, select the bank account to credit - the system automatically updates the bank balance. Invoice descriptions in reports display the first line item description or client name.'
   },
   {
     title: 'Tracking Expenses',
-    content: 'Record business expenses with automatic serial numbers (EXP-XXXX). Categorize expenses, link to vendors, specify payment method (cash/bank/card), and upload bills and receipts. When approving expenses with bank payment, select the bank account - the balance is automatically debited. All approved expenses appear in financial reports.'
+    content: 'Record business expenses with automatic serial numbers (EXP-XXXX). Categorize expenses, link to vendors, specify payment method (cash/bank/card), and upload bills and receipts. When approving expenses with bank payment, select the bank account - the balance is automatically debited. All approved expenses appear in financial reports with proper descriptions.'
   },
   {
     title: 'Employee Management (Admin Only)',
-    content: 'Manage employee records including personal details, employment information, and salary components. Set basic salary, allowances, EPF rates (employee and employer), ETF rate, and APIT scenario. APIT Scenario A: employee pays APIT tax. APIT Scenario B: employer pays APIT tax. Employee records are used for payroll processing.'
+    content: 'Manage employee records including personal details, employment information, and salary components. Set basic salary and allowances. EPF rates (employee and employer) and ETF rate are automatically populated from active tax configurations and displayed as read-only labels. Set the APIT scenario for each employee: Scenario A (employee pays APIT tax) or Scenario B (employer pays APIT tax). Employee records are used for payroll processing.'
   },
   {
     title: 'Payroll Processing (Admin Only)',
-    content: 'Process payroll for multiple employees in bulk. Select employees and preview calculations before processing. Payroll includes EPF (8% employee, 12% employer on basic salary), ETF (3% on basic salary), APIT (calculated on gross salary using slab system), and stamp fees. When processing payroll, select a bank account - net salaries are automatically debited. Processed payroll appears in Transactions and Financial Reports.'
+    content: 'Process payroll for multiple employees in bulk. Select employees and preview calculations before processing. In the preview, you can edit two income components separately: "Allowances" (regular monthly allowances) and "Performance Bonus" (one-time bonuses). Both are added to basic salary to calculate gross salary. Payroll includes EPF (8% employee, 12% employer on basic salary), ETF (3% on basic salary), APIT (calculated on gross salary using slab system based on employee scenario), and stamp fees. When processing payroll, select a bank account - net salaries are automatically debited. Processed payroll appears in Transactions and Financial Reports.'
+  },
+  {
+    title: 'APIT Scenarios Explained',
+    content: 'APIT (Advance Personal Income Tax) is calculated once per employee using slab-based tax brackets with standard deductions. The single APIT amount is then assigned based on the employee\'s scenario: Scenario A - Employee pays APIT (deducted from salary, reducing net pay), Scenario B - Employer pays APIT (added to employer costs, not deducted from salary). In Scenario B, APIT appears only in employer costs section, not in employee deductions. Sri Lanka tax slabs: 0-150K LKR (0%), 150K-250K (6%), 250K-323K (12%), 323K+ (56.25% with standard deduction).'
   },
   {
     title: 'Tax Configuration (Admin Only)',
-    content: 'Configure tax rates including EPF employee rate, EPF employer rate, ETF rate, stamp fee, and APIT tax slabs. APIT uses slab-based calculation with standard deductions: 0-150K LKR (0%), 150K-250K (6%), 250K-323K (12%), 323K+ (56.25%). Tax configurations apply to all payroll calculations unless employee has custom rates.'
+    content: 'Configure tax rates including EPF employee rate, EPF employer rate, ETF rate, and stamp fee. These configurations are automatically applied when adding new employees - the rates appear as read-only labels in the employee modal. Tax configurations apply to all payroll calculations unless employee has custom rates.'
+  },
+  {
+    title: 'Tax Reports',
+    content: 'Generate tax compliance reports for submission to the Inland Revenue Department. Reports include: gross income from paid invoices, total expenses from approved items, APIT deductions (showing only employer responsibility for remittance), and payroll statutory contributions. Payroll expenses are displayed in a dedicated section separate from regular expenses. Reports can be filtered by date range and exported to PDF.'
   },
   {
     title: 'Transactions Tracking',
-    content: 'View all financial transactions in one place with two tabs: All Transactions shows invoices, expenses, and payroll summary. Bank Transactions tab displays all bank debits and credits with details including transaction type, bank account, date, category, description, and amount. Filter and track cash flow across all bank accounts.'
+    content: 'View all financial transactions in one place with two tabs: All Transactions shows invoices (with serial number descriptions), expenses, and payroll summary. Bank Transactions tab displays all bank debits and credits with details including transaction type, bank account, date, category, description, and amount. Filter and track cash flow across all bank accounts.'
   },
   {
     title: 'Financial Reports',
-    content: 'Access three comprehensive report views: Overview (total income, expenses, profit), Profit & Loss Statement (detailed income vs expenses breakdown), and Expenses Breakdown (category-wise expense analysis with charts). Reports include only confirmed transactions: paid invoices, approved expenses, and processed payroll. Export reports to PDF or Excel.'
+    content: 'Access three comprehensive report views: Overview (total income, expenses, profit), Profit & Loss Statement (detailed income vs expenses breakdown including payroll statutory contributions like EPF, ETF, and employer APIT), and Expenses Breakdown (category-wise expense analysis with charts showing payroll in dedicated section). Reports include only confirmed transactions: paid invoices, approved expenses, and processed payroll. Export reports to PDF or Excel.'
   },
   {
     title: 'User Management (Admin Only)',
