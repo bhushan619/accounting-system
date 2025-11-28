@@ -1203,12 +1203,13 @@ export default function Payroll() {
                         Sending...
                       </>
                     ) : (
-                    <>
-                      <Mail size={18} />
-                      Send Emails
-                    </>
-                  )}
-                </button>
+                      <>
+                        <Mail size={18} />
+                        Send Emails
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
