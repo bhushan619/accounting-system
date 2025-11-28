@@ -408,21 +408,10 @@ export default function Payroll() {
         
         const templateParams = {
           to_email: entry.employee.email,
-          to_name: entry.employee.fullName,
-          employee_id: entry.employee.employeeId,
-          month: getMonthName(selectedRun.month),
-          year: selectedRun.year,
-          basic_salary: entry.basicSalary.toLocaleString(),
-          allowances: entry.allowances.toLocaleString(),
-          gross_salary: entry.grossSalary.toLocaleString(),
-          epf_employee: entry.epfEmployee.toLocaleString(),
-          apit: (entry.apit || 0).toLocaleString(),
-          stamp_fee: entry.stampFee.toLocaleString(),
-          other_deductions: (entry.deductionAmount || 0).toLocaleString(),
-          deduction_reason: entry.deductionReason || 'N/A',
-          total_deductions: entry.totalDeductions.toLocaleString(),
-          net_salary: entry.netSalary.toLocaleString(),
-          run_number: selectedRun.runNumber
+          EMPLOYEE_NAME: entry.employee.fullName,
+          AMOUNT: entry.netSalary.toLocaleString(),
+          PROCESSING_DATE: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }),
+          PERIOD_TEXT: `${getMonthName(selectedRun.month)} ${selectedRun.year}`
         };
         
         console.log('Sending email to:', entry.employee.email, 'with params:', templateParams);
