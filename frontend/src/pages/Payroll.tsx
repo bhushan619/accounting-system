@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Trash2, Plus, X, Eye, Mail, Loader2, Edit } from 'lucide-react';
-import emailjs from '@emailjs/browser';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Trash2, Plus, X, Eye, Mail, Loader2, Edit } from "lucide-react";
+import emailjs from "@emailjs/browser";
 
 interface PayrollRun {
   _id: string;
@@ -69,9 +69,9 @@ interface EditEntry {
 }
 
 // EmailJS Configuration - User should update these with their own keys
-const EMAILJS_SERVICE_ID = 'service_velosync';
-const EMAILJS_TEMPLATE_ID = 'template_payroll';
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // User must replace this
+const EMAILJS_SERVICE_ID = "service_velosync";
+const EMAILJS_TEMPLATE_ID = "template_payroll";
+const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // User must replace this
 
 export default function Payroll() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
@@ -87,21 +87,21 @@ export default function Payroll() {
   const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
   const [editData, setEditData] = useState<EditEntry[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [pendingProcess, setPendingProcess] = useState<{id: string, totalAmount: number} | null>(null);
-  const [selectedBank, setSelectedBank] = useState('');
+  const [pendingProcess, setPendingProcess] = useState<{ id: string; totalAmount: number } | null>(null);
+  const [selectedBank, setSelectedBank] = useState("");
   const [previewData, setPreviewData] = useState<PayrollPreview[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [taxRates, setTaxRates] = useState<any>(null);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [emailConfig, setEmailConfig] = useState({
-    serviceId: "mSb2J3Gl_6XLrVKBV",
+    serviceId: "service_ForEmails",
     templateId: "template_vssalary",
-    publicKey: "mSb2J3Gl_6XLrVKBV"
+    publicKey: "mSb2J3Gl_6XLrVKBV",
   });
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
-    year: new Date().getFullYear()
+    year: new Date().getFullYear(),
   });
 
   useEffect(() => {
@@ -114,43 +114,43 @@ export default function Payroll() {
         axios.get(`${import.meta.env.VITE_API_URL}/payrollruns`),
         axios.get(`${import.meta.env.VITE_API_URL}/employees`),
         axios.get(`${import.meta.env.VITE_API_URL}/banks`),
-        axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`)
+        axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`),
       ]);
       setRuns(runsRes.data);
-      setEmployees(employeesRes.data.filter((e: Employee) => e.status === 'active'));
+      setEmployees(employeesRes.data.filter((e: Employee) => e.status === "active"));
       setBanks(banksRes.data);
-      
+
       // Extract tax rates from tax config
       const rates = {
         epfEmployee: 8,
         epfEmployer: 12,
         etf: 3,
-        stampFee: 25
+        stampFee: 25,
       };
-      
+
       taxRes.data.forEach((config: any) => {
-        if (config.taxType === 'epf_employee' && config.isActive) rates.epfEmployee = config.rate;
-        if (config.taxType === 'epf_employer' && config.isActive) rates.epfEmployer = config.rate;
-        if (config.taxType === 'etf' && config.isActive) rates.etf = config.rate;
-        if (config.taxType === 'stamp_fee' && config.isActive) rates.stampFee = config.rate;
+        if (config.taxType === "epf_employee" && config.isActive) rates.epfEmployee = config.rate;
+        if (config.taxType === "epf_employer" && config.isActive) rates.epfEmployer = config.rate;
+        if (config.taxType === "etf" && config.isActive) rates.etf = config.rate;
+        if (config.taxType === "stamp_fee" && config.isActive) rates.stampFee = config.rate;
       });
-      
+
       setTaxRates(rates);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error("Failed to load data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateAPIT = (grossSalary: number, scenario: string = 'employee'): number => {
+  const calculateAPIT = (grossSalary: number, scenario: string = "employee"): number => {
     const employeeSlabs = [
       { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
       { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
       { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
       { minIncome: 275001, maxIncome: 316667, rate: 24, standardDeduction: 53500 },
       { minIncome: 316668, maxIncome: 358333, rate: 30, standardDeduction: 72500 },
-      { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
+      { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 },
     ];
 
     const employerSlabs = [
@@ -159,12 +159,12 @@ export default function Payroll() {
       { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
       { minIncome: 262501, maxIncome: 294167, rate: 32.56, standardDeduction: 73000 },
       { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
-      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
+      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 },
     ];
 
-    const slabs = scenario === 'employee' ? employeeSlabs : employerSlabs;
+    const slabs = scenario === "employee" ? employeeSlabs : employerSlabs;
     let applicableSlab = slabs[0];
-    
+
     for (const slab of slabs) {
       if (grossSalary >= slab.minIncome) {
         if (slab.maxIncome === null || grossSalary <= slab.maxIncome) {
@@ -174,19 +174,19 @@ export default function Payroll() {
       }
     }
 
-    const apit = (grossSalary * applicableSlab.rate / 100) - applicableSlab.standardDeduction;
+    const apit = (grossSalary * applicableSlab.rate) / 100 - applicableSlab.standardDeduction;
     return Math.max(0, Math.round(apit * 100) / 100);
   };
 
   const recalculatePayroll = (
-    entry: PayrollPreview, 
-    newAllowances: number, 
+    entry: PayrollPreview,
+    newAllowances: number,
     newPerformanceBonus: number,
     newDeductionAmount: number = entry.deductionAmount,
-    newDeductionReason: string = entry.deductionReason
+    newDeductionReason: string = entry.deductionReason,
   ): PayrollPreview => {
     if (!taxRates) return entry;
-    
+
     const basicSalary = entry.basicSalary;
     const allowances = newAllowances;
     const performanceBonus = newPerformanceBonus;
@@ -194,20 +194,20 @@ export default function Payroll() {
     const deductionReason = newDeductionReason;
     const totalAllowances = allowances + performanceBonus;
     const grossSalary = basicSalary + totalAllowances;
-    
-    const epfEmployee = Math.round((basicSalary * taxRates.epfEmployee / 100) * 100) / 100;
-    const epfEmployer = Math.round((basicSalary * taxRates.epfEmployer / 100) * 100) / 100;
-    const etf = Math.round((basicSalary * taxRates.etf / 100) * 100) / 100;
+
+    const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
+    const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
+    const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
-    
-    const apit = calculateAPIT(grossSalary, entry.employee.apitScenario || 'employee');
-    
+
+    const apit = calculateAPIT(grossSalary, entry.employee.apitScenario || "employee");
+
     let deductions: number;
     let netSalary: number;
     let apitEmployer = 0;
     let ctc: number;
-    
-    if (entry.employee.apitScenario === 'employer') {
+
+    if (entry.employee.apitScenario === "employer") {
       deductions = epfEmployee + stampFee + deductionAmount;
       netSalary = grossSalary - deductions;
       apitEmployer = apit;
@@ -218,7 +218,7 @@ export default function Payroll() {
       apitEmployer = 0;
       ctc = grossSalary + epfEmployer + etf;
     }
-    
+
     return {
       ...entry,
       allowances,
@@ -234,7 +234,7 @@ export default function Payroll() {
       stampFee,
       totalDeductions: deductions,
       netSalary,
-      totalCTC: ctc
+      totalCTC: ctc,
     };
   };
 
@@ -242,11 +242,11 @@ export default function Payroll() {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
-      updatedPreview[index], 
-      numValue, 
+      updatedPreview[index],
+      numValue,
       updatedPreview[index].performanceBonus,
       updatedPreview[index].deductionAmount,
-      updatedPreview[index].deductionReason
+      updatedPreview[index].deductionReason,
     );
     setPreviewData(updatedPreview);
   };
@@ -255,11 +255,11 @@ export default function Payroll() {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
-      updatedPreview[index], 
-      updatedPreview[index].allowances, 
+      updatedPreview[index],
+      updatedPreview[index].allowances,
       numValue,
       updatedPreview[index].deductionAmount,
-      updatedPreview[index].deductionReason
+      updatedPreview[index].deductionReason,
     );
     setPreviewData(updatedPreview);
   };
@@ -268,11 +268,11 @@ export default function Payroll() {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
-      updatedPreview[index], 
-      updatedPreview[index].allowances, 
+      updatedPreview[index],
+      updatedPreview[index].allowances,
       updatedPreview[index].performanceBonus,
       numValue,
-      updatedPreview[index].deductionReason
+      updatedPreview[index].deductionReason,
     );
     setPreviewData(updatedPreview);
   };
@@ -281,7 +281,7 @@ export default function Payroll() {
     const updatedPreview = [...previewData];
     updatedPreview[index] = {
       ...updatedPreview[index],
-      deductionReason: value
+      deductionReason: value,
     };
     setPreviewData(updatedPreview);
   };
@@ -289,57 +289,57 @@ export default function Payroll() {
   const handlePreview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEmployees.length === 0) {
-      alert('Please select at least one employee');
+      alert("Please select at least one employee");
       return;
     }
-    
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/preview`, {
         ...formData,
-        employeeIds: selectedEmployees
+        employeeIds: selectedEmployees,
       });
       // Add performanceBonus and deduction fields to preview data (defaults to 0)
       const dataWithExtras = response.data.map((entry: PayrollPreview) => ({
         ...entry,
         performanceBonus: 0,
         deductionAmount: 0,
-        deductionReason: ''
+        deductionReason: "",
       }));
       setPreviewData(dataWithExtras);
       setShowPreview(true);
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to preview payroll');
+      alert(error.response?.data?.error || "Failed to preview payroll");
     }
   };
 
   const handleGenerate = async () => {
     try {
       // Send preview data with updated allowances and deductions
-      const employeeData = previewData.map(entry => ({
+      const employeeData = previewData.map((entry) => ({
         employeeId: entry.employee._id,
         allowances: entry.allowances + entry.performanceBonus,
         deductionAmount: entry.deductionAmount,
-        deductionReason: entry.deductionReason
+        deductionReason: entry.deductionReason,
       }));
-      
+
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
         ...formData,
         employeeIds: selectedEmployees,
-        employeeData
+        employeeData,
       });
       loadData();
       resetForm();
       setShowPreview(false);
       setPreviewData([]);
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to generate payroll run');
+      alert(error.response?.data?.error || "Failed to generate payroll run");
     }
   };
 
   const handleProcess = async (id: string) => {
-    const run = runs.find(r => r._id === id);
+    const run = runs.find((r) => r._id === id);
     if (!run) return;
-    
+
     // Show bank selection modal
     setPendingProcess({ id, totalAmount: run.totalNetSalary });
     setShowBankModal(true);
@@ -351,105 +351,101 @@ export default function Payroll() {
       setSelectedRun(response.data);
       setShowViewModal(true);
     } catch (error) {
-      console.error('Failed to load run details:', error);
-      alert('Failed to load payroll run details');
+      console.error("Failed to load run details:", error);
+      alert("Failed to load payroll run details");
     }
   };
 
   const confirmProcess = async () => {
     if (!selectedBank || !pendingProcess) return;
-    
+
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${pendingProcess.id}/process`, {
-        bankId: selectedBank
+        bankId: selectedBank,
       });
       setShowBankModal(false);
-      
+
       // After successful processing, ask if user wants to send emails
       const runDetails = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${pendingProcess.id}`);
       setSelectedRun(runDetails.data);
       setPendingProcess(null);
-      setSelectedBank('');
+      setSelectedBank("");
       setShowEmailModal(true);
-      
+
       loadData();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to process payroll');
+      alert(error.response?.data?.error || "Failed to process payroll");
     }
   };
 
   const sendPayrollEmails = async () => {
     if (!selectedRun || !selectedRun.payrollEntries) return;
-    
-    if (emailConfig.publicKey === 'YOUR_PUBLIC_KEY') {
-      alert('Please configure your EmailJS public key first. Go to https://www.emailjs.com to get your credentials.');
+
+    if (emailConfig.publicKey === "YOUR_PUBLIC_KEY") {
+      alert("Please configure your EmailJS public key first. Go to https://www.emailjs.com to get your credentials.");
       return;
     }
-    
+
     setSendingEmails(true);
     let successCount = 0;
     let failCount = 0;
-    
+
     try {
-      console.log('Initializing EmailJS with config:', {
+      console.log("Initializing EmailJS with config:", {
         serviceId: emailConfig.serviceId,
         templateId: emailConfig.templateId,
-        publicKey: emailConfig.publicKey ? '***configured***' : 'missing'
+        publicKey: emailConfig.publicKey ? "***configured***" : "missing",
       });
-      
+
       emailjs.init(emailConfig.publicKey);
-      
+
       for (const entry of selectedRun.payrollEntries as any[]) {
         if (!entry.employee?.email) {
-          console.warn('Skipping entry - no employee email:', entry);
+          console.warn("Skipping entry - no employee email:", entry);
           failCount++;
           continue;
         }
-        
+
         const templateParams = {
           to_email: entry.employee.email,
           EMPLOYEE_NAME: entry.employee.fullName,
           AMOUNT: entry.netSalary.toLocaleString(),
-          PROCESSING_DATE: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }),
-          PERIOD_TEXT: `${getMonthName(selectedRun.month)} ${selectedRun.year}`
+          PROCESSING_DATE: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
+          PERIOD_TEXT: `${getMonthName(selectedRun.month)} ${selectedRun.year}`,
         };
-        
-        console.log('Sending email to:', entry.employee.email, 'with params:', templateParams);
-        
+
+        console.log("Sending email to:", entry.employee.email, "with params:", templateParams);
+
         try {
-          const response = await emailjs.send(
-            emailConfig.serviceId,
-            emailConfig.templateId,
-            templateParams
-          );
-          console.log('Email sent successfully:', response);
+          const response = await emailjs.send(emailConfig.serviceId, emailConfig.templateId, templateParams);
+          console.log("Email sent successfully:", response);
           successCount++;
         } catch (emailError: any) {
           console.error(`Failed to send email to ${entry.employee.email}:`, emailError);
-          console.error('Error details:', emailError.text || emailError.message || emailError);
+          console.error("Error details:", emailError.text || emailError.message || emailError);
           failCount++;
         }
       }
-      
+
       alert(`Emails sent: ${successCount} successful, ${failCount} failed`);
       setShowEmailModal(false);
       setSelectedRun(null);
     } catch (error: any) {
-      console.error('Email sending error:', error);
-      console.error('Error details:', error.text || error.message || error);
-      alert(`Failed to send emails: ${error.text || error.message || 'Check console for details'}`);
+      console.error("Email sending error:", error);
+      console.error("Error details:", error.text || error.message || error);
+      alert(`Failed to send emails: ${error.text || error.message || "Check console for details"}`);
     } finally {
       setSendingEmails(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this payroll run and all associated entries?')) return;
+    if (!confirm("Delete this payroll run and all associated entries?")) return;
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
       loadData();
     } catch (error) {
-      console.error('Failed to delete:', error);
+      console.error("Failed to delete:", error);
     }
   };
 
@@ -457,60 +453,62 @@ export default function Payroll() {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
       const run = response.data;
-      
-      if (run.status !== 'draft') {
-        alert('Can only edit draft payroll runs');
+
+      if (run.status !== "draft") {
+        alert("Can only edit draft payroll runs");
         return;
       }
-      
+
       setSelectedRun(run);
-      setEditData(run.payrollEntries.map((entry: any) => ({
-        _id: entry._id,
-        serialNumber: entry.serialNumber,
-        employee: entry.employee,
-        basicSalary: entry.basicSalary,
-        allowances: entry.allowances,
-        deductionAmount: entry.deductionAmount || 0,
-        deductionReason: entry.deductionReason || '',
-        grossSalary: entry.grossSalary,
-        epfEmployee: entry.epfEmployee,
-        epfEmployer: entry.epfEmployer,
-        etf: entry.etf,
-        apit: entry.apit || 0,
-        apitEmployer: entry.apitEmployer || 0,
-        stampFee: entry.stampFee,
-        totalDeductions: entry.totalDeductions,
-        netSalary: entry.netSalary,
-        totalCTC: entry.totalCTC
-      })));
+      setEditData(
+        run.payrollEntries.map((entry: any) => ({
+          _id: entry._id,
+          serialNumber: entry.serialNumber,
+          employee: entry.employee,
+          basicSalary: entry.basicSalary,
+          allowances: entry.allowances,
+          deductionAmount: entry.deductionAmount || 0,
+          deductionReason: entry.deductionReason || "",
+          grossSalary: entry.grossSalary,
+          epfEmployee: entry.epfEmployee,
+          epfEmployer: entry.epfEmployer,
+          etf: entry.etf,
+          apit: entry.apit || 0,
+          apitEmployer: entry.apitEmployer || 0,
+          stampFee: entry.stampFee,
+          totalDeductions: entry.totalDeductions,
+          netSalary: entry.netSalary,
+          totalCTC: entry.totalCTC,
+        })),
+      );
       setShowEditModal(true);
     } catch (error) {
-      console.error('Failed to load payroll for editing:', error);
-      alert('Failed to load payroll run details');
+      console.error("Failed to load payroll for editing:", error);
+      alert("Failed to load payroll run details");
     }
   };
 
   const recalculateEditEntry = (entry: EditEntry, newAllowances: number, newDeductionAmount: number): EditEntry => {
     if (!taxRates) return entry;
-    
+
     const basicSalary = entry.basicSalary;
     const allowances = newAllowances;
     const deductionAmount = newDeductionAmount;
     const grossSalary = basicSalary + allowances;
-    
-    const epfEmployee = Math.round((basicSalary * taxRates.epfEmployee / 100) * 100) / 100;
-    const epfEmployer = Math.round((basicSalary * taxRates.epfEmployer / 100) * 100) / 100;
-    const etf = Math.round((basicSalary * taxRates.etf / 100) * 100) / 100;
+
+    const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
+    const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
+    const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
-    
-    const apit = calculateAPIT(grossSalary, entry.employee?.apitScenario || 'employee');
-    
+
+    const apit = calculateAPIT(grossSalary, entry.employee?.apitScenario || "employee");
+
     let deductions: number;
     let netSalary: number;
     let apitEmployer = 0;
     let ctc: number;
-    
-    if (entry.employee?.apitScenario === 'employer') {
+
+    if (entry.employee?.apitScenario === "employer") {
       deductions = epfEmployee + stampFee + deductionAmount;
       netSalary = grossSalary - deductions;
       apitEmployer = apit;
@@ -521,7 +519,7 @@ export default function Payroll() {
       apitEmployer = 0;
       ctc = grossSalary + epfEmployer + etf;
     }
-    
+
     return {
       ...entry,
       allowances,
@@ -535,7 +533,7 @@ export default function Payroll() {
       stampFee,
       totalDeductions: deductions,
       netSalary,
-      totalCTC: ctc
+      totalCTC: ctc,
     };
   };
 
@@ -561,43 +559,42 @@ export default function Payroll() {
 
   const handleSaveEdit = async () => {
     if (!selectedRun) return;
-    
+
     setSavingEdit(true);
     try {
-      const entries = editData.map(entry => ({
+      const entries = editData.map((entry) => ({
         _id: entry._id,
         allowances: entry.allowances,
         deductionAmount: entry.deductionAmount,
-        deductionReason: entry.deductionReason
+        deductionReason: entry.deductionReason,
       }));
-      
+
       await axios.put(`${import.meta.env.VITE_API_URL}/payrollruns/${selectedRun._id}/entries`, { entries });
-      
+
       setShowEditModal(false);
       setSelectedRun(null);
       setEditData([]);
       loadData();
-      alert('Payroll run updated successfully');
+      alert("Payroll run updated successfully");
     } catch (error: any) {
-      console.error('Failed to save edit:', error);
-      alert(error.response?.data?.error || 'Failed to save changes');
+      console.error("Failed to save edit:", error);
+      alert(error.response?.data?.error || "Failed to save changes");
     } finally {
       setSavingEdit(false);
     }
   };
 
   const toggleEmployee = (id: string) => {
-    setSelectedEmployees(prev =>
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
+    setSelectedEmployees((prev) => (prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]));
   };
 
   const selectAll = () => {
-    const filtered = employees.filter(emp => 
-      emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = employees.filter(
+      (emp) =>
+        emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-    setSelectedEmployees(filtered.map(e => e._id));
+    setSelectedEmployees(filtered.map((e) => e._id));
   };
 
   const deselectAll = () => {
@@ -607,31 +604,36 @@ export default function Payroll() {
   const resetForm = () => {
     setFormData({
       month: new Date().getMonth() + 1,
-      year: new Date().getFullYear()
+      year: new Date().getFullYear(),
     });
     setSelectedEmployees([]);
-    setSearchQuery('');
+    setSearchQuery("");
     setShowModal(false);
     setShowPreview(false);
     setPreviewData([]);
   };
 
   const getMonthName = (month: number) => {
-    return new Date(2000, month - 1).toLocaleString('default', { month: 'long' });
+    return new Date(2000, month - 1).toLocaleString("default", { month: "long" });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'paid': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "paid":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEmployees = employees.filter(
+    (emp) =>
+      emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (loading) return <div className="text-center py-8">Loading...</div>;
@@ -686,12 +688,8 @@ export default function Payroll() {
                       {getMonthName(run.month)} {run.year}
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">{run.totalEmployees}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      Rs. {run.totalGrossSalary.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-destructive">
-                      Rs. {run.totalDeductions.toLocaleString()}
-                    </td>
+                    <td className="px-6 py-4 text-sm text-foreground">Rs. {run.totalGrossSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-destructive">Rs. {run.totalDeductions.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-foreground">
                       Rs. {run.totalNetSalary.toLocaleString()}
                     </td>
@@ -709,7 +707,7 @@ export default function Payroll() {
                           <Eye size={14} />
                           View
                         </button>
-                        {run.status === 'draft' && (
+                        {run.status === "draft" && (
                           <button
                             onClick={() => handleEditPayroll(run._id)}
                             className="px-3 py-1 text-xs bg-amber-500 text-white rounded hover:bg-amber-600 flex items-center gap-1"
@@ -718,7 +716,7 @@ export default function Payroll() {
                             Edit
                           </button>
                         )}
-                        {run.status === 'paid' && (
+                        {run.status === "paid" && (
                           <button
                             onClick={async () => {
                               const res = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${run._id}`);
@@ -731,7 +729,7 @@ export default function Payroll() {
                             Email
                           </button>
                         )}
-                        {(run.status === 'draft' || run.status === 'completed') && (
+                        {(run.status === "draft" || run.status === "completed") && (
                           <button
                             onClick={() => handleProcess(run._id)}
                             className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
@@ -776,7 +774,9 @@ export default function Payroll() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     {[...Array(12)].map((_, i) => (
-                      <option key={i} value={i + 1}>{getMonthName(i + 1)}</option>
+                      <option key={i} value={i + 1}>
+                        {getMonthName(i + 1)}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -799,11 +799,7 @@ export default function Payroll() {
                     Select Employees ({selectedEmployees.length} selected)
                   </label>
                   <div className="space-x-2">
-                    <button
-                      type="button"
-                      onClick={selectAll}
-                      className="text-xs text-primary hover:underline"
-                    >
+                    <button type="button" onClick={selectAll} className="text-xs text-primary hover:underline">
                       Select All
                     </button>
                     <button
@@ -826,15 +822,10 @@ export default function Payroll() {
 
                 <div className="border border-border rounded-lg max-h-64 overflow-y-auto">
                   {filteredEmployees.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-muted-foreground">
-                      No employees found
-                    </div>
+                    <div className="px-4 py-8 text-center text-muted-foreground">No employees found</div>
                   ) : (
                     filteredEmployees.map((emp) => (
-                      <label
-                        key={emp._id}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-accent cursor-pointer"
-                      >
+                      <label key={emp._id} className="flex items-center gap-3 px-4 py-2 hover:bg-accent cursor-pointer">
                         <input
                           type="checkbox"
                           checked={selectedEmployees.includes(emp._id)}
@@ -844,9 +835,7 @@ export default function Payroll() {
                         <span className="text-sm text-foreground flex-1">
                           {emp.employeeId} - {emp.fullName}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          Rs. {emp.basicSalary.toLocaleString()}
-                        </span>
+                        <span className="text-xs text-muted-foreground">Rs. {emp.basicSalary.toLocaleString()}</span>
                       </label>
                     ))
                   )}
@@ -898,8 +887,12 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-orange-50">Deduction</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-orange-50">Reason</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-orange-50">
+                      Deduction
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-orange-50">
+                      Reason
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Total Ded.</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(ER)</th>
@@ -933,11 +926,11 @@ export default function Payroll() {
                           step="0.01"
                         />
                       </td>
-                      <td className="px-3 py-2 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-destructive">
-                        {(entry.apit || 0).toLocaleString()}
+                      <td className="px-3 py-2 text-right font-medium text-foreground">
+                        {entry.grossSalary.toLocaleString()}
                       </td>
+                      <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right bg-orange-50/50">
                         <input
@@ -959,12 +952,18 @@ export default function Payroll() {
                           placeholder="Reason..."
                         />
                       </td>
-                      <td className="px-3 py-2 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-medium text-destructive">
+                        {entry.totalDeductions.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-primary">
+                        {entry.netSalary.toLocaleString()}
+                      </td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-foreground">
+                        {entry.totalCTC.toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -987,9 +986,7 @@ export default function Payroll() {
                       {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
-                      {previewData
-                        .reduce((sum, e) => sum + (e.apit || 0), 0)
-                        .toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}
@@ -1071,7 +1068,7 @@ export default function Payroll() {
                   onClick={() => {
                     setShowBankModal(false);
                     setPendingProcess(null);
-                    setSelectedBank('');
+                    setSelectedBank("");
                   }}
                   className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
                 >
@@ -1096,59 +1093,61 @@ export default function Payroll() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-lg p-6 border border-border">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">Send Payroll Notifications</h2>
-              <button 
+              <button
                 onClick={() => {
                   setShowEmailModal(false);
                   setSelectedRun(null);
-                }} 
+                }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>EmailJS Setup Required:</strong> To send emails, you need to configure EmailJS. 
-                  Visit <a href="https://www.emailjs.com" target="_blank" rel="noopener noreferrer" className="underline">emailjs.com</a> to 
-                  create a free account and get your credentials.
+                  <strong>EmailJS Setup Required:</strong> To send emails, you need to configure EmailJS. Visit{" "}
+                  <a href="https://www.emailjs.com" target="_blank" rel="noopener noreferrer" className="underline">
+                    emailjs.com
+                  </a>{" "}
+                  to create a free account and get your credentials.
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1 text-foreground">Service ID</label>
                 <input
                   type="text"
                   value={emailConfig.serviceId}
-                  onChange={(e) => setEmailConfig({...emailConfig, serviceId: e.target.value})}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, serviceId: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   placeholder="service_xxxxx"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1 text-foreground">Template ID</label>
                 <input
                   type="text"
                   value={emailConfig.templateId}
-                  onChange={(e) => setEmailConfig({...emailConfig, templateId: e.target.value})}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, templateId: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   placeholder="template_xxxxx"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1 text-foreground">Public Key</label>
                 <input
                   type="text"
                   value={emailConfig.publicKey}
-                  onChange={(e) => setEmailConfig({...emailConfig, publicKey: e.target.value})}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, publicKey: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   placeholder="Your EmailJS public key"
                 />
               </div>
-              
+
               <div className="bg-muted rounded-lg p-4">
                 <p className="text-sm text-muted-foreground mb-2">
                   <strong>Run:</strong> {selectedRun.runNumber} • {getMonthName(selectedRun.month)} {selectedRun.year}
@@ -1157,7 +1156,7 @@ export default function Payroll() {
                   <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email notifications
                 </p>
               </div>
-              
+
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => {
@@ -1170,7 +1169,7 @@ export default function Payroll() {
                 </button>
                 <button
                   onClick={sendPayrollEmails}
-                  disabled={sendingEmails || emailConfig.publicKey === 'YOUR_PUBLIC_KEY'}
+                  disabled={sendingEmails || emailConfig.publicKey === "YOUR_PUBLIC_KEY"}
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {sendingEmails ? (
@@ -1201,7 +1200,10 @@ export default function Payroll() {
                   Payroll Run Details - {selectedRun.runNumber}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {getMonthName(selectedRun.month)} {selectedRun.year} • Status: <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(selectedRun.status)}`}>{selectedRun.status}</span>
+                  {getMonthName(selectedRun.month)} {selectedRun.year} • Status:{" "}
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(selectedRun.status)}`}>
+                    {selectedRun.status}
+                  </span>
                 </p>
               </div>
               <button
@@ -1223,11 +1225,15 @@ export default function Payroll() {
               </div>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Total Gross Salary</p>
-                <p className="text-2xl font-bold text-foreground">Rs. {selectedRun.totalGrossSalary.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  Rs. {selectedRun.totalGrossSalary.toLocaleString()}
+                </p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Total Deductions</p>
-                <p className="text-2xl font-bold text-destructive">Rs. {selectedRun.totalDeductions.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-destructive">
+                  Rs. {selectedRun.totalDeductions.toLocaleString()}
+                </p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Total Net Salary</p>
@@ -1244,21 +1250,47 @@ export default function Payroll() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Serial</th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Basic</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Allowances</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Gross</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (E)</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Serial
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Employee
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Basic
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Allowances
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Gross
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        EPF (E)
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Stamp</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Other Ded.</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Deductions</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Net Salary</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (ER)</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Stamp
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Other Ded.
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Deductions
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Net Salary
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        EPF (ER)
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">ETF</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT (ER)</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Total CTC</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        APIT (ER)
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Total CTC
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -1268,27 +1300,39 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-foreground">{entry.serialNumber}</td>
                           <td className="px-3 py-3 text-foreground">
                             <div>
-                              <p className="font-medium">{entry.employee?.fullName || 'N/A'}</p>
-                              <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ''}</p>
+                              <p className="font-medium">{entry.employee?.fullName || "N/A"}</p>
+                              <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ""}</p>
                             </div>
                           </td>
                           <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-medium text-foreground">
+                            {entry.grossSalary.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-3 text-right text-destructive">
+                            {entry.epfEmployee.toLocaleString()}
+                          </td>
                           <td className="px-3 py-3 text-right text-destructive">
                             {(entry.apit || 0).toLocaleString()}
                           </td>
                           <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-orange-600" title={entry.deductionReason || 'N/A'}>
+                          <td className="px-3 py-3 text-right text-orange-600" title={entry.deductionReason || "N/A"}>
                             {(entry.deductionAmount || 0).toLocaleString()}
                           </td>
-                          <td className="px-3 py-3 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right font-medium text-destructive">
+                            {entry.totalDeductions.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-3 text-right font-semibold text-primary">
+                            {entry.netSalary.toLocaleString()}
+                          </td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right font-semibold text-foreground">{entry.totalCTC.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-orange-600">
+                            {entry.apitEmployer.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-3 text-right font-semibold text-foreground">
+                            {entry.totalCTC.toLocaleString()}
+                          </td>
                         </tr>
                       ))
                     ) : (
@@ -1302,50 +1346,71 @@ export default function Payroll() {
                   {selectedRun.payrollEntries && selectedRun.payrollEntries.length > 0 && (
                     <tfoot className="bg-muted font-semibold">
                       <tr>
-                        <td colSpan={2} className="px-3 py-3 text-foreground">Total</td>
-                        <td className="px-3 py-3 text-right text-foreground">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.basicSalary, 0).toLocaleString()}
+                        <td colSpan={2} className="px-3 py-3 text-foreground">
+                          Total
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.allowances, 0).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-3 text-right text-foreground">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.grossSalary, 0).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-3 text-right text-destructive">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.epfEmployee, 0).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-3 text-right text-destructive">
                           {selectedRun.payrollEntries
-                            .reduce(
-                              (sum: number, e: any) => sum + (e.apit || 0),
-                              0
-                            )
+                            .reduce((sum: number, e: any) => sum + e.basicSalary, 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.allowances, 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.grossSalary, 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-destructive">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.stampFee, 0).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + (e.deductionAmount || 0), 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.epfEmployee, 0)
+                            .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-destructive">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalDeductions, 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + (e.apit || 0), 0)
+                            .toLocaleString()}
                         </td>
-                        <td className="px-3 py-3 text-right text-primary">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.netSalary, 0).toLocaleString()}
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.stampFee, 0)
+                            .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.epfEmployer, 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + (e.deductionAmount || 0), 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-destructive">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.totalDeductions, 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-primary">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.netSalary, 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-orange-600">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.epfEmployer, 0)
+                            .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-orange-600">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.etf, 0).toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.apitEmployer, 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.apitEmployer, 0)
+                            .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
-                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.totalCTC, 0).toLocaleString()}
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.totalCTC, 0)
+                            .toLocaleString()}
                         </td>
                       </tr>
                     </tfoot>
@@ -1375,9 +1440,7 @@ export default function Payroll() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-8xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-semibold text-foreground">
-                  Edit Payroll Run - {selectedRun.runNumber}
-                </h2>
+                <h2 className="text-2xl font-semibold text-foreground">Edit Payroll Run - {selectedRun.runNumber}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   {getMonthName(selectedRun.month)} {selectedRun.year} • Edit allowances and deductions
                 </p>
@@ -1399,17 +1462,37 @@ export default function Payroll() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Basic</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Allowances</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Gross</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">EPF (E)</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Employee
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Basic
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Allowances
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Gross
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        EPF (E)
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">APIT</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Stamp</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-orange-50">Deduction</th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase bg-orange-50">Reason</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Total Ded.</th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Net Salary</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Stamp
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-orange-50">
+                        Deduction
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase bg-orange-50">
+                        Reason
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Total Ded.
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Net Salary
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -1417,8 +1500,8 @@ export default function Payroll() {
                       <tr key={entry._id} className="hover:bg-accent/50">
                         <td className="px-3 py-3 text-foreground">
                           <div>
-                            <p className="font-medium">{entry.employee?.fullName || 'N/A'}</p>
-                            <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ''}</p>
+                            <p className="font-medium">{entry.employee?.fullName || "N/A"}</p>
+                            <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ""}</p>
                           </div>
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
@@ -1432,7 +1515,9 @@ export default function Payroll() {
                             step="0.01"
                           />
                         </td>
-                        <td className="px-3 py-3 text-right font-medium text-foreground">{entry.grossSalary.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right font-medium text-foreground">
+                          {entry.grossSalary.toLocaleString()}
+                        </td>
                         <td className="px-3 py-3 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                         <td className="px-3 py-3 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
                         <td className="px-3 py-3 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
@@ -1455,8 +1540,12 @@ export default function Payroll() {
                             placeholder="Reason..."
                           />
                         </td>
-                        <td className="px-3 py-3 text-right font-medium text-destructive">{entry.totalDeductions.toLocaleString()}</td>
-                        <td className="px-3 py-3 text-right font-semibold text-primary">{entry.netSalary.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right font-medium text-destructive">
+                          {entry.totalDeductions.toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right font-semibold text-primary">
+                          {entry.netSalary.toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1519,7 +1608,7 @@ export default function Payroll() {
                     Saving...
                   </>
                 ) : (
-                  'Save Changes'
+                  "Save Changes"
                 )}
               </button>
             </div>
