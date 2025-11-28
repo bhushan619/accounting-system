@@ -563,7 +563,7 @@ export default function Payroll() {
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-7xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">
                 Payroll Preview - {getMonthName(formData.month)} {formData.year}
