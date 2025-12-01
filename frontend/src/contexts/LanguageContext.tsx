@@ -189,19 +189,6 @@ const defaultTranslations: Record<Language, Translations> = {
     // Vendors
     'vendors.taxId': 'Tax ID',
     
-    // Reports
-    'reports.title': 'Financial Reports',
-    'reports.overview': 'Overview',
-    'reports.profitLoss': 'Profit & Loss',
-    'reports.report': 'Report',
-    'reports.expenseBreakdown': 'Expense Breakdown',
-    'reports.generate': 'Generate',
-    
-    // Tax Reports
-    'taxReports.title': 'Tax Reports (IRD)',
-    'taxReports.generateReport': 'Generate Report',
-    'taxReports.dateRange': 'Date Range',
-    
     // Translations
     'translations.title': 'Translation Management',
     'translations.key': 'Key',
@@ -506,19 +493,6 @@ const defaultTranslations: Record<Language, Translations> = {
     
     // Vendors
     'vendors.taxId': '税号',
-    
-    // Reports
-    'reports.title': '财务报告',
-    'reports.overview': '概览',
-    'reports.profitLoss': '损益表',
-    'reports.report': '报告',
-    'reports.expenseBreakdown': '费用明细',
-    'reports.generate': '生成',
-    
-    // Tax Reports
-    'taxReports.title': '税务报告',
-    'taxReports.generateReport': '生成报告',
-    'taxReports.dateRange': '日期范围',
     
     // Translations
     'translations.title': '翻译管理',
