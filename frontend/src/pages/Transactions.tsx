@@ -188,14 +188,14 @@ export default function Transactions() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
         <Wallet className="text-primary" />
-        Transactions
+        {t('transactions')}
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total Income</p>
+              <p className="text-sm text-muted-foreground">{t('totalIncome')}</p>
               <p className="text-2xl font-bold text-green-600">
                 Rs. {totalIncome.toLocaleString()}
               </p>
@@ -207,7 +207,7 @@ export default function Transactions() {
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total Expenses</p>
+              <p className="text-sm text-muted-foreground">{t('totalExpenses')}</p>
               <p className="text-2xl font-bold text-red-600">
                 Rs. {totalExpense.toLocaleString()}
               </p>
@@ -219,7 +219,7 @@ export default function Transactions() {
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total Payroll</p>
+              <p className="text-sm text-muted-foreground">{t('totalPayroll')}</p>
               <p className="text-2xl font-bold text-red-600">
                 Rs. {totalPayroll.toLocaleString()}
               </p>
@@ -231,7 +231,7 @@ export default function Transactions() {
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Net Balance</p>
+              <p className="text-sm text-muted-foreground">{t('netBalance')}</p>
               <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 Rs. {balance.toLocaleString()}
               </p>
@@ -251,7 +251,7 @@ export default function Transactions() {
               }`}
             >
               <Wallet className="inline mr-2" size={16} />
-              All Transactions
+              {t('allTransactions')}
             </button>
             <button
               onClick={() => setActiveTab('bank')}
@@ -260,7 +260,7 @@ export default function Transactions() {
               }`}
             >
               <Landmark className="inline mr-2" size={16} />
-              Bank Transactions
+              {t('bankTransactions')}
             </button>
           </div>
 
@@ -272,7 +272,7 @@ export default function Transactions() {
                   filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
                 }`}
               >
-                All
+                {t('all')}
               </button>
               <button
                 onClick={() => setFilter('income')}
@@ -280,7 +280,7 @@ export default function Transactions() {
                   filter === 'income' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
                 }`}
               >
-                Income
+                {t('income')}
               </button>
               <button
                 onClick={() => setFilter('expense')}
@@ -288,7 +288,7 @@ export default function Transactions() {
                   filter === 'expense' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
                 }`}
               >
-                Expenses
+                {t('expenses')}
               </button>
               <button
                 onClick={() => setFilter('payroll')}
@@ -296,7 +296,7 @@ export default function Transactions() {
                   filter === 'payroll' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
                 }`}
               >
-                Payroll
+                {t('payroll')}
               </button>
             </div>
           )}
@@ -307,12 +307,12 @@ export default function Transactions() {
             <table className="w-full">
               <thead className="bg-muted">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Reference</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('reference')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -326,11 +326,11 @@ export default function Transactions() {
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'income' ? (
-                          <><ArrowUpRight size={16} /> Income</>
+                          <><ArrowUpRight size={16} /> {t('income')}</>
                         ) : transaction.type === 'payroll' ? (
-                          <><ArrowDownRight size={16} /> Payroll</>
+                          <><ArrowDownRight size={16} /> {t('payroll')}</>
                         ) : (
-                          <><ArrowDownRight size={16} /> Expense</>
+                          <><ArrowDownRight size={16} /> {t('expense')}</>
                         )}
                       </span>
                     </td>
@@ -350,13 +350,13 @@ export default function Transactions() {
             <table className="w-full">
               <thead className="bg-muted">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Bank Account</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Reference</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('bankAccount')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('reference')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -379,9 +379,9 @@ export default function Transactions() {
                         transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'credit' ? (
-                          <><ArrowUpRight size={16} /> Credit</>
+                          <><ArrowUpRight size={16} /> {t('credit')}</>
                         ) : (
-                          <><ArrowDownRight size={16} /> Debit</>
+                          <><ArrowDownRight size={16} /> {t('debit')}</>
                         )}
                       </span>
                     </td>
