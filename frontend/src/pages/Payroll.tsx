@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Trash2, Plus, X, Eye, Mail, Loader2, Edit } from "lucide-react";
+import { Trash2, Plus, X, Eye, Mail, Loader2, Edit, Upload, Download, FileSpreadsheet } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import * as XLSX from "xlsx";
 import { useLanguage } from "../contexts/LanguageContext";
 
 interface PayrollRun {
@@ -30,6 +31,13 @@ interface Employee {
   status: string;
 }
 
+interface AttendanceData {
+  employeeId: string;
+  workingDays: number;
+  attendedDays: number;
+  absentDays: number;
+}
+
 interface PayrollPreview {
   employee: Employee;
   basicSalary: number;
@@ -37,6 +45,9 @@ interface PayrollPreview {
   performanceBonus: number;
   deductionAmount: number;
   deductionReason: string;
+  attendedDays: number;
+  absentDays: number;
+  attendanceDeduction: number;
   grossSalary: number;
   epfEmployee: number;
   epfEmployer: number;
@@ -106,6 +117,9 @@ export default function Payroll() {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
+  const [attendanceFile, setAttendanceFile] = useState<File | null>(null);
+  const [workingDaysInMonth, setWorkingDaysInMonth] = useState(22);
 
   useEffect(() => {
     loadData();
@@ -181,12 +195,79 @@ export default function Payroll() {
     return Math.max(0, Math.round(apit * 100) / 100);
   };
 
+  const downloadAttendanceTemplate = () => {
+    // Create sample data with all active employees
+    const templateData = employees.map((emp) => ({
+      "Employee ID": emp.employeeId,
+      "Employee Name": emp.fullName,
+      "Working Days": workingDaysInMonth,
+      "Attended Days": workingDaysInMonth,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    
+    const fileName = `Attendance_Template_${getMonthName(formData.month)}_${formData.year}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  const handleAttendanceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAttendanceFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const parsedAttendance: AttendanceData[] = jsonData.map((row: any) => {
+          const workingDays = Number(row["Working Days"]) || workingDaysInMonth;
+          const attendedDays = Number(row["Attended Days"]) || 0;
+          return {
+            employeeId: String(row["Employee ID"] || ""),
+            workingDays,
+            attendedDays,
+            absentDays: Math.max(0, workingDays - attendedDays),
+          };
+        });
+
+        setAttendanceData(parsedAttendance);
+      } catch (error) {
+        console.error("Failed to parse attendance file:", error);
+        alert("Failed to parse the attendance file. Please ensure it follows the template format.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const getAttendanceForEmployee = (employeeId: string): AttendanceData | undefined => {
+    return attendanceData.find((a) => a.employeeId === employeeId);
+  };
+
   const recalculatePayroll = (
     entry: PayrollPreview,
     newAllowances: number,
     newPerformanceBonus: number,
     newDeductionAmount: number = entry.deductionAmount,
     newDeductionReason: string = entry.deductionReason,
+    newAttendedDays: number = entry.attendedDays,
+    newAbsentDays: number = entry.absentDays,
   ): PayrollPreview => {
     if (!taxRates) return entry;
 
@@ -195,6 +276,13 @@ export default function Payroll() {
     const performanceBonus = newPerformanceBonus;
     const deductionAmount = newDeductionAmount;
     const deductionReason = newDeductionReason;
+    const attendedDays = newAttendedDays;
+    const absentDays = newAbsentDays;
+    
+    // Calculate attendance deduction (per day salary × absent days)
+    const perDaySalary = basicSalary / workingDaysInMonth;
+    const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
+    
     const totalAllowances = allowances + performanceBonus;
     const grossSalary = basicSalary + totalAllowances;
 
@@ -210,13 +298,16 @@ export default function Payroll() {
     let apitEmployer = 0;
     let ctc: number;
 
+    // Include attendance deduction in total deductions
+    const totalOtherDeductions = deductionAmount + attendanceDeduction;
+
     if (entry.employee.apitScenario === "employer") {
-      deductions = epfEmployee + stampFee + deductionAmount;
+      deductions = epfEmployee + stampFee + totalOtherDeductions;
       netSalary = grossSalary - deductions;
       apitEmployer = apit;
       ctc = grossSalary + epfEmployer + etf + apitEmployer;
     } else {
-      deductions = epfEmployee + apit + stampFee + deductionAmount;
+      deductions = epfEmployee + apit + stampFee + totalOtherDeductions;
       netSalary = grossSalary - deductions;
       apitEmployer = 0;
       ctc = grossSalary + epfEmployer + etf;
@@ -228,6 +319,9 @@ export default function Payroll() {
       performanceBonus,
       deductionAmount,
       deductionReason,
+      attendedDays,
+      absentDays,
+      attendanceDeduction,
       grossSalary,
       epfEmployee,
       epfEmployer,
@@ -250,6 +344,8 @@ export default function Payroll() {
       updatedPreview[index].performanceBonus,
       updatedPreview[index].deductionAmount,
       updatedPreview[index].deductionReason,
+      updatedPreview[index].attendedDays,
+      updatedPreview[index].absentDays,
     );
     setPreviewData(updatedPreview);
   };
@@ -263,6 +359,8 @@ export default function Payroll() {
       numValue,
       updatedPreview[index].deductionAmount,
       updatedPreview[index].deductionReason,
+      updatedPreview[index].attendedDays,
+      updatedPreview[index].absentDays,
     );
     setPreviewData(updatedPreview);
   };
@@ -276,6 +374,8 @@ export default function Payroll() {
       updatedPreview[index].performanceBonus,
       numValue,
       updatedPreview[index].deductionReason,
+      updatedPreview[index].attendedDays,
+      updatedPreview[index].absentDays,
     );
     setPreviewData(updatedPreview);
   };
@@ -296,19 +396,41 @@ export default function Payroll() {
       return;
     }
 
+    if (attendanceData.length === 0) {
+      alert("Please upload an attendance file before proceeding");
+      return;
+    }
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/preview`, {
         ...formData,
         employeeIds: selectedEmployees,
       });
-      // Add performanceBonus and deduction fields to preview data (defaults to 0)
-      const dataWithExtras = response.data.map((entry: PayrollPreview) => ({
-        ...entry,
-        performanceBonus: 0,
-        deductionAmount: 0,
-        deductionReason: "",
-      }));
-      setPreviewData(dataWithExtras);
+      // Add performanceBonus, deduction fields and attendance to preview data
+      const dataWithExtras = response.data.map((entry: PayrollPreview) => {
+        const attendance = getAttendanceForEmployee(entry.employee.employeeId);
+        const attendedDays = attendance?.attendedDays ?? workingDaysInMonth;
+        const absentDays = attendance?.absentDays ?? 0;
+        const perDaySalary = entry.basicSalary / workingDaysInMonth;
+        const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
+        
+        return {
+          ...entry,
+          performanceBonus: 0,
+          deductionAmount: 0,
+          deductionReason: "",
+          attendedDays,
+          absentDays,
+          attendanceDeduction,
+        };
+      });
+      
+      // Recalculate with attendance deductions
+      const recalculatedData = dataWithExtras.map((entry: PayrollPreview) => 
+        recalculatePayroll(entry, entry.allowances, entry.performanceBonus, entry.deductionAmount, entry.deductionReason, entry.attendedDays, entry.absentDays)
+      );
+      
+      setPreviewData(recalculatedData);
       setShowPreview(true);
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to preview payroll");
@@ -317,12 +439,14 @@ export default function Payroll() {
 
   const handleGenerate = async () => {
     try {
-      // Send preview data with updated allowances and deductions
+      // Send preview data with updated allowances, deductions and attendance
       const employeeData = previewData.map((entry) => ({
         employeeId: entry.employee._id,
         allowances: entry.allowances + entry.performanceBonus,
-        deductionAmount: entry.deductionAmount,
-        deductionReason: entry.deductionReason,
+        deductionAmount: entry.deductionAmount + entry.attendanceDeduction,
+        deductionReason: entry.deductionReason ? 
+          `${entry.deductionReason}${entry.absentDays > 0 ? `, Absent ${entry.absentDays} days` : ''}` : 
+          entry.absentDays > 0 ? `Absent ${entry.absentDays} days` : '',
       }));
 
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
@@ -642,6 +766,8 @@ export default function Payroll() {
     setShowModal(false);
     setShowPreview(false);
     setPreviewData([]);
+    setAttendanceData([]);
+    setAttendanceFile(null);
   };
 
   const getMonthName = (month: number) => {
@@ -824,6 +950,69 @@ export default function Payroll() {
                 </div>
               </div>
 
+              {/* Working Days and Attendance Upload */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileSpreadsheet size={18} />
+                    {t('payroll.attendanceData')}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={downloadAttendanceTemplate}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
+                  >
+                    <Download size={14} />
+                    {t('payroll.downloadTemplate')}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('payroll.workingDaysInMonth')}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={workingDaysInMonth}
+                      onChange={(e) => setWorkingDaysInMonth(parseInt(e.target.value) || 22)}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('payroll.uploadAttendance')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleAttendanceUpload}
+                        className="hidden"
+                        id="attendance-upload"
+                      />
+                      <label
+                        htmlFor="attendance-upload"
+                        className="flex items-center justify-center gap-2 w-full px-3 py-2 border border-dashed border-border rounded-lg bg-background text-foreground hover:bg-accent cursor-pointer"
+                      >
+                        <Upload size={16} />
+                        {attendanceFile ? attendanceFile.name : t('payroll.chooseFile')}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {attendanceData.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm text-green-800">
+                      ✓ {t('payroll.attendanceLoaded').replace('{count}', String(attendanceData.length))}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium text-foreground">
@@ -915,11 +1104,14 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allowances</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Bonus</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">Days Attended</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">Absent</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50">Attend. Ded.</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-orange-50">
-                      Deduction
+                      Other Ded.
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-orange-50">
                       Reason
@@ -959,6 +1151,15 @@ export default function Payroll() {
                       </td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">
                         {entry.grossSalary.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700 font-medium">
+                        {entry.attendedDays}/{workingDaysInMonth}
+                      </td>
+                      <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600 font-medium">
+                        {entry.absentDays}
+                      </td>
+                      <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
+                        {entry.attendanceDeduction.toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
@@ -1012,6 +1213,13 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700">-</td>
+                    <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600">
+                      {previewData.reduce((sum, e) => sum + e.absentDays, 0)}
+                    </td>
+                    <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
+                      {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
