@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, FileText, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface TaxReportData {
   period: { startDate: string; endDate: string };
@@ -33,6 +34,7 @@ interface TaxReportData {
 }
 
 export default function TaxReports() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -437,20 +439,20 @@ export default function TaxReports() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-card rounded-lg shadow p-6 mb-6">
         <div className="flex items-center gap-3 mb-6">
-          <FileText className="text-blue-600" size={28} />
+          <FileText className="text-primary" size={28} />
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Tax Report Generator</h1>
-            <p className="text-gray-600 text-sm">Generate comprehensive tax reports for Sri Lanka IRD submission</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('taxReports.title')}</h1>
+            <p className="text-muted-foreground text-sm">{t('taxReports.infoText')}</p>
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
-            <AlertCircle className="text-blue-600 mt-0.5" size={20} />
-            <div className="text-sm text-gray-700">
-              <p className="font-semibold mb-2">This report includes:</p>
+            <AlertCircle className="text-primary mt-0.5" size={20} />
+            <div className="text-sm text-foreground">
+              <p className="font-semibold mb-2">{t('taxReports.title')}:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>Income Tax calculations based on paid invoices</li>
                 <li>VAT (Value Added Tax) collected and paid</li>
@@ -463,72 +465,72 @@ export default function TaxReports() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-700">{error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+            <p className="text-destructive">{error}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('taxReports.companyName')} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter company name"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder={t('taxReports.companyName')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tax Identification Number (TIN) <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('taxReports.companyTIN')} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={companyTIN}
               onChange={(e) => setCompanyTIN(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter TIN"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="TIN"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company Address
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('taxReports.companyAddress')}
             </label>
             <input
               type="text"
               value={companyAddress}
               onChange={(e) => setCompanyAddress(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter company address"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder={t('taxReports.companyAddress')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Report Start Date <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('common.startDate')} <span className="text-destructive">*</span>
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Report End Date <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('common.endDate')} <span className="text-destructive">*</span>
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -536,18 +538,18 @@ export default function TaxReports() {
         <button
           onClick={generatePDF}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed transition-colors"
         >
           <Download size={20} />
-          {loading ? 'Generating Report...' : 'Generate Tax Report (PDF)'}
+          {loading ? t('taxReports.generating') : t('taxReports.downloadPDF')}
         </button>
 
-        <div className="mt-6 text-sm text-gray-600">
+        <div className="mt-6 text-sm text-muted-foreground">
           <p className="font-semibold mb-2">After generating the report:</p>
           <ol className="list-decimal list-inside space-y-1 ml-2">
             <li>Review the PDF document carefully</li>
             <li>Gather all physical copies of supporting documents</li>
-            <li>Submit to IRD via online portal: <a href="https://www.ird.gov.lk/en/eservices/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://www.ird.gov.lk/en/eservices/</a></li>
+            <li>Submit to IRD via online portal: <a href="https://www.ird.gov.lk/en/eservices/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.ird.gov.lk/en/eservices/</a></li>
             <li>Keep a copy for your records</li>
           </ol>
         </div>

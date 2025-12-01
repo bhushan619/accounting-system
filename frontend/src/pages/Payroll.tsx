@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Trash2, Plus, X, Eye, Mail, Loader2, Edit } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface PayrollRun {
   _id: string;
@@ -74,6 +75,7 @@ const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 export default function Payroll() {
+  const { t } = useLanguage();
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -665,39 +667,39 @@ export default function Payroll() {
       emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Payroll Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate and manage payroll runs for employees</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('payroll.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('payroll.description')}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Generate Payroll
+          {t('payroll.generatePayroll')}
         </button>
       </div>
 
       {/* Payroll Runs Table */}
       <div className="bg-card rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Payroll Runs History</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('payroll.payrollRuns')}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Run #</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Period</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employees</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Gross</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Deductions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Net</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.runNumber')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.period')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('employees.title')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.grossSalary')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.deductions')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.netSalary')}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
               </tr>

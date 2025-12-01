@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Settings, Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface TaxBracket {
   minIncome: number;
@@ -20,6 +21,7 @@ interface TaxConfig {
 }
 
 export default function TaxConfigurations() {
+  const { t } = useLanguage();
   const [configs, setConfigs] = useState<TaxConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -135,14 +137,14 @@ export default function TaxConfigurations() {
     return types[type] || type;
   };
 
-  if (loading) return <div className="text-foreground">Loading...</div>;
+  if (loading) return <div className="text-foreground">{t('common.loading')}</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <Settings className="text-primary" />
-          Tax Configurations
+          {t('taxConfig.title')}
         </h1>
         <div className="flex gap-2">
           {configs.length === 0 && (
@@ -152,7 +154,7 @@ export default function TaxConfigurations() {
               className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-secondary/80 transition-colors disabled:opacity-50"
             >
               <Download size={20} />
-              {seeding ? 'Seeding...' : 'Seed Default Configs'}
+              {seeding ? t('taxConfig.seeding') : t('taxConfig.seedDefault')}
             </button>
           )}
           <button
@@ -160,7 +162,7 @@ export default function TaxConfigurations() {
             className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
           >
             <Plus size={20} />
-            Add Tax Config
+            {t('taxConfig.addConfig')}
           </button>
         </div>
       </div>
@@ -169,12 +171,12 @@ export default function TaxConfigurations() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">From</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">To</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.name')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.type')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.from')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.to')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.status')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -192,7 +194,7 @@ export default function TaxConfigurations() {
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     config.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {config.isActive ? 'Active' : 'Inactive'}
+                    {config.isActive ? t('taxConfig.active') : t('taxConfig.inactive')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm">
@@ -211,7 +213,7 @@ export default function TaxConfigurations() {
         </table>
         {configs.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            No tax configurations found. Click "Seed Default Configs" to load Sri Lankan defaults.
+            {t('taxConfig.noConfigs')}
           </div>
         )}
       </div>
@@ -220,11 +222,11 @@ export default function TaxConfigurations() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-foreground">
-              {editingConfig ? 'Edit Tax Configuration' : 'Add Tax Configuration'}
+              {editingConfig ? t('taxConfig.editConfig') : t('taxConfig.addConfig')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Name</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('common.name')}</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -234,7 +236,7 @@ export default function TaxConfigurations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Tax Type</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('taxConfig.taxType')}</label>
                 <select
                   value={formData.taxType}
                   onChange={(e) => setFormData({ ...formData, taxType: e.target.value as any })}
@@ -257,7 +259,7 @@ export default function TaxConfigurations() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Rate {formData.taxType === 'stamp_fee' ? '(LKR)' : '(%)'}
+                  {t('taxConfig.rate')} {formData.taxType === 'stamp_fee' ? '(LKR)' : '(%)'}
                 </label>
                 <input
                   type="number"
@@ -269,7 +271,7 @@ export default function TaxConfigurations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Applicable From</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('taxConfig.applicableFrom')}</label>
                 <input
                   type="date"
                   value={formData.applicableFrom}
@@ -279,7 +281,7 @@ export default function TaxConfigurations() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Applicable To (Optional)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('taxConfig.applicableTo')}</label>
                 <input
                   type="date"
                   value={formData.applicableTo}
@@ -294,14 +296,14 @@ export default function TaxConfigurations() {
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                   className="mr-2"
                 />
-                <label className="text-sm text-foreground">Active</label>
+                <label className="text-sm text-foreground">{t('taxConfig.active')}</label>
               </div>
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90">
-                  {editingConfig ? 'Update' : 'Create'}
+                  {editingConfig ? t('common.edit') : t('common.add')}
                 </button>
                 <button type="button" onClick={resetForm} className="flex-1 bg-muted text-foreground py-2 rounded-lg hover:bg-muted/80">
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
