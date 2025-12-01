@@ -194,6 +194,12 @@ const defaultTranslations: Record<Language, Translations> = {
     'payroll.attendanceDeduction': 'Attend. Ded.',
     'payroll.otherDeduction': 'Other Ded.',
     'payroll.uploadAttendanceFirst': 'Please upload an attendance file before proceeding',
+    'payroll.attendanceWarnings': 'Attendance Warnings',
+    'payroll.attendanceHistoryTitle': 'Previous Attendance Records',
+    'payroll.attendanceHistoryNote': 'This shows attendance from the last payroll run for this period.',
+    'payroll.loadingHistory': 'Loading attendance history...',
+    'payroll.employee': 'Employee',
+    'payroll.workingDays': 'Working Days',
     
     // Users
     'users.title': 'User Management',
@@ -543,6 +549,12 @@ const defaultTranslations: Record<Language, Translations> = {
     'payroll.attendanceDeduction': '考勤扣款',
     'payroll.otherDeduction': '其他扣款',
     'payroll.uploadAttendanceFirst': '请先上传考勤文件再继续',
+    'payroll.attendanceWarnings': '考勤警告',
+    'payroll.attendanceHistoryTitle': '历史考勤记录',
+    'payroll.attendanceHistoryNote': '显示此期间上次工资单的考勤记录。',
+    'payroll.loadingHistory': '正在加载考勤历史...',
+    'payroll.employee': '员工',
+    'payroll.workingDays': '工作天数',
     
     // Users
     'users.title': '用户管理',

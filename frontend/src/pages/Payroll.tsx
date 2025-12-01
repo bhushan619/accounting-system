@@ -36,6 +36,25 @@ interface AttendanceData {
   workingDays: number;
   attendedDays: number;
   absentDays: number;
+  attendanceDeduction?: number;
+}
+
+interface AttendanceHistory {
+  _id: string;
+  employee: { _id: string; employeeId: string; fullName: string; basicSalary: number };
+  month: number;
+  year: number;
+  workingDays: number;
+  attendedDays: number;
+  absentDays: number;
+  attendanceDeduction: number;
+}
+
+interface AttendanceWarning {
+  type: 'missing' | 'extra' | 'invalid';
+  employeeId: string;
+  employeeName?: string;
+  message: string;
 }
 
 interface PayrollPreview {
@@ -120,6 +139,10 @@ export default function Payroll() {
   const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
   const [attendanceFile, setAttendanceFile] = useState<File | null>(null);
   const [workingDaysInMonth, setWorkingDaysInMonth] = useState(22);
+  const [attendanceWarnings, setAttendanceWarnings] = useState<AttendanceWarning[]>([]);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistory[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
 
   useEffect(() => {
     loadData();
@@ -201,7 +224,7 @@ export default function Payroll() {
       "Employee ID": emp.employeeId,
       "Employee Name": emp.fullName,
       "Working Days": workingDaysInMonth,
-      "Attended Days": workingDaysInMonth,
+      "Attended Days": workingDaysInMonth, // Supports decimals for half days (e.g., 21.5)
     }));
 
     const ws = XLSX.utils.json_to_sheet(templateData);
@@ -211,11 +234,21 @@ export default function Payroll() {
       { wch: 15 },
       { wch: 30 },
       { wch: 15 },
-      { wch: 15 },
+      { wch: 20 },
     ];
+
+    // Add a note about half-day support
+    const noteSheet = XLSX.utils.aoa_to_sheet([
+      ["Instructions:"],
+      ["1. Fill in 'Attended Days' for each employee"],
+      ["2. Half-days are supported (e.g., 21.5 for 21 full days + 1 half day)"],
+      ["3. Do not modify Employee ID column"],
+      ["4. Working Days can be adjusted if needed"],
+    ]);
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    XLSX.utils.book_append_sheet(wb, noteSheet, "Instructions");
     
     const fileName = `Attendance_Template_${getMonthName(formData.month)}_${formData.year}.xlsx`;
     XLSX.writeFile(wb, fileName);
@@ -236,24 +269,113 @@ export default function Payroll() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const parsedAttendance: AttendanceData[] = jsonData.map((row: any) => {
+        const warnings: AttendanceWarning[] = [];
+        const parsedAttendance: AttendanceData[] = [];
+        const uploadedEmployeeIds = new Set<string>();
+
+        jsonData.forEach((row: any) => {
+          const employeeId = String(row["Employee ID"] || "").trim();
+          if (!employeeId) return;
+
+          uploadedEmployeeIds.add(employeeId);
           const workingDays = Number(row["Working Days"]) || workingDaysInMonth;
-          const attendedDays = Number(row["Attended Days"]) || 0;
-          return {
-            employeeId: String(row["Employee ID"] || ""),
+          // Support half-day attendance (e.g., 21.5)
+          const attendedDays = parseFloat(String(row["Attended Days"])) || 0;
+          
+          // Validate attended days
+          if (attendedDays < 0) {
+            warnings.push({
+              type: 'invalid',
+              employeeId,
+              message: `${employeeId}: Attended days cannot be negative`
+            });
+          }
+          if (attendedDays > workingDays) {
+            warnings.push({
+              type: 'invalid',
+              employeeId,
+              message: `${employeeId}: Attended days (${attendedDays}) exceeds working days (${workingDays})`
+            });
+          }
+
+          parsedAttendance.push({
+            employeeId,
             workingDays,
-            attendedDays,
+            attendedDays: Math.max(0, attendedDays),
             absentDays: Math.max(0, workingDays - attendedDays),
-          };
+          });
+        });
+
+        // Check for employees not in attendance file
+        const selectedEmps = employees.filter(e => selectedEmployees.includes(e._id));
+        selectedEmps.forEach(emp => {
+          if (!uploadedEmployeeIds.has(emp.employeeId)) {
+            warnings.push({
+              type: 'missing',
+              employeeId: emp.employeeId,
+              employeeName: emp.fullName,
+              message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`
+            });
+          }
+        });
+
+        // Check for extra employees in attendance file (not selected for payroll)
+        const activeEmployeeIds = new Set(employees.map(e => e.employeeId));
+        uploadedEmployeeIds.forEach(empId => {
+          if (!activeEmployeeIds.has(empId)) {
+            warnings.push({
+              type: 'extra',
+              employeeId: empId,
+              message: `${empId}: Employee not found in system`
+            });
+          }
         });
 
         setAttendanceData(parsedAttendance);
+        setAttendanceWarnings(warnings);
       } catch (error) {
         console.error("Failed to parse attendance file:", error);
         alert("Failed to parse the attendance file. Please ensure it follows the template format.");
       }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  // Revalidate attendance warnings when selected employees change
+  const validateAttendanceForSelectedEmployees = () => {
+    if (attendanceData.length === 0) return;
+    
+    const warnings: AttendanceWarning[] = [];
+    const uploadedEmployeeIds = new Set(attendanceData.map(a => a.employeeId));
+    
+    // Check for missing attendance data for selected employees
+    const selectedEmps = employees.filter(e => selectedEmployees.includes(e._id));
+    selectedEmps.forEach(emp => {
+      if (!uploadedEmployeeIds.has(emp.employeeId)) {
+        warnings.push({
+          type: 'missing',
+          employeeId: emp.employeeId,
+          employeeName: emp.fullName,
+          message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`
+        });
+      }
+    });
+    
+    setAttendanceWarnings(warnings);
+  };
+
+  // Fetch attendance history when month/year changes
+  const fetchAttendanceHistory = async (month: number, year: number) => {
+    setLoadingHistory(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/attendance/month/${year}/${month}`);
+      setAttendanceHistory(response.data);
+    } catch (error) {
+      console.error("Failed to fetch attendance history:", error);
+      setAttendanceHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
   const getAttendanceForEmployee = (employeeId: string): AttendanceData | undefined => {
@@ -449,11 +571,33 @@ export default function Payroll() {
           entry.absentDays > 0 ? `Absent ${entry.absentDays} days` : '',
       }));
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
+      const runResponse = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
         ...formData,
         employeeIds: selectedEmployees,
         employeeData,
       });
+
+      // Save attendance data to backend
+      const attendanceToSave = previewData.map((entry) => ({
+        employeeId: entry.employee.employeeId,
+        workingDays: workingDaysInMonth,
+        attendedDays: entry.attendedDays,
+        absentDays: entry.absentDays,
+        attendanceDeduction: entry.attendanceDeduction,
+      }));
+
+      try {
+        await axios.post(`${import.meta.env.VITE_API_URL}/attendance/bulk`, {
+          month: formData.month,
+          year: formData.year,
+          attendanceData: attendanceToSave,
+          payrollRunId: runResponse.data._id,
+        });
+      } catch (attError) {
+        console.error("Failed to save attendance data:", attError);
+        // Non-blocking - payroll was still generated
+      }
+
       loadData();
       resetForm();
       setShowPreview(false);
@@ -475,7 +619,18 @@ export default function Payroll() {
   const handleViewDetails = async (id: string) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
-      setSelectedRun(response.data);
+      const run = response.data;
+      setSelectedRun(run);
+      
+      // Also fetch attendance data for this period
+      try {
+        const attendanceRes = await axios.get(`${import.meta.env.VITE_API_URL}/attendance/month/${run.year}/${run.month}`);
+        setViewAttendanceData(attendanceRes.data);
+      } catch (attError) {
+        console.error("Failed to fetch attendance:", attError);
+        setViewAttendanceData([]);
+      }
+      
       setShowViewModal(true);
     } catch (error) {
       console.error("Failed to load run details:", error);
@@ -768,7 +923,23 @@ export default function Payroll() {
     setPreviewData([]);
     setAttendanceData([]);
     setAttendanceFile(null);
+    setAttendanceWarnings([]);
+    setAttendanceHistory([]);
   };
+
+  // Fetch attendance history when modal opens or month/year changes
+  useEffect(() => {
+    if (showModal) {
+      fetchAttendanceHistory(formData.month, formData.year);
+    }
+  }, [showModal, formData.month, formData.year]);
+
+  // Revalidate warnings when selected employees change
+  useEffect(() => {
+    if (attendanceData.length > 0 && selectedEmployees.length > 0) {
+      validateAttendanceForSelectedEmployees();
+    }
+  }, [selectedEmployees, attendanceData]);
 
   const getMonthName = (month: number) => {
     return new Date(2000, month - 1).toLocaleString("default", { month: "long" });
@@ -1008,7 +1179,70 @@ export default function Payroll() {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <p className="text-sm text-green-800">
                       ✓ {t('payroll.attendanceLoaded').replace('{count}', String(attendanceData.length))}
+                      {attendanceData.some(a => a.attendedDays % 1 !== 0) && (
+                        <span className="ml-2 text-blue-600">(includes half-day records)</span>
+                      )}
                     </p>
+                  </div>
+                )}
+
+                {/* Attendance Warnings */}
+                {attendanceWarnings.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-amber-800 mb-2">
+                      ⚠️ {t('payroll.attendanceWarnings')} ({attendanceWarnings.length})
+                    </p>
+                    <ul className="text-xs text-amber-700 space-y-1 max-h-24 overflow-y-auto">
+                      {attendanceWarnings.map((warning, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${
+                            warning.type === 'missing' ? 'bg-red-500' : 
+                            warning.type === 'extra' ? 'bg-orange-500' : 'bg-yellow-500'
+                          }`} />
+                          {warning.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Attendance History */}
+                {attendanceHistory.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-800 mb-2">
+                      📋 {t('payroll.attendanceHistoryTitle')} ({getMonthName(formData.month)} {formData.year})
+                    </p>
+                    <div className="max-h-32 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-blue-100">
+                          <tr>
+                            <th className="px-2 py-1 text-left">{t('payroll.employee')}</th>
+                            <th className="px-2 py-1 text-center">{t('payroll.workingDays')}</th>
+                            <th className="px-2 py-1 text-center">{t('payroll.daysAttended')}</th>
+                            <th className="px-2 py-1 text-center">{t('payroll.absent')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {attendanceHistory.map((record) => (
+                            <tr key={record._id} className="border-b border-blue-100">
+                              <td className="px-2 py-1">{record.employee?.fullName || record.employee?.employeeId}</td>
+                              <td className="px-2 py-1 text-center">{record.workingDays}</td>
+                              <td className="px-2 py-1 text-center">{record.attendedDays}</td>
+                              <td className="px-2 py-1 text-center text-red-600">{record.absentDays}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2 italic">
+                      {t('payroll.attendanceHistoryNote')}
+                    </p>
+                  </div>
+                )}
+                {loadingHistory && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="animate-spin" size={16} />
+                    {t('payroll.loadingHistory')}
                   </div>
                 )}
               </div>
@@ -1153,10 +1387,10 @@ export default function Payroll() {
                         {entry.grossSalary.toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700 font-medium">
-                        {entry.attendedDays}/{workingDaysInMonth}
+                        {Number.isInteger(entry.attendedDays) ? entry.attendedDays : entry.attendedDays.toFixed(1)}/{workingDaysInMonth}
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600 font-medium">
-                        {entry.absentDays}
+                        {Number.isInteger(entry.absentDays) ? entry.absentDays : entry.absentDays.toFixed(1)}
                       </td>
                       <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
                         {entry.attendanceDeduction.toLocaleString()}
@@ -1216,7 +1450,10 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700">-</td>
                     <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600">
-                      {previewData.reduce((sum, e) => sum + e.absentDays, 0)}
+                      {(() => {
+                        const total = previewData.reduce((sum, e) => sum + e.absentDays, 0);
+                        return Number.isInteger(total) ? total : total.toFixed(1);
+                      })()}
                     </td>
                     <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
                       {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}
@@ -1452,6 +1689,7 @@ export default function Payroll() {
                 onClick={() => {
                   setShowViewModal(false);
                   setSelectedRun(null);
+                  setViewAttendanceData([]);
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
