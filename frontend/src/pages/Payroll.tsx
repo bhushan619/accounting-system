@@ -51,7 +51,7 @@ interface AttendanceHistory {
 }
 
 interface AttendanceWarning {
-  type: 'missing' | 'extra' | 'invalid';
+  type: "missing" | "extra" | "invalid";
   employeeId: string;
   employeeName?: string;
   message: string;
@@ -228,14 +228,9 @@ export default function Payroll() {
     }));
 
     const ws = XLSX.utils.json_to_sheet(templateData);
-    
+
     // Set column widths
-    ws["!cols"] = [
-      { wch: 15 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 20 },
-    ];
+    ws["!cols"] = [{ wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 20 }];
 
     // Add a note about half-day support
     const noteSheet = XLSX.utils.aoa_to_sheet([
@@ -249,7 +244,7 @@ export default function Payroll() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Attendance");
     XLSX.utils.book_append_sheet(wb, noteSheet, "Instructions");
-    
+
     const fileName = `Attendance_Template_${getMonthName(formData.month)}_${formData.year}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
@@ -259,7 +254,7 @@ export default function Payroll() {
     if (!file) return;
 
     setAttendanceFile(file);
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -281,20 +276,20 @@ export default function Payroll() {
           const workingDays = Number(row["Working Days"]) || workingDaysInMonth;
           // Support half-day attendance (e.g., 21.5)
           const attendedDays = parseFloat(String(row["Attended Days"])) || 0;
-          
+
           // Validate attended days
           if (attendedDays < 0) {
             warnings.push({
-              type: 'invalid',
+              type: "invalid",
               employeeId,
-              message: `${employeeId}: Attended days cannot be negative`
+              message: `${employeeId}: Attended days cannot be negative`,
             });
           }
           if (attendedDays > workingDays) {
             warnings.push({
-              type: 'invalid',
+              type: "invalid",
               employeeId,
-              message: `${employeeId}: Attended days (${attendedDays}) exceeds working days (${workingDays})`
+              message: `${employeeId}: Attended days (${attendedDays}) exceeds working days (${workingDays})`,
             });
           }
 
@@ -307,26 +302,26 @@ export default function Payroll() {
         });
 
         // Check for employees not in attendance file
-        const selectedEmps = employees.filter(e => selectedEmployees.includes(e._id));
-        selectedEmps.forEach(emp => {
+        const selectedEmps = employees.filter((e) => selectedEmployees.includes(e._id));
+        selectedEmps.forEach((emp) => {
           if (!uploadedEmployeeIds.has(emp.employeeId)) {
             warnings.push({
-              type: 'missing',
+              type: "missing",
               employeeId: emp.employeeId,
               employeeName: emp.fullName,
-              message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`
+              message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`,
             });
           }
         });
 
         // Check for extra employees in attendance file (not selected for payroll)
-        const activeEmployeeIds = new Set(employees.map(e => e.employeeId));
-        uploadedEmployeeIds.forEach(empId => {
+        const activeEmployeeIds = new Set(employees.map((e) => e.employeeId));
+        uploadedEmployeeIds.forEach((empId) => {
           if (!activeEmployeeIds.has(empId)) {
             warnings.push({
-              type: 'extra',
+              type: "extra",
               employeeId: empId,
-              message: `${empId}: Employee not found in system`
+              message: `${empId}: Employee not found in system`,
             });
           }
         });
@@ -344,23 +339,23 @@ export default function Payroll() {
   // Revalidate attendance warnings when selected employees change
   const validateAttendanceForSelectedEmployees = () => {
     if (attendanceData.length === 0) return;
-    
+
     const warnings: AttendanceWarning[] = [];
-    const uploadedEmployeeIds = new Set(attendanceData.map(a => a.employeeId));
-    
+    const uploadedEmployeeIds = new Set(attendanceData.map((a) => a.employeeId));
+
     // Check for missing attendance data for selected employees
-    const selectedEmps = employees.filter(e => selectedEmployees.includes(e._id));
-    selectedEmps.forEach(emp => {
+    const selectedEmps = employees.filter((e) => selectedEmployees.includes(e._id));
+    selectedEmps.forEach((emp) => {
       if (!uploadedEmployeeIds.has(emp.employeeId)) {
         warnings.push({
-          type: 'missing',
+          type: "missing",
           employeeId: emp.employeeId,
           employeeName: emp.fullName,
-          message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`
+          message: `${emp.employeeId} (${emp.fullName}): Missing attendance data`,
         });
       }
     });
-    
+
     setAttendanceWarnings(warnings);
   };
 
@@ -400,11 +395,11 @@ export default function Payroll() {
     const deductionReason = newDeductionReason;
     const attendedDays = newAttendedDays;
     const absentDays = newAbsentDays;
-    
+
     // Calculate attendance deduction (per day salary × absent days)
     const perDaySalary = basicSalary / workingDaysInMonth;
     const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
-    
+
     const totalAllowances = allowances + performanceBonus;
     const grossSalary = basicSalary + totalAllowances;
 
@@ -535,7 +530,7 @@ export default function Payroll() {
         const absentDays = attendance?.absentDays ?? 0;
         const perDaySalary = entry.basicSalary / workingDaysInMonth;
         const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
-        
+
         return {
           ...entry,
           performanceBonus: 0,
@@ -546,12 +541,20 @@ export default function Payroll() {
           attendanceDeduction,
         };
       });
-      
+
       // Recalculate with attendance deductions
-      const recalculatedData = dataWithExtras.map((entry: PayrollPreview) => 
-        recalculatePayroll(entry, entry.allowances, entry.performanceBonus, entry.deductionAmount, entry.deductionReason, entry.attendedDays, entry.absentDays)
+      const recalculatedData = dataWithExtras.map((entry: PayrollPreview) =>
+        recalculatePayroll(
+          entry,
+          entry.allowances,
+          entry.performanceBonus,
+          entry.deductionAmount,
+          entry.deductionReason,
+          entry.attendedDays,
+          entry.absentDays,
+        ),
       );
-      
+
       setPreviewData(recalculatedData);
       setShowPreview(true);
     } catch (error: any) {
@@ -566,9 +569,11 @@ export default function Payroll() {
         employeeId: entry.employee._id,
         allowances: entry.allowances + entry.performanceBonus,
         deductionAmount: entry.deductionAmount + entry.attendanceDeduction,
-        deductionReason: entry.deductionReason ? 
-          `${entry.deductionReason}${entry.absentDays > 0 ? `, Absent ${entry.absentDays} days` : ''}` : 
-          entry.absentDays > 0 ? `Absent ${entry.absentDays} days` : '',
+        deductionReason: entry.deductionReason
+          ? `${entry.deductionReason}${entry.absentDays > 0 ? `, Absent ${entry.absentDays} days` : ""}`
+          : entry.absentDays > 0
+            ? `Absent ${entry.absentDays} days`
+            : "",
       }));
 
       const runResponse = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
@@ -621,16 +626,18 @@ export default function Payroll() {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
       const run = response.data;
       setSelectedRun(run);
-      
+
       // Also fetch attendance data for this period
       try {
-        const attendanceRes = await axios.get(`${import.meta.env.VITE_API_URL}/attendance/month/${run.year}/${run.month}`);
+        const attendanceRes = await axios.get(
+          `${import.meta.env.VITE_API_URL}/attendance/month/${run.year}/${run.month}`,
+        );
         setViewAttendanceData(attendanceRes.data);
       } catch (attError) {
         console.error("Failed to fetch attendance:", attError);
         setViewAttendanceData([]);
       }
-      
+
       setShowViewModal(true);
     } catch (error) {
       console.error("Failed to load run details:", error);
@@ -964,39 +971,51 @@ export default function Payroll() {
       emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
+  if (loading) return <div className="text-center py-8">{t("common.loading")}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('payroll.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('payroll.description')}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("payroll.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("payroll.description")}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          {t('payroll.generatePayroll')}
+          {t("payroll.generatePayroll")}
         </button>
       </div>
 
       {/* Payroll Runs Table */}
       <div className="bg-card rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">{t('payroll.payrollRuns')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t("payroll.payrollRuns")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.runNumber')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.period')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('employees.title')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.grossSalary')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.deductions')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('payroll.netSalary')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("payroll.runNumber")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("payroll.period")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("employees.title")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("payroll.grossSalary")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("payroll.deductions")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                  {t("payroll.netSalary")}
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
               </tr>
@@ -1084,7 +1103,7 @@ export default function Payroll() {
       {/* Generate Payroll Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">Generate Payroll Run</h2>
               <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
@@ -1126,7 +1145,7 @@ export default function Payroll() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <FileSpreadsheet size={18} />
-                    {t('payroll.attendanceData')}
+                    {t("payroll.attendanceData")}
                   </h3>
                   <button
                     type="button"
@@ -1134,14 +1153,14 @@ export default function Payroll() {
                     className="flex items-center gap-2 px-3 py-1.5 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
                   >
                     <Download size={14} />
-                    {t('payroll.downloadTemplate')}
+                    {t("payroll.downloadTemplate")}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('payroll.workingDaysInMonth')}
+                      {t("payroll.workingDaysInMonth")}
                     </label>
                     <input
                       type="number"
@@ -1154,7 +1173,7 @@ export default function Payroll() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('payroll.uploadAttendance')}
+                      {t("payroll.uploadAttendance")}
                     </label>
                     <div className="relative">
                       <input
@@ -1169,7 +1188,7 @@ export default function Payroll() {
                         className="flex items-center justify-center gap-2 w-full px-3 py-2 border border-dashed border-border rounded-lg bg-background text-foreground hover:bg-accent cursor-pointer"
                       >
                         <Upload size={16} />
-                        {attendanceFile ? attendanceFile.name : t('payroll.chooseFile')}
+                        {attendanceFile ? attendanceFile.name : t("payroll.chooseFile")}
                       </label>
                     </div>
                   </div>
@@ -1178,8 +1197,8 @@ export default function Payroll() {
                 {attendanceData.length > 0 && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <p className="text-sm text-green-800">
-                      ✓ {t('payroll.attendanceLoaded').replace('{count}', String(attendanceData.length))}
-                      {attendanceData.some(a => a.attendedDays % 1 !== 0) && (
+                      ✓ {t("payroll.attendanceLoaded").replace("{count}", String(attendanceData.length))}
+                      {attendanceData.some((a) => a.attendedDays % 1 !== 0) && (
                         <span className="ml-2 text-blue-600">(includes half-day records)</span>
                       )}
                     </p>
@@ -1190,15 +1209,20 @@ export default function Payroll() {
                 {attendanceWarnings.length > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                     <p className="text-sm font-medium text-amber-800 mb-2">
-                      ⚠️ {t('payroll.attendanceWarnings')} ({attendanceWarnings.length})
+                      ⚠️ {t("payroll.attendanceWarnings")} ({attendanceWarnings.length})
                     </p>
                     <ul className="text-xs text-amber-700 space-y-1 max-h-24 overflow-y-auto">
                       {attendanceWarnings.map((warning, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${
-                            warning.type === 'missing' ? 'bg-red-500' : 
-                            warning.type === 'extra' ? 'bg-orange-500' : 'bg-yellow-500'
-                          }`} />
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              warning.type === "missing"
+                                ? "bg-red-500"
+                                : warning.type === "extra"
+                                  ? "bg-orange-500"
+                                  : "bg-yellow-500"
+                            }`}
+                          />
                           {warning.message}
                         </li>
                       ))}
@@ -1210,16 +1234,16 @@ export default function Payroll() {
                 {attendanceHistory.length > 0 && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm font-medium text-blue-800 mb-2">
-                      📋 {t('payroll.attendanceHistoryTitle')} ({getMonthName(formData.month)} {formData.year})
+                      📋 {t("payroll.attendanceHistoryTitle")} ({getMonthName(formData.month)} {formData.year})
                     </p>
                     <div className="max-h-32 overflow-y-auto">
                       <table className="w-full text-xs">
                         <thead className="bg-blue-100">
                           <tr>
-                            <th className="px-2 py-1 text-left">{t('payroll.employee')}</th>
-                            <th className="px-2 py-1 text-center">{t('payroll.workingDays')}</th>
-                            <th className="px-2 py-1 text-center">{t('payroll.daysAttended')}</th>
-                            <th className="px-2 py-1 text-center">{t('payroll.absent')}</th>
+                            <th className="px-2 py-1 text-left">{t("payroll.employee")}</th>
+                            <th className="px-2 py-1 text-center">{t("payroll.workingDays")}</th>
+                            <th className="px-2 py-1 text-center">{t("payroll.daysAttended")}</th>
+                            <th className="px-2 py-1 text-center">{t("payroll.absent")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1234,15 +1258,13 @@ export default function Payroll() {
                         </tbody>
                       </table>
                     </div>
-                    <p className="text-xs text-blue-600 mt-2 italic">
-                      {t('payroll.attendanceHistoryNote')}
-                    </p>
+                    <p className="text-xs text-blue-600 mt-2 italic">{t("payroll.attendanceHistoryNote")}</p>
                   </div>
                 )}
                 {loadingHistory && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="animate-spin" size={16} />
-                    {t('payroll.loadingHistory')}
+                    {t("payroll.loadingHistory")}
                   </div>
                 )}
               </div>
@@ -1338,9 +1360,15 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allowances</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Bonus</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">Days Attended</th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">Absent</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50">Attend. Ded.</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
+                      Days Attended
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
+                      Absent
+                    </th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50">
+                      Attend. Ded.
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
@@ -1387,7 +1415,8 @@ export default function Payroll() {
                         {entry.grossSalary.toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700 font-medium">
-                        {Number.isInteger(entry.attendedDays) ? entry.attendedDays : entry.attendedDays.toFixed(1)}/{workingDaysInMonth}
+                        {Number.isInteger(entry.attendedDays) ? entry.attendedDays : entry.attendedDays.toFixed(1)}/
+                        {workingDaysInMonth}
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600 font-medium">
                         {Number.isInteger(entry.absentDays) ? entry.absentDays : entry.absentDays.toFixed(1)}
