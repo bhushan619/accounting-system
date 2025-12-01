@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function Login() {
+  const { t } = useLanguage();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -26,7 +28,7 @@ export default function Login() {
       }
       navigate('/dashboard');
     } catch (err: any) {
-      setError(isSignup ? 'Signup failed. Please try again.' : 'Login failed. Please check your email and password.');
+      setError(isSignup ? (t('login.signupFailed') || 'Signup failed. Please try again.') : (t('login.loginFailed') || 'Login failed. Please check your email and password.'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -51,24 +53,24 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-sidebar-foreground">VeloSync</h1>
-              <p className="text-sidebar-foreground/60">Accounts</p>
+              <p className="text-sidebar-foreground/60">{t('login.accounts') || 'Accounts'}</p>
             </div>
           </div>
           
           <h2 className="text-4xl font-bold text-sidebar-foreground mb-4 leading-tight">
-            Streamline Your<br />
+            {t('login.tagline1') || 'Streamline Your'}<br />
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Financial Management
+              {t('login.tagline2') || 'Financial Management'}
             </span>
           </h2>
           
           <p className="text-lg text-sidebar-foreground/70 mb-8 max-w-md">
-            Complete accountancy solution with invoicing, expenses, payroll, and tax compliance - all in one platform.
+            {t('login.description') || 'Complete accountancy solution with invoicing, expenses, payroll, and tax compliance - all in one platform.'}
           </p>
           
           {/* Feature Badges */}
           <div className="flex flex-wrap gap-3">
-            {['Invoicing', 'Expenses', 'Payroll', 'Tax Reports'].map((feature) => (
+            {[t('nav.invoices'), t('nav.expenses'), t('nav.payroll'), t('taxReports.title')].map((feature) => (
               <span 
                 key={feature}
                 className="px-4 py-2 bg-sidebar-muted/50 text-sidebar-foreground/80 rounded-full text-sm font-medium"
@@ -90,7 +92,7 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">VeloSync</h1>
-              <p className="text-xs text-muted-foreground">Accounts</p>
+              <p className="text-xs text-muted-foreground">{t('login.accounts') || 'Accounts'}</p>
             </div>
           </div>
 
@@ -98,10 +100,10 @@ export default function Login() {
           <div className="bg-card rounded-2xl shadow-lg border border-border p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-foreground">
-                {isSignup ? 'Create Account' : 'Welcome Back'}
+                {isSignup ? (t('login.createAccount') || 'Create Account') : (t('login.welcomeBack') || 'Welcome Back')}
               </h2>
               <p className="text-muted-foreground mt-2">
-                {isSignup ? 'Start managing your finances today' : 'Sign in to continue to your dashboard'}
+                {isSignup ? (t('login.signupSubtitle') || 'Start managing your finances today') : (t('login.loginSubtitle') || 'Sign in to continue to your dashboard')}
               </p>
             </div>
 
@@ -114,7 +116,7 @@ export default function Login() {
             <form onSubmit={submit} className="space-y-5">
               {isSignup && (
                 <div className="form-group animate-fade-in">
-                  <label className="input-label">Full Name</label>
+                  <label className="input-label">{t('users.fullName')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
@@ -122,14 +124,14 @@ export default function Login() {
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       className="input pl-11"
-                      placeholder="Enter your full name"
+                      placeholder={t('login.enterFullName') || 'Enter your full name'}
                     />
                   </div>
                 </div>
               )}
 
               <div className="form-group">
-                <label className="input-label">Email Address</label>
+                <label className="input-label">{t('login.email')}</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <input
@@ -144,7 +146,7 @@ export default function Login() {
               </div>
 
               <div className="form-group">
-                <label className="input-label">Password</label>
+                <label className="input-label">{t('login.password')}</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <input
@@ -167,11 +169,11 @@ export default function Login() {
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
-                    <span>{isSignup ? 'Creating account...' : 'Signing in...'}</span>
+                    <span>{isSignup ? (t('login.creatingAccount') || 'Creating account...') : (t('login.signingIn') || 'Signing in...')}</span>
                   </>
                 ) : (
                   <>
-                    <span>{isSignup ? 'Create Account' : 'Sign In'}</span>
+                    <span>{isSignup ? (t('login.createAccount') || 'Create Account') : t('login.signIn')}</span>
                     <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
                   </>
                 )}
@@ -180,7 +182,7 @@ export default function Login() {
 
             <div className="mt-8 text-center">
               <p className="text-muted-foreground">
-                {isSignup ? 'Already have an account?' : "Don't have an account?"}
+                {isSignup ? (t('login.haveAccount') || 'Already have an account?') : (t('login.noAccount') || "Don't have an account?")}
               </p>
               <button
                 type="button"
@@ -190,14 +192,14 @@ export default function Login() {
                 }}
                 className="mt-2 text-primary font-medium hover:underline"
               >
-                {isSignup ? 'Sign in instead' : 'Create an account'}
+                {isSignup ? (t('login.signInInstead') || 'Sign in instead') : (t('login.createAccountLink') || 'Create an account')}
               </button>
             </div>
           </div>
 
           {/* Footer */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} VeloSync. All rights reserved.
+            © {new Date().getFullYear()} VeloSync. {t('login.allRightsReserved') || 'All rights reserved.'}
           </p>
         </div>
       </div>

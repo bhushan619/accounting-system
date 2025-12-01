@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
   _id: string;
@@ -11,6 +12,7 @@ interface User {
 }
 
 export default function UserManagement() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -89,18 +91,18 @@ export default function UserManagement() {
     setShowModal(true);
   };
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">User Management</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
         <button
           onClick={openNewModal}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Add User
+          {t('users.addUser')}
         </button>
       </div>
 
@@ -108,11 +110,11 @@ export default function UserManagement() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Full Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Created</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.email')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.fullName')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.role')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.date')}</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -126,7 +128,7 @@ export default function UserManagement() {
                       ? 'bg-primary/20 text-primary' 
                       : 'bg-secondary/20 text-secondary-foreground'
                   }`}>
-                    {user.role}
+                    {user.role === 'admin' ? t('users.admin') : t('users.accountant')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
@@ -157,7 +159,7 @@ export default function UserManagement() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">
-                {editingId ? 'Edit User' : 'Add User'}
+                {editingId ? t('users.editUser') : t('users.addUser')}
               </h2>
               <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
                 <X size={24} />
@@ -166,7 +168,7 @@ export default function UserManagement() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Email</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('common.email')}</label>
                 <input
                   type="email"
                   required
@@ -178,7 +180,7 @@ export default function UserManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Password {editingId && '(leave blank to keep current)'}
+                  {t('login.password')} {editingId && `(${t('users.passwordHint') || 'leave blank to keep current'})`}
                 </label>
                 <input
                   type="password"
@@ -190,7 +192,7 @@ export default function UserManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('users.fullName')}</label>
                 <input
                   type="text"
                   value={formData.fullName}
@@ -200,14 +202,14 @@ export default function UserManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
-                  <option value="accountant">Accountant</option>
-                  <option value="admin">Admin</option>
+                  <option value="accountant">{t('users.accountant')}</option>
+                  <option value="admin">{t('users.admin')}</option>
                 </select>
               </div>
 
@@ -217,13 +219,13 @@ export default function UserManagement() {
                   onClick={resetForm}
                   className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
-                  {editingId ? 'Update' : 'Create'}
+                  {editingId ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

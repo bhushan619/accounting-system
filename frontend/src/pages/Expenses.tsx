@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Receipt, Upload, FileDown } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Expense {
   _id: string;
@@ -18,6 +19,7 @@ interface Expense {
 }
 
 export default function Expenses() {
+  const { t } = useLanguage();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -215,18 +217,18 @@ export default function Expenses() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('expenses.title')}</h1>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Add Expense
+          {t('expenses.addExpense')}
         </button>
       </div>
 
@@ -234,14 +236,14 @@ export default function Expenses() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Expense #</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Vendor</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Category</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Date</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Amount</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Files</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('expenses.expenseNo') || 'Expense #'}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('expenses.vendor')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('expenses.category')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.date')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.amount')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.status')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('expenses.files') || 'Files'}</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

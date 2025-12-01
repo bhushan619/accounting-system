@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, UserCog, Mail, Phone } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Employee {
   _id: string;
@@ -23,6 +24,7 @@ interface TaxConfig {
 }
 
 export default function Employees() {
+  const { t } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -245,18 +247,18 @@ export default function Employees() {
     setShowModal(true);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Employees</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('employees.title')}</h1>
         <button
           onClick={openNewModal}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Add Employee
+          {t('employees.addEmployee')}
         </button>
       </div>
 
@@ -264,13 +266,13 @@ export default function Employees() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Employee ID</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Designation</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Department</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Salary</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.employeeId') || 'Employee ID'}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.name')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.designation')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.department') || 'Department'}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.basicSalary')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.status')}</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Section {
   title: string;
@@ -74,29 +75,30 @@ const sections: Section[] = [
 ];
 
 export default function Guide() {
+  const { t } = useLanguage();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">User Guide</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-6">{t('guide.title')}</h1>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-card rounded-lg shadow border border-border">
         {sections.map((section, index) => (
-          <div key={index} className="border-b last:border-b-0">
+          <div key={index} className="border-b border-border last:border-b-0">
             <button
               onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
             >
-              <span className="font-semibold text-lg text-gray-800">{section.title}</span>
+              <span className="font-semibold text-lg text-foreground">{section.title}</span>
               {expandedIndex === index ? (
-                <ChevronUp className="text-gray-600" />
+                <ChevronUp className="text-muted-foreground" />
               ) : (
-                <ChevronDown className="text-gray-600" />
+                <ChevronDown className="text-muted-foreground" />
               )}
             </button>
             {expandedIndex === index && (
               <div className="px-6 pb-4">
-                <p className="text-gray-600">{section.content}</p>
+                <p className="text-muted-foreground">{section.content}</p>
               </div>
             )}
           </div>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function EnhancedReports() {
+  const { t } = useLanguage();
   const { loading: authLoading, token } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'profitloss' | 'expenses'>('overview');
   const [dateRange, setDateRange] = useState({
@@ -51,13 +53,13 @@ export default function EnhancedReports() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Financial Reports</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('reports.title')}</h1>
         <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Download size={20} />
-          Export Report
+          {t('common.export')} {t('reports.report') || 'Report'}
         </button>
       </div>
 
@@ -67,7 +69,7 @@ export default function EnhancedReports() {
           <Calendar size={20} className="text-muted-foreground" />
           <div className="flex gap-4 items-center flex-1">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('common.startDate')}</label>
               <input
                 type="date"
                 value={dateRange.startDate}
@@ -76,7 +78,7 @@ export default function EnhancedReports() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">End Date</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('common.endDate')}</label>
               <input
                 type="date"
                 value={dateRange.endDate}
@@ -88,7 +90,7 @@ export default function EnhancedReports() {
               onClick={loadReports}
               className="mt-6 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
             >
-              Apply Filter
+              {t('common.applyFilter')}
             </button>
           </div>
         </div>
