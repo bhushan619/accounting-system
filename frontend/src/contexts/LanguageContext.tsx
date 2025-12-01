@@ -597,7 +597,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   
   const [translations, setTranslations] = useState<Record<Language, Translations>>(() => {
     const saved = localStorage.getItem('translations');
-    return saved ? JSON.parse(saved) : defaultTranslations;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge saved translations with defaults to ensure new keys are always available
+      return {
+        en: { ...defaultTranslations.en, ...parsed.en },
+        zh: { ...defaultTranslations.zh, ...parsed.zh }
+      };
+    }
+    return defaultTranslations;
   });
 
   useEffect(() => {
