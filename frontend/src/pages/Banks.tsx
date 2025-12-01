@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Landmark, CreditCard } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Bank {
   _id: string;
@@ -13,6 +14,7 @@ interface Bank {
 }
 
 export default function Banks() {
+  const { t } = useLanguage();
   const [banks, setBanks] = useState<Bank[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -97,18 +99,18 @@ export default function Banks() {
     setShowModal(true);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Bank Accounts</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('banks.title')}</h1>
         <button
           onClick={openNewModal}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Add Bank Account
+          {t('banks.addBank')}
         </button>
       </div>
 
@@ -138,7 +140,7 @@ export default function Banks() {
             </div>
 
             <div className="mb-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Current Balance</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('banks.balance')}</p>
               <p className="text-2xl font-bold text-foreground">
                 {bank.currency} {bank.balance.toLocaleString()}
               </p>
@@ -150,14 +152,14 @@ export default function Banks() {
                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
               >
                 <Edit size={14} />
-                Edit
+                {t('common.edit')}
               </button>
               <button
                 onClick={() => handleDelete(bank._id)}
                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
               >
                 <Trash2 size={14} />
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -167,7 +169,7 @@ export default function Banks() {
       {banks.length === 0 && (
         <div className="text-center py-12 bg-card rounded-lg border border-border">
           <Landmark className="mx-auto text-muted-foreground mb-4" size={48} />
-          <p className="text-muted-foreground">No bank accounts found</p>
+          <p className="text-muted-foreground">{t('common.noData')}</p>
         </div>
       )}
 
@@ -175,11 +177,11 @@ export default function Banks() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">
-              {editingBank ? 'Edit Bank Account' : 'Add Bank Account'}
+              {editingBank ? t('banks.editBank') : t('banks.addBank')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Bank Name *</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('banks.bankName')} *</label>
                 <input
                   type="text"
                   value={formData.bankName}
@@ -189,7 +191,7 @@ export default function Banks() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Account Name *</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('banks.accountName') || 'Account Name'} *</label>
                 <input
                   type="text"
                   value={formData.accountName}
@@ -199,7 +201,7 @@ export default function Banks() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Account Number *</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('banks.accountNumber')} *</label>
                 <input
                   type="text"
                   value={formData.accountNumber}
@@ -209,7 +211,7 @@ export default function Banks() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Branch</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('banks.branch') || 'Branch'}</label>
                 <input
                   type="text"
                   value={formData.branch}
@@ -218,7 +220,7 @@ export default function Banks() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Balance</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('banks.balance')}</label>
                 <input
                   type="number"
                   value={formData.balance}
@@ -227,7 +229,7 @@ export default function Banks() {
                   readOnly={!!editingBank}
                 />
                 {editingBank && (
-                  <p className="text-xs text-muted-foreground mt-1">Balance is readonly when editing. Update through transactions.</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('banks.balanceReadonly') || 'Balance is readonly when editing. Update through transactions.'}</p>
                 )}
               </div>
               <div className="flex gap-2 justify-end">
@@ -236,13 +238,13 @@ export default function Banks() {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
-                  {editingBank ? 'Update' : 'Create'}
+                  {editingBank ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

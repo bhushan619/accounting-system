@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Mail, Users, Loader2, Search, X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Client {
   _id: string;
@@ -10,6 +11,7 @@ interface Client {
 }
 
 export default function Clients() {
+  const { t } = useLanguage();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -89,12 +91,12 @@ export default function Clients() {
       {/* Page Header */}
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">Clients</h1>
-          <p className="page-description">Manage your client information</p>
+          <h1 className="page-title">{t('clients.title')}</h1>
+          <p className="page-description">{t('clients.description') || 'Manage your client information'}</p>
         </div>
         <button onClick={openNewModal} className="btn btn-primary btn-md">
           <Plus size={18} />
-          <span>Add Client</span>
+          <span>{t('clients.addClient')}</span>
         </button>
       </div>
 
@@ -104,7 +106,7 @@ export default function Clients() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
           <input
             type="text"
-            placeholder="Search clients..."
+            placeholder={t('common.search') + '...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input pl-11"
@@ -112,7 +114,7 @@ export default function Clients() {
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-xl">
           <Users className="text-primary" size={18} />
-          <span className="text-sm font-medium text-foreground">{clients.length} Clients</span>
+          <span className="text-sm font-medium text-foreground">{clients.length} {t('nav.clients')}</span>
         </div>
       </div>
 
@@ -122,10 +124,10 @@ export default function Clients() {
           <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Created</th>
-                <th className="text-right">Actions</th>
+                <th>{t('common.name')}</th>
+                <th>{t('common.email')}</th>
+                <th>{t('common.date')}</th>
+                <th className="text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -155,14 +157,14 @@ export default function Clients() {
                         className="btn btn-ghost btn-sm"
                       >
                         <Edit size={14} />
-                        <span>Edit</span>
+                        <span>{t('common.edit')}</span>
                       </button>
                       <button
                         onClick={() => handleDelete(client._id)}
                         className="btn btn-sm text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 size={14} />
-                        <span>Delete</span>
+                        <span>{t('common.delete')}</span>
                       </button>
                     </div>
                   </td>
@@ -175,7 +177,7 @@ export default function Clients() {
           <div className="text-center py-12">
             <Users className="mx-auto text-muted-foreground mb-3" size={40} />
             <p className="text-muted-foreground">
-              {searchTerm ? 'No clients match your search' : 'No clients found'}
+              {searchTerm ? t('common.noData') : t('common.noData')}
             </p>
           </div>
         )}
@@ -187,7 +189,7 @@ export default function Clients() {
           <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="modal-header flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">
-                {editingClient ? 'Edit Client' : 'Add New Client'}
+                {editingClient ? t('clients.editClient') : t('clients.addClient')}
               </h2>
               <button 
                 onClick={() => setShowModal(false)}
@@ -199,18 +201,18 @@ export default function Clients() {
             <form onSubmit={handleSubmit}>
               <div className="modal-body space-y-4">
                 <div className="form-group">
-                  <label className="input-label">Name</label>
+                  <label className="input-label">{t('common.name')}</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="input"
-                    placeholder="Enter client name"
+                    placeholder={t('clients.clientName')}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label className="input-label">Email</label>
+                  <label className="input-label">{t('common.email')}</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -227,10 +229,10 @@ export default function Clients() {
                   onClick={() => setShowModal(false)}
                   className="btn btn-secondary btn-md"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary btn-md">
-                  {editingClient ? 'Update Client' : 'Add Client'}
+                  {editingClient ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

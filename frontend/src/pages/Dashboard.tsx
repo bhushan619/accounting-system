@@ -16,9 +16,11 @@ import {
   Filter,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Dashboard() {
   const { loading: authLoading, token, user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      title: "Total Revenue",
+      title: t('dashboard.totalRevenue'),
       value: stats?.totalRevenue || 0,
       icon: DollarSign,
       trend: "up",
@@ -96,7 +98,7 @@ export default function Dashboard() {
       valueColor: "text-green-600",
     },
     {
-      title: "Total Expenses",
+      title: t('dashboard.totalExpenses'),
       value: stats?.totalExpenses || 0,
       icon: TrendingDown,
       trend: "down",
@@ -107,7 +109,7 @@ export default function Dashboard() {
       valueColor: "text-red-600",
     },
     {
-      title: "Total Payroll",
+      title: t('dashboard.payroll'),
       value: stats?.totalPayroll || 0,
       icon: Users,
       trend: "neutral",
@@ -118,7 +120,7 @@ export default function Dashboard() {
       valueColor: "text-orange-600",
     },
     {
-      title: "Net Profit",
+      title: t('dashboard.netProfit'),
       value: stats?.profit || 0,
       icon: TrendingUp,
       trend: "up",
@@ -152,13 +154,13 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-description">Welcome back! Here's your financial overview.</p>
+          <h1 className="page-title">{t('dashboard.title')}</h1>
+          <p className="page-description">{t('dashboard.welcome') || 'Welcome back! Here\'s your financial overview.'}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={() => navigate("/invoices")} className="btn btn-primary btn-md">
             <Plus size={18} />
-            <span>New Invoice</span>
+            <span>{t('invoices.addInvoice')}</span>
           </button>
         </div>
       </div>
