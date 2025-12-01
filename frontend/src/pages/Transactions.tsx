@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Transaction {
   _id: string;
@@ -32,6 +33,7 @@ const getMonthName = (month: number) => {
 };
 
 export default function Transactions() {
+  const { t } = useLanguage();
   const { loading: authLoading, token } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);

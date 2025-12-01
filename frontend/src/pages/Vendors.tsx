@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Building2, Phone, Mail } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Vendor {
   _id: string;
@@ -13,6 +14,7 @@ interface Vendor {
 }
 
 export default function Vendors() {
+  const { t } = useLanguage();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -88,18 +90,18 @@ export default function Vendors() {
     setShowModal(true);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Vendors</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('vendors.title')}</h1>
         <button
           onClick={openNewModal}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus size={20} />
-          Add Vendor
+          {t('vendors.addVendor')}
         </button>
       </div>
 
@@ -114,7 +116,7 @@ export default function Vendors() {
                 <div>
                   <h3 className="font-semibold text-foreground">{vendor.name}</h3>
                   {vendor.taxId && (
-                    <p className="text-xs text-muted-foreground">Tax ID: {vendor.taxId}</p>
+                    <p className="text-xs text-muted-foreground">{t('vendors.taxId') || 'Tax ID'}: {vendor.taxId}</p>
                   )}
                 </div>
               </div>
@@ -144,14 +146,14 @@ export default function Vendors() {
                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
               >
                 <Edit size={14} />
-                Edit
+                {t('common.edit')}
               </button>
               <button
                 onClick={() => handleDelete(vendor._id)}
                 className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
               >
                 <Trash2 size={14} />
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -161,7 +163,7 @@ export default function Vendors() {
       {vendors.length === 0 && (
         <div className="text-center py-12 bg-card rounded-lg border border-border">
           <Building2 className="mx-auto text-muted-foreground mb-4" size={48} />
-          <p className="text-muted-foreground">No vendors found</p>
+          <p className="text-muted-foreground">{t('common.noData')}</p>
         </div>
       )}
 
@@ -169,11 +171,11 @@ export default function Vendors() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">
-              {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
+              {editingVendor ? t('vendors.editVendor') : t('vendors.addVendor')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Name *</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('common.name')} *</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -183,7 +185,7 @@ export default function Vendors() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('common.email')}</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -192,7 +194,7 @@ export default function Vendors() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Phone</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('common.phone')}</label>
                 <input
                   type="tel"
                   value={formData.phone}
@@ -201,7 +203,7 @@ export default function Vendors() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Address</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('common.address')}</label>
                 <textarea
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -210,7 +212,7 @@ export default function Vendors() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Tax ID</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('vendors.taxId') || 'Tax ID'}</label>
                 <input
                   type="text"
                   value={formData.taxId}
@@ -224,13 +226,13 @@ export default function Vendors() {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
-                  {editingVendor ? 'Update' : 'Create'}
+                  {editingVendor ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

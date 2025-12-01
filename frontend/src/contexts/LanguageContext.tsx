@@ -133,6 +133,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.paid': 'Paid',
     'invoices.pending': 'Pending',
     'invoices.draft': 'Draft',
+    'invoices.files': 'Files',
+    'invoices.createInvoice': 'Create Invoice',
     
     // Expenses
     'expenses.title': 'Expenses',
@@ -142,6 +144,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.vendor': 'Vendor',
     'expenses.approved': 'Approved',
     'expenses.pending': 'Pending',
+    'expenses.expenseNo': 'Expense #',
+    'expenses.files': 'Files',
     
     // Employees
     'employees.title': 'Employees',
@@ -151,6 +155,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.designation': 'Designation',
     'employees.basicSalary': 'Basic Salary',
     'employees.epfNo': 'EPF No',
+    'employees.employeeId': 'Employee ID',
+    'employees.department': 'Department',
     
     // Payroll
     'payroll.title': 'Payroll',
@@ -173,11 +179,16 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.role': 'Role',
     'users.admin': 'Admin',
     'users.accountant': 'Accountant',
+    'users.passwordHint': 'leave blank to keep current',
+    
+    // Vendors
+    'vendors.taxId': 'Tax ID',
     
     // Reports
     'reports.title': 'Financial Reports',
     'reports.overview': 'Overview',
     'reports.profitLoss': 'Profit & Loss',
+    'reports.report': 'Report',
     'reports.expenseBreakdown': 'Expense Breakdown',
     'reports.generate': 'Generate',
     
@@ -199,10 +210,31 @@ const defaultTranslations: Record<Language, Translations> = {
     
     // Login
     'login.title': 'Sign In',
-    'login.email': 'Email',
+    'login.email': 'Email Address',
     'login.password': 'Password',
     'login.signIn': 'Sign In',
     'login.forgotPassword': 'Forgot Password?',
+    'login.accounts': 'Accounts',
+    'login.tagline1': 'Streamline Your',
+    'login.tagline2': 'Financial Management',
+    'login.description': 'Complete accountancy solution with invoicing, expenses, payroll, and tax compliance - all in one platform.',
+    'login.createAccount': 'Create Account',
+    'login.welcomeBack': 'Welcome Back',
+    'login.signupSubtitle': 'Start managing your finances today',
+    'login.loginSubtitle': 'Sign in to continue to your dashboard',
+    'login.enterFullName': 'Enter your full name',
+    'login.creatingAccount': 'Creating account...',
+    'login.signingIn': 'Signing in...',
+    'login.haveAccount': 'Already have an account?',
+    'login.noAccount': "Don't have an account?",
+    'login.signInInstead': 'Sign in instead',
+    'login.createAccountLink': 'Create an account',
+    'login.allRightsReserved': 'All rights reserved.',
+    'login.loginFailed': 'Login failed. Please check your email and password.',
+    'login.signupFailed': 'Signup failed. Please try again.',
+    
+    // Guide
+    'guide.title': 'User Guide',
   },
   zh: {
     // Navigation
@@ -322,6 +354,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.paid': '已付款',
     'invoices.pending': '待处理',
     'invoices.draft': '草稿',
+    'invoices.files': '文件',
+    'invoices.createInvoice': '创建发票',
     
     // Expenses
     'expenses.title': '费用管理',
@@ -331,6 +365,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.vendor': '供应商',
     'expenses.approved': '已批准',
     'expenses.pending': '待处理',
+    'expenses.expenseNo': '费用编号',
+    'expenses.files': '文件',
     
     // Employees
     'employees.title': '员工管理',
@@ -340,6 +376,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.designation': '职位',
     'employees.basicSalary': '基本工资',
     'employees.epfNo': '公积金号',
+    'employees.employeeId': '员工编号',
+    'employees.department': '部门',
     
     // Payroll
     'payroll.title': '工资管理',
@@ -362,11 +400,16 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.role': '角色',
     'users.admin': '管理员',
     'users.accountant': '会计',
+    'users.passwordHint': '留空以保持当前密码',
+    
+    // Vendors
+    'vendors.taxId': '税号',
     
     // Reports
     'reports.title': '财务报告',
     'reports.overview': '概览',
     'reports.profitLoss': '损益表',
+    'reports.report': '报告',
     'reports.expenseBreakdown': '费用明细',
     'reports.generate': '生成',
     
@@ -388,10 +431,31 @@ const defaultTranslations: Record<Language, Translations> = {
     
     // Login
     'login.title': '登录',
-    'login.email': '邮箱',
+    'login.email': '邮箱地址',
     'login.password': '密码',
     'login.signIn': '登录',
     'login.forgotPassword': '忘记密码？',
+    'login.accounts': '账户',
+    'login.tagline1': '简化您的',
+    'login.tagline2': '财务管理',
+    'login.description': '完整的会计解决方案，包括发票、费用、工资和税务合规 - 全部集成在一个平台。',
+    'login.createAccount': '创建账户',
+    'login.welcomeBack': '欢迎回来',
+    'login.signupSubtitle': '立即开始管理您的财务',
+    'login.loginSubtitle': '登录以继续访问您的仪表板',
+    'login.enterFullName': '输入您的全名',
+    'login.creatingAccount': '正在创建账户...',
+    'login.signingIn': '正在登录...',
+    'login.haveAccount': '已有账户？',
+    'login.noAccount': '没有账户？',
+    'login.signInInstead': '改为登录',
+    'login.createAccountLink': '创建账户',
+    'login.allRightsReserved': '版权所有。',
+    'login.loginFailed': '登录失败。请检查您的邮箱和密码。',
+    'login.signupFailed': '注册失败。请重试。',
+    
+    // Guide
+    'guide.title': '用户指南',
   }
 };
 
