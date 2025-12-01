@@ -96,6 +96,14 @@ const defaultTranslations: Record<Language, Translations> = {
     'dashboard.viewReportsDesc': 'Analyze your financial data',
     'dashboard.revenue': 'Revenue',
     'dashboard.expenses': 'Expenses',
+    'dashboard.filterByDate': 'Filter by Date',
+    'dashboard.startDate': 'Start Date',
+    'dashboard.endDate': 'End Date',
+    'dashboard.applyFilter': 'Apply Filter',
+    'dashboard.clear': 'Clear',
+    'dashboard.showingDataFrom': 'Showing data from',
+    'dashboard.to': 'to',
+    'dashboard.noFinancialData': 'No financial data available',
     
     // Clients
     'clients.title': 'Clients',
@@ -426,6 +434,14 @@ const defaultTranslations: Record<Language, Translations> = {
     'dashboard.viewReportsDesc': '分析您的财务数据',
     'dashboard.revenue': '收入',
     'dashboard.expenses': '支出',
+    'dashboard.filterByDate': '按日期筛选',
+    'dashboard.startDate': '开始日期',
+    'dashboard.endDate': '结束日期',
+    'dashboard.applyFilter': '应用筛选',
+    'dashboard.clear': '清除',
+    'dashboard.showingDataFrom': '显示数据从',
+    'dashboard.to': '至',
+    'dashboard.noFinancialData': '暂无财务数据',
     
     // Clients
     'clients.title': '客户管理',

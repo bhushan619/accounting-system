@@ -171,11 +171,11 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Filter size={18} />
-              <span className="font-medium">Filter by Date:</span>
+              <span className="font-medium">{t('dashboard.filterByDate')}:</span>
             </div>
             <div className="flex flex-wrap items-end gap-4">
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Start Date</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t('dashboard.startDate')}</label>
                 <div className="relative">
                   <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
@@ -187,7 +187,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">End Date</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t('dashboard.endDate')}</label>
                 <div className="relative">
                   <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
@@ -203,14 +203,14 @@ export default function Dashboard() {
                   onClick={handleApplyFilter}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
                 >
-                  Apply Filter
+                  {t('dashboard.applyFilter')}
                 </button>
                 {filterApplied && (
                   <button
                     onClick={handleClearFilter}
                     className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent text-sm"
                   >
-                    Clear
+                    {t('dashboard.clear')}
                   </button>
                 )}
               </div>
@@ -218,7 +218,7 @@ export default function Dashboard() {
           </div>
           {filterApplied && (
             <div className="mt-3 text-sm text-primary">
-              Showing data from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
+              {t('dashboard.showingDataFrom')} {new Date(startDate).toLocaleDateString()} {t('dashboard.to')} {new Date(endDate).toLocaleDateString()}
             </div>
           )}
         </div>
@@ -255,7 +255,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="card">
           <div className="card-header">
-            <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('dashboard.quickActions')}</h2>
           </div>
           <div className="card-body space-y-3">
             <button
@@ -266,8 +266,8 @@ export default function Dashboard() {
                 <FileText size={20} />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-medium text-foreground">Create Invoice</p>
-                <p className="text-sm text-muted-foreground">Generate a new invoice for clients</p>
+                <p className="font-medium text-foreground">{t('dashboard.createInvoice')}</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.createInvoiceDesc')}</p>
               </div>
               <ArrowUpRight className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
@@ -280,8 +280,8 @@ export default function Dashboard() {
                 <Receipt size={20} />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-medium text-foreground">Record Expense</p>
-                <p className="text-sm text-muted-foreground">Log a new business expense</p>
+                <p className="font-medium text-foreground">{t('dashboard.recordExpense')}</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.recordExpenseDesc')}</p>
               </div>
               <ArrowUpRight className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
@@ -295,8 +295,8 @@ export default function Dashboard() {
                   <Users size={20} />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="font-medium text-foreground">Process Payroll</p>
-                  <p className="text-sm text-muted-foreground">Generate and manage employee payroll</p>
+                  <p className="font-medium text-foreground">{t('dashboard.processPayroll')}</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.processPayrollDesc')}</p>
                 </div>
                 <ArrowUpRight
                   className="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -313,8 +313,8 @@ export default function Dashboard() {
                 <TrendingUp size={20} />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-medium text-foreground">View Reports</p>
-                <p className="text-sm text-muted-foreground">Analyze your financial data</p>
+                <p className="font-medium text-foreground">{t('dashboard.viewReports')}</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.viewReportsDesc')}</p>
               </div>
               <ArrowUpRight className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </button>
@@ -324,7 +324,7 @@ export default function Dashboard() {
         {/* Recent Activity */}
         <div className="card">
           <div className="card-header">
-            <h2 className="text-lg font-semibold text-foreground">Financial Summary</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('dashboard.financialSummary')}</h2>
           </div>
           <div className="card-body">
             {stats ? (
@@ -334,7 +334,7 @@ export default function Dashboard() {
                     <div className="icon-container icon-success">
                       <TrendingUp size={18} />
                     </div>
-                    <span className="text-sm text-foreground">Revenue</span>
+                    <span className="text-sm text-foreground">{t('dashboard.revenue')}</span>
                   </div>
                   <span className="font-semibold text-green-600">LKR {stats.totalRevenue?.toLocaleString() || 0}</span>
                 </div>
@@ -344,7 +344,7 @@ export default function Dashboard() {
                     <div className="icon-container icon-danger">
                       <TrendingDown size={18} />
                     </div>
-                    <span className="text-sm text-foreground">Expenses</span>
+                    <span className="text-sm text-foreground">{t('dashboard.expenses')}</span>
                   </div>
                   <span className="font-semibold text-red-600">LKR {stats.totalExpenses?.toLocaleString() || 0}</span>
                 </div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
                       <div className="icon-container bg-orange-100 text-orange-600">
                         <Users size={18} />
                       </div>
-                      <span className="text-sm text-foreground">Payroll</span>
+                      <span className="text-sm text-foreground">{t('dashboard.payroll')}</span>
                     </div>
                     <span className="font-semibold text-orange-600">
                       LKR {stats.totalPayroll?.toLocaleString() || 0}
@@ -369,7 +369,7 @@ export default function Dashboard() {
                       <div className="icon-container icon-primary">
                         <DollarSign size={18} />
                       </div>
-                      <span className="text-sm font-medium text-foreground">Net Profit</span>
+                      <span className="text-sm font-medium text-foreground">{t('dashboard.netProfit')}</span>
                     </div>
                     <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
                       LKR {stats.profit?.toLocaleString() || 0}
@@ -378,7 +378,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No financial data available</p>
+              <p className="text-muted-foreground text-center py-8">{t('dashboard.noFinancialData')}</p>
             )}
           </div>
         </div>
