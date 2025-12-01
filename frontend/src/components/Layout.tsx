@@ -1,6 +1,8 @@
 import React, { ReactNode, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import { 
   Home, 
   Users, 
@@ -20,7 +22,8 @@ import {
   Wallet,
   PieChart,
   FileSpreadsheet,
-  Zap
+  Zap,
+  Globe
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -29,6 +32,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -115,61 +119,69 @@ export default function Layout({ children }: LayoutProps) {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin">
           {/* Dashboard */}
-          <NavLink to="/dashboard" icon={Home}>Dashboard</NavLink>
+          <NavLink to="/dashboard" icon={Home}>{t('nav.dashboard')}</NavLink>
 
           {/* Masters Group */}
           <NavGroup 
-            title="Masters" 
+            title={t('nav.masters')} 
             icon={Building2}
             isOpen={mastersOpen} 
             onToggle={() => setMastersOpen(!mastersOpen)}
           >
-            <NavLink to="/clients" icon={Users}>Clients</NavLink>
-            <NavLink to="/vendors" icon={Building2}>Vendors</NavLink>
-            <NavLink to="/banks" icon={Landmark}>Banks</NavLink>
+            <NavLink to="/clients" icon={Users}>{t('nav.clients')}</NavLink>
+            <NavLink to="/vendors" icon={Building2}>{t('nav.vendors')}</NavLink>
+            <NavLink to="/banks" icon={Landmark}>{t('nav.banks')}</NavLink>
             {user?.role === 'admin' && (
-              <NavLink to="/tax-configurations" icon={SettingsIcon}>Tax Config</NavLink>
+              <NavLink to="/tax-configurations" icon={SettingsIcon}>{t('nav.taxConfig')}</NavLink>
             )}
           </NavGroup>
 
           {/* Bookkeeping Group */}
           <NavGroup 
-            title="Bookkeeping" 
+            title={t('nav.bookkeeping')} 
             icon={FileText}
             isOpen={bookkeepingOpen} 
             onToggle={() => setBookkeepingOpen(!bookkeepingOpen)}
           >
-            <NavLink to="/invoices" icon={FileText}>Invoices</NavLink>
-            <NavLink to="/expenses" icon={Receipt}>Expenses</NavLink>
-            <NavLink to="/transactions" icon={Wallet}>Transactions</NavLink>
-            <NavLink to="/reports" icon={PieChart}>Financial Reports</NavLink>
-            <NavLink to="/tax-reports" icon={FileSpreadsheet}>Tax Reports (IRD)</NavLink>
+            <NavLink to="/invoices" icon={FileText}>{t('nav.invoices')}</NavLink>
+            <NavLink to="/expenses" icon={Receipt}>{t('nav.expenses')}</NavLink>
+            <NavLink to="/transactions" icon={Wallet}>{t('nav.transactions')}</NavLink>
+            <NavLink to="/reports" icon={PieChart}>{t('nav.financialReports')}</NavLink>
+            <NavLink to="/tax-reports" icon={FileSpreadsheet}>{t('nav.taxReports')}</NavLink>
           </NavGroup>
 
           {/* Salary Group (Admin only) */}
           {user?.role === 'admin' && (
             <NavGroup 
-              title="Salary" 
+              title={t('nav.salary')} 
               icon={DollarSign}
               isOpen={salaryOpen} 
               onToggle={() => setSalaryOpen(!salaryOpen)}
             >
-              <NavLink to="/employees" icon={UserCog}>Employees</NavLink>
-              <NavLink to="/payroll" icon={DollarSign}>Payroll</NavLink>
+              <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
+              <NavLink to="/payroll" icon={DollarSign}>{t('nav.payroll')}</NavLink>
             </NavGroup>
           )}
 
           {/* Users (Admin only) */}
           {user?.role === 'admin' && (
-            <NavLink to="/users" icon={Users}>Users</NavLink>
+            <NavLink to="/users" icon={Users}>{t('nav.users')}</NavLink>
+          )}
+
+          {/* Translations (Admin only) */}
+          {user?.role === 'admin' && (
+            <NavLink to="/translations" icon={Globe}>{t('nav.translations')}</NavLink>
           )}
 
           {/* User Guide */}
-          <NavLink to="/guide" icon={BookOpen}>User Guide</NavLink>
+          <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
         </nav>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-sidebar-muted">
+        <div className="p-4 border-t border-sidebar-muted space-y-2">
+          {/* Language Switcher */}
+          <LanguageSwitcher collapsed={!sidebarOpen} />
+          
           {sidebarOpen && (
             <div className="mb-3 px-3 animate-fade-in">
               <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
@@ -181,7 +193,7 @@ export default function Layout({ children }: LayoutProps) {
             className="flex items-center gap-3 px-3 py-2.5 w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
           >
             <LogOut size={18} />
-            {sidebarOpen && <span className="text-sm font-medium">Sign Out</span>}
+            {sidebarOpen && <span className="text-sm font-medium">{t('nav.signOut')}</span>}
           </button>
         </div>
       </aside>
