@@ -107,7 +107,7 @@ export default function EnhancedReports() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Overview
+            {t('enhancedReports.overview')}
           </button>
           <button
             onClick={() => setActiveTab('profitloss')}
@@ -117,7 +117,7 @@ export default function EnhancedReports() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Profit & Loss
+            {t('enhancedReports.profitLoss')}
           </button>
           <button
             onClick={() => setActiveTab('expenses')}
@@ -127,47 +127,47 @@ export default function EnhancedReports() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Expenses Breakdown
+            {t('enhancedReports.expensesBreakdown')}
           </button>
         </div>
       </div>
 
-      {loading && <div className="text-center py-8 text-muted-foreground">Loading...</div>}
+      {loading && <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>}
 
       {/* Overview Tab */}
       {!loading && activeTab === 'overview' && overviewData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Revenue</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalRevenue')}</h3>
             <p className="text-3xl font-bold text-foreground">Rs. {overviewData.totalRevenue?.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground mt-2">{overviewData.invoiceCount} invoices</p>
+            <p className="text-sm text-muted-foreground mt-2">{overviewData.invoiceCount} {t('enhancedReports.invoices')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Expenses</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalExpenses')}</h3>
             <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalExpenses?.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground mt-2">{overviewData.expenseCount} expenses</p>
+            <p className="text-sm text-muted-foreground mt-2">{overviewData.expenseCount} {t('enhancedReports.expensesLabel')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Payroll Costs</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.payrollCosts')}</h3>
             <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalPayroll?.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground mt-2">{overviewData.payrollCount} payroll entries</p>
+            <p className="text-sm text-muted-foreground mt-2">{overviewData.payrollCount} {t('enhancedReports.payrollEntries')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Costs</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalCosts')}</h3>
             <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalCosts?.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground mt-2">Expenses + Payroll</p>
+            <p className="text-sm text-muted-foreground mt-2">{t('enhancedReports.expensesPlusPayroll')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6 md:col-span-2">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Net Profit</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.netProfit')}</h3>
             <p className={`text-3xl font-bold ${overviewData.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
               Rs. {overviewData.profit?.toLocaleString()}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              {overviewData.profit >= 0 ? 'Profit' : 'Loss'}
+              {overviewData.profit >= 0 ? t('enhancedReports.profit') : t('enhancedReports.loss')}
             </p>
           </div>
         </div>
@@ -178,14 +178,14 @@ export default function EnhancedReports() {
         <div className="space-y-6">
           <div className="bg-card rounded-lg shadow overflow-hidden">
             <div className="bg-muted px-6 py-3">
-              <h3 className="font-semibold text-foreground">Revenue</h3>
+              <h3 className="font-semibold text-foreground">{t('enhancedReports.revenue')}</h3>
             </div>
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -197,7 +197,7 @@ export default function EnhancedReports() {
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
-                  <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>Total Revenue</td>
+                  <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>{t('enhancedReports.totalRevenue')}</td>
                   <td className="px-6 py-4 text-sm text-foreground text-right">
                     Rs. {profitLossData.revenue?.total?.toLocaleString()}
                   </td>
@@ -208,15 +208,15 @@ export default function EnhancedReports() {
 
           <div className="bg-card rounded-lg shadow overflow-hidden">
             <div className="bg-muted px-6 py-3">
-              <h3 className="font-semibold text-foreground">Expenses</h3>
+              <h3 className="font-semibold text-foreground">{t('enhancedReports.expensesLabel')}</h3>
             </div>
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -229,7 +229,7 @@ export default function EnhancedReports() {
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
-                  <td className="px-6 py-4 text-sm text-foreground" colSpan={3}>Total Expenses</td>
+                  <td className="px-6 py-4 text-sm text-foreground" colSpan={3}>{t('enhancedReports.totalExpenses')}</td>
                   <td className="px-6 py-4 text-sm text-destructive text-right">
                     Rs. {profitLossData.costs?.totalExpenses?.toLocaleString()}
                   </td>
@@ -240,20 +240,20 @@ export default function EnhancedReports() {
 
           <div className="bg-card rounded-lg shadow overflow-hidden">
             <div className="bg-muted px-6 py-3">
-              <h3 className="font-semibold text-foreground">Payroll</h3>
+              <h3 className="font-semibold text-foreground">{t('payroll')}</h3>
             </div>
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Period</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('description')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('enhancedReports.period')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {profitLossData.costs?.payroll?.map((item: any) => (
                   <tr key={item.id}>
-                    <td className="px-6 py-4 text-sm text-foreground">{item.employee?.fullName || 'Unknown'}</td>
+                    <td className="px-6 py-4 text-sm text-foreground">{item.employee?.fullName || t('enhancedReports.unknown')}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{item.month}/{item.year}</td>
                     <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
                   </tr>
@@ -266,7 +266,7 @@ export default function EnhancedReports() {
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
-                  <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>Total Payroll</td>
+                  <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>{t('enhancedReports.totalPayroll')}</td>
                   <td className="px-6 py-4 text-sm text-destructive text-right">
                     Rs. {((profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0)).toLocaleString()}
                   </td>
@@ -277,7 +277,7 @@ export default function EnhancedReports() {
 
           <div className="bg-card rounded-lg shadow p-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-foreground">Net Profit/Loss</h3>
+              <h3 className="text-xl font-semibold text-foreground">{t('enhancedReports.netProfitLoss')}</h3>
               <p className={`text-3xl font-bold ${(profitLossData.revenue?.total - (profitLossData.costs?.totalExpenses + profitLossData.costs?.totalPayroll + profitLossData.costs?.totalPayrollExpenses)) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                 Rs. {((profitLossData.revenue?.total || 0) - ((profitLossData.costs?.totalExpenses || 0) + (profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0))).toLocaleString()}
               </p>
@@ -292,10 +292,10 @@ export default function EnhancedReports() {
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Category</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Count</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Total Amount</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Percentage</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('category')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('enhancedReports.count')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('enhancedReports.totalAmount')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('enhancedReports.percentage')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -312,7 +312,7 @@ export default function EnhancedReports() {
                 );
               })}
               <tr className="bg-muted/30 font-semibold">
-                <td className="px-6 py-4 text-sm text-foreground">Total</td>
+                <td className="px-6 py-4 text-sm text-foreground">{t('enhancedReports.total')}</td>
                 <td className="px-6 py-4 text-sm text-foreground text-right">
                   {expensesData.byCategory && Object.values(expensesData.byCategory).reduce((sum: number, cat: any) => sum + cat.count, 0)}
                 </td>
