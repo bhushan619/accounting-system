@@ -7,6 +7,13 @@ const AttendanceSchema = new Schema({
   workingDays: { type: Number, required: true },
   attendedDays: { type: Number, required: true }, // Supports half days (e.g., 21.5)
   absentDays: { type: Number, required: true },
+  // Leave types breakdown (supports half days)
+  sickLeave: { type: Number, default: 0 },
+  casualLeave: { type: Number, default: 0 },
+  annualLeave: { type: Number, default: 0 },
+  unpaidLeave: { type: Number, default: 0 },
+  otherLeave: { type: Number, default: 0 },
+  leaveNotes: { type: String, default: '' },
   attendanceDeduction: { type: Number, default: 0 },
   payrollRun: { type: Schema.Types.ObjectId, ref: 'PayrollRun' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
