@@ -200,6 +200,14 @@ const defaultTranslations: Record<Language, Translations> = {
     'payroll.loadingHistory': 'Loading attendance history...',
     'payroll.employee': 'Employee',
     'payroll.workingDays': 'Working Days',
+    'payroll.sickLeave': 'Sick Leave',
+    'payroll.casualLeave': 'Casual Leave',
+    'payroll.annualLeave': 'Annual Leave',
+    'payroll.unpaidLeave': 'Unpaid Leave',
+    'payroll.otherLeave': 'Other Leave',
+    'payroll.leaveNotes': 'Leave Notes',
+    'payroll.leaveBreakdown': 'Leave Breakdown',
+    'payroll.paidLeave': 'Paid Leave',
     
     // Users
     'users.title': 'User Management',
@@ -555,6 +563,14 @@ const defaultTranslations: Record<Language, Translations> = {
     'payroll.loadingHistory': '正在加载考勤历史...',
     'payroll.employee': '员工',
     'payroll.workingDays': '工作天数',
+    'payroll.sickLeave': '病假',
+    'payroll.casualLeave': '事假',
+    'payroll.annualLeave': '年假',
+    'payroll.unpaidLeave': '无薪假',
+    'payroll.otherLeave': '其他假',
+    'payroll.leaveNotes': '请假备注',
+    'payroll.leaveBreakdown': '假期明细',
+    'payroll.paidLeave': '带薪假期',
     
     // Users
     'users.title': '用户管理',

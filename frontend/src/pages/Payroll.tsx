@@ -36,6 +36,12 @@ interface AttendanceData {
   workingDays: number;
   attendedDays: number;
   absentDays: number;
+  sickLeave: number;
+  casualLeave: number;
+  annualLeave: number;
+  unpaidLeave: number;
+  otherLeave: number;
+  leaveNotes: string;
   attendanceDeduction?: number;
 }
 
@@ -47,6 +53,12 @@ interface AttendanceHistory {
   workingDays: number;
   attendedDays: number;
   absentDays: number;
+  sickLeave: number;
+  casualLeave: number;
+  annualLeave: number;
+  unpaidLeave: number;
+  otherLeave: number;
+  leaveNotes: string;
   attendanceDeduction: number;
 }
 
@@ -66,6 +78,12 @@ interface PayrollPreview {
   deductionReason: string;
   attendedDays: number;
   absentDays: number;
+  sickLeave: number;
+  casualLeave: number;
+  annualLeave: number;
+  unpaidLeave: number;
+  otherLeave: number;
+  leaveNotes: string;
   attendanceDeduction: number;
   grossSalary: number;
   epfEmployee: number;
@@ -219,26 +237,56 @@ export default function Payroll() {
   };
 
   const downloadAttendanceTemplate = () => {
-    // Create sample data with all active employees
+    // Create sample data with all active employees including leave types
     const templateData = employees.map((emp) => ({
       "Employee ID": emp.employeeId,
       "Employee Name": emp.fullName,
       "Working Days": workingDaysInMonth,
-      "Attended Days": workingDaysInMonth, // Supports decimals for half days (e.g., 21.5)
+      "Attended Days": workingDaysInMonth,
+      "Sick Leave": 0,
+      "Casual Leave": 0,
+      "Annual Leave": 0,
+      "Unpaid Leave": 0,
+      "Other Leave": 0,
+      "Leave Notes": "",
     }));
 
     const ws = XLSX.utils.json_to_sheet(templateData);
 
     // Set column widths
-    ws["!cols"] = [{ wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 20 }];
+    ws["!cols"] = [
+      { wch: 15 }, // Employee ID
+      { wch: 30 }, // Employee Name
+      { wch: 15 }, // Working Days
+      { wch: 15 }, // Attended Days
+      { wch: 12 }, // Sick Leave
+      { wch: 12 }, // Casual Leave
+      { wch: 12 }, // Annual Leave
+      { wch: 12 }, // Unpaid Leave
+      { wch: 12 }, // Other Leave
+      { wch: 25 }, // Leave Notes
+    ];
 
-    // Add a note about half-day support
+    // Add instructions sheet
     const noteSheet = XLSX.utils.aoa_to_sheet([
       ["Instructions:"],
+      [""],
       ["1. Fill in 'Attended Days' for each employee"],
       ["2. Half-days are supported (e.g., 21.5 for 21 full days + 1 half day)"],
       ["3. Do not modify Employee ID column"],
       ["4. Working Days can be adjusted if needed"],
+      [""],
+      ["Leave Types:"],
+      ["- Sick Leave: Days taken due to illness (typically paid)"],
+      ["- Casual Leave: Short-notice personal leave (typically paid)"],
+      ["- Annual Leave: Planned vacation/holiday leave (paid)"],
+      ["- Unpaid Leave: Leave without pay (deducted from salary)"],
+      ["- Other Leave: Any other type of leave"],
+      [""],
+      ["Notes:"],
+      ["- Only 'Unpaid Leave' will be deducted from salary"],
+      ["- Other leave types are for tracking purposes"],
+      ["- Leave Notes: Optional comments for any leave"],
     ]);
 
     const wb = XLSX.utils.book_new();
@@ -276,6 +324,14 @@ export default function Payroll() {
           const workingDays = Number(row["Working Days"]) || workingDaysInMonth;
           // Support half-day attendance (e.g., 21.5)
           const attendedDays = parseFloat(String(row["Attended Days"])) || 0;
+          
+          // Parse leave types (all support half-days)
+          const sickLeave = parseFloat(String(row["Sick Leave"])) || 0;
+          const casualLeave = parseFloat(String(row["Casual Leave"])) || 0;
+          const annualLeave = parseFloat(String(row["Annual Leave"])) || 0;
+          const unpaidLeave = parseFloat(String(row["Unpaid Leave"])) || 0;
+          const otherLeave = parseFloat(String(row["Other Leave"])) || 0;
+          const leaveNotes = String(row["Leave Notes"] || "").trim();
 
           // Validate attended days
           if (attendedDays < 0) {
@@ -293,11 +349,42 @@ export default function Payroll() {
             });
           }
 
+          // Validate leave types are not negative
+          const leaveTypes = { sickLeave, casualLeave, annualLeave, unpaidLeave, otherLeave };
+          Object.entries(leaveTypes).forEach(([type, value]) => {
+            if (value < 0) {
+              warnings.push({
+                type: "invalid",
+                employeeId,
+                message: `${employeeId}: ${type} cannot be negative`,
+              });
+            }
+          });
+
+          // Calculate total leave days
+          const totalLeave = sickLeave + casualLeave + annualLeave + unpaidLeave + otherLeave;
+          const calculatedAbsentDays = workingDays - attendedDays;
+          
+          // Warn if leave days don't match absent days
+          if (totalLeave > 0 && Math.abs(totalLeave - calculatedAbsentDays) > 0.5) {
+            warnings.push({
+              type: "invalid",
+              employeeId,
+              message: `${employeeId}: Total leave (${totalLeave}) doesn't match absent days (${calculatedAbsentDays.toFixed(1)})`,
+            });
+          }
+
           parsedAttendance.push({
             employeeId,
             workingDays,
             attendedDays: Math.max(0, attendedDays),
             absentDays: Math.max(0, workingDays - attendedDays),
+            sickLeave: Math.max(0, sickLeave),
+            casualLeave: Math.max(0, casualLeave),
+            annualLeave: Math.max(0, annualLeave),
+            unpaidLeave: Math.max(0, unpaidLeave),
+            otherLeave: Math.max(0, otherLeave),
+            leaveNotes,
           });
         });
 
@@ -529,7 +616,9 @@ export default function Payroll() {
         const attendedDays = attendance?.attendedDays ?? workingDaysInMonth;
         const absentDays = attendance?.absentDays ?? 0;
         const perDaySalary = entry.basicSalary / workingDaysInMonth;
-        const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
+        // Only unpaid leave causes deduction
+        const unpaidLeave = attendance?.unpaidLeave ?? 0;
+        const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
 
         return {
           ...entry,
@@ -538,6 +627,12 @@ export default function Payroll() {
           deductionReason: "",
           attendedDays,
           absentDays,
+          sickLeave: attendance?.sickLeave ?? 0,
+          casualLeave: attendance?.casualLeave ?? 0,
+          annualLeave: attendance?.annualLeave ?? 0,
+          unpaidLeave: attendance?.unpaidLeave ?? 0,
+          otherLeave: attendance?.otherLeave ?? 0,
+          leaveNotes: attendance?.leaveNotes ?? "",
           attendanceDeduction,
         };
       });
@@ -570,9 +665,9 @@ export default function Payroll() {
         allowances: entry.allowances + entry.performanceBonus,
         deductionAmount: entry.deductionAmount + entry.attendanceDeduction,
         deductionReason: entry.deductionReason
-          ? `${entry.deductionReason}${entry.absentDays > 0 ? `, Absent ${entry.absentDays} days` : ""}`
-          : entry.absentDays > 0
-            ? `Absent ${entry.absentDays} days`
+          ? `${entry.deductionReason}${entry.unpaidLeave > 0 ? `, Unpaid Leave ${entry.unpaidLeave} days` : ""}`
+          : entry.unpaidLeave > 0
+            ? `Unpaid Leave ${entry.unpaidLeave} days`
             : "",
       }));
 
@@ -582,12 +677,18 @@ export default function Payroll() {
         employeeData,
       });
 
-      // Save attendance data to backend
+      // Save attendance data to backend with leave types
       const attendanceToSave = previewData.map((entry) => ({
         employeeId: entry.employee.employeeId,
         workingDays: workingDaysInMonth,
         attendedDays: entry.attendedDays,
         absentDays: entry.absentDays,
+        sickLeave: entry.sickLeave,
+        casualLeave: entry.casualLeave,
+        annualLeave: entry.annualLeave,
+        unpaidLeave: entry.unpaidLeave,
+        otherLeave: entry.otherLeave,
+        leaveNotes: entry.leaveNotes,
         attendanceDeduction: entry.attendanceDeduction,
       }));
 
@@ -1236,14 +1337,18 @@ export default function Payroll() {
                     <p className="text-sm font-medium text-blue-800 mb-2">
                       📋 {t("payroll.attendanceHistoryTitle")} ({getMonthName(formData.month)} {formData.year})
                     </p>
-                    <div className="max-h-32 overflow-y-auto">
+                    <div className="max-h-48 overflow-y-auto overflow-x-auto">
                       <table className="w-full text-xs">
-                        <thead className="bg-blue-100">
+                        <thead className="bg-blue-100 sticky top-0">
                           <tr>
                             <th className="px-2 py-1 text-left">{t("payroll.employee")}</th>
                             <th className="px-2 py-1 text-center">{t("payroll.workingDays")}</th>
                             <th className="px-2 py-1 text-center">{t("payroll.daysAttended")}</th>
-                            <th className="px-2 py-1 text-center">{t("payroll.absent")}</th>
+                            <th className="px-2 py-1 text-center text-green-700">{t("payroll.sickLeave")}</th>
+                            <th className="px-2 py-1 text-center text-blue-700">{t("payroll.casualLeave")}</th>
+                            <th className="px-2 py-1 text-center text-purple-700">{t("payroll.annualLeave")}</th>
+                            <th className="px-2 py-1 text-center text-red-700">{t("payroll.unpaidLeave")}</th>
+                            <th className="px-2 py-1 text-center text-gray-700">{t("payroll.otherLeave")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1252,7 +1357,11 @@ export default function Payroll() {
                               <td className="px-2 py-1">{record.employee?.fullName || record.employee?.employeeId}</td>
                               <td className="px-2 py-1 text-center">{record.workingDays}</td>
                               <td className="px-2 py-1 text-center">{record.attendedDays}</td>
-                              <td className="px-2 py-1 text-center text-red-600">{record.absentDays}</td>
+                              <td className="px-2 py-1 text-center text-green-600">{record.sickLeave || 0}</td>
+                              <td className="px-2 py-1 text-center text-blue-600">{record.casualLeave || 0}</td>
+                              <td className="px-2 py-1 text-center text-purple-600">{record.annualLeave || 0}</td>
+                              <td className="px-2 py-1 text-center text-red-600">{record.unpaidLeave || 0}</td>
+                              <td className="px-2 py-1 text-center text-gray-600">{record.otherLeave || 0}</td>
                             </tr>
                           ))}
                         </tbody>
