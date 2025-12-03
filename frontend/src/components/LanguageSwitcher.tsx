@@ -4,9 +4,10 @@ import { useLanguage, Language } from '../contexts/LanguageContext';
 
 interface LanguageSwitcherProps {
   collapsed?: boolean;
+  variant?: 'sidebar' | 'light';
 }
 
-export default function LanguageSwitcher({ collapsed = false }: LanguageSwitcherProps) {
+export default function LanguageSwitcher({ collapsed = false, variant = 'sidebar' }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage();
 
   const languages: { code: Language; label: string; flag: string }[] = [
@@ -15,6 +16,10 @@ export default function LanguageSwitcher({ collapsed = false }: LanguageSwitcher
   ];
 
   const currentLang = languages.find(l => l.code === language);
+  
+  const buttonClasses = variant === 'light'
+    ? 'flex items-center gap-2 px-3 py-2 text-foreground/70 hover:text-foreground hover:bg-muted rounded-lg transition-all duration-200'
+    : 'flex items-center gap-2 px-3 py-2 w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-all duration-200';
 
   const handleLanguageChange = () => {
     // Toggle between languages
@@ -25,7 +30,7 @@ export default function LanguageSwitcher({ collapsed = false }: LanguageSwitcher
   return (
     <button
       onClick={handleLanguageChange}
-      className="flex items-center gap-2 px-3 py-2 w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-all duration-200"
+      className={buttonClasses}
       title={collapsed ? `${currentLang?.flag} ${currentLang?.label}` : undefined}
     >
       <Globe size={18} />

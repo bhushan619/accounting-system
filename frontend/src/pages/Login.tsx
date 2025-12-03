@@ -87,7 +87,7 @@ export default function Login() {
       <div className="flex-1 flex flex-col p-8">
         {/* Language Switcher */}
         <div className="flex justify-end mb-4">
-          <LanguageSwitcher />
+          <LanguageSwitcher variant="light" />
         </div>
         
         <div className="flex-1 flex items-center justify-center">
