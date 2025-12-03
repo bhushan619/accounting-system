@@ -255,7 +255,6 @@ const defaultTranslations: Record<Language, Translations> = {
     'login.signInInstead': 'Sign in instead',
     'login.createAccountLink': 'Create an account',
     'login.allRightsReserved': 'All rights reserved.',
-    'login.forgotPassword': 'Forgot password?',
     
     // Forgot Password
     'forgotPassword.title': 'Forgot Password?',
@@ -651,7 +650,6 @@ const defaultTranslations: Record<Language, Translations> = {
     'login.signInInstead': '改为登录',
     'login.createAccountLink': '创建账户',
     'login.allRightsReserved': '版权所有。',
-    'login.forgotPassword': '忘记密码？',
     
     // Forgot Password
     'forgotPassword.title': '忘记密码？',
