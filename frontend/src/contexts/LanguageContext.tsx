@@ -471,7 +471,6 @@ const defaultTranslations: Record<Language, Translations> = {
     // Common additions
     'startDate': 'Start Date',
     'endDate': 'End Date',
-    'generate': 'Generate',
     'serial': 'Serial',
     'client': 'Client',
     'vendor': 'Vendor',
@@ -934,7 +933,6 @@ const defaultTranslations: Record<Language, Translations> = {
     // Common additions
     'startDate': '开始日期',
     'endDate': '结束日期',
-    'generate': '生成',
     'serial': '序号',
     'client': '客户',
     'vendor': '供应商',
