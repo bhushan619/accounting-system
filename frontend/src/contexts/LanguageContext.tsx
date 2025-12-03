@@ -35,6 +35,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'nav.users': 'Users',
     'nav.userGuide': 'User Guide',
     'nav.translations': 'Translations',
+    'nav.approvals': 'Approvals',
+    'nav.vatReports': 'VAT Reports',
+    'nav.employeePortal': 'Employee Portal',
     'nav.signOut': 'Sign Out',
     
     // Common
@@ -409,6 +412,71 @@ const defaultTranslations: Record<Language, Translations> = {
     'enhancedReports.totalAmount': 'Total Amount',
     'enhancedReports.percentage': 'Percentage',
     'enhancedReports.total': 'Total',
+    
+    // Approvals Page
+    'approvals.title': 'Approvals',
+    'approvals.subtitle': 'Review and approve pending invoices and expenses',
+    'approvals.pendingInvoices': 'Pending Invoices',
+    'approvals.pendingExpenses': 'Pending Expenses',
+    'approvals.noItems': 'No items pending approval',
+    'approvals.approve': 'Approve',
+    'approvals.reject': 'Reject',
+    'approvals.rejectReason': 'Rejection Reason',
+    'approvals.rejectReasonPlaceholder': 'Enter reason for rejection...',
+    'approvals.accountantApproval': 'Accountant Approval',
+    'approvals.adminApproval': 'Admin Approval',
+    'approvals.awaitingAccountant': 'Awaiting Accountant',
+    'approvals.awaitingAdmin': 'Awaiting Admin',
+    'approvals.approved': 'Approved',
+    'approvals.rejected': 'Rejected',
+    
+    // VAT Reports Page
+    'vatReports.title': 'VAT Returns',
+    'vatReports.subtitle': 'Generate VAT returns for IRD submission',
+    'vatReports.irdSummary': 'IRD VAT Return Summary',
+    'vatReports.totalSales': 'Total Sales (Box 1)',
+    'vatReports.outputVat': 'Output VAT (Box 2)',
+    'vatReports.totalPurchases': 'Total Purchases (Box 3)',
+    'vatReports.inputVat': 'Input VAT (Box 4)',
+    'vatReports.netVatPayable': 'Net VAT Payable (Box 5)',
+    'vatReports.vatRefundable': 'VAT Refundable (Box 6)',
+    'vatReports.salesInvoices': 'Output VAT - Sales Invoices',
+    'vatReports.expensesInput': 'Input VAT - Expenses',
+    
+    // Employee Portal Page
+    'employeePortal.title': 'Employee Portal',
+    'employeePortal.welcome': 'Welcome',
+    'employeePortal.myProfile': 'My Profile',
+    'employeePortal.myPayslips': 'My Payslips',
+    'employeePortal.updateRequests': 'Update Requests',
+    'employeePortal.personalInfo': 'Personal Information',
+    'employeePortal.bankInfo': 'Bank Information',
+    'employeePortal.requestUpdate': 'Request Update',
+    'employeePortal.pendingRequests': 'Pending Requests',
+    'employeePortal.noPayslips': 'No payslips available',
+    'employeePortal.downloadPayslip': 'Download Payslip',
+    'employeePortal.taxDocuments': 'Tax Documents',
+    'employeePortal.updatePending': 'Your update request is pending approval',
+    'employeePortal.updateApproved': 'Update approved',
+    'employeePortal.updateRejected': 'Update rejected',
+    
+    // Employee Login Page
+    'employeeLogin.title': 'Employee Portal',
+    'employeeLogin.subtitle': 'Access your payslips and personal information',
+    'employeeLogin.login': 'Employee Login',
+    'employeeLogin.register': 'Register',
+    'employeeLogin.employeeId': 'Employee ID',
+    'employeeLogin.adminLogin': 'Admin/Accountant Login',
+    
+    // Common additions
+    'startDate': 'Start Date',
+    'endDate': 'End Date',
+    'generate': 'Generate',
+    'serial': 'Serial',
+    'client': 'Client',
+    'vendor': 'Vendor',
+    'subtotal': 'Subtotal',
+    'vatAmount': 'VAT Amount',
   },
   zh: {
     // Navigation
@@ -430,6 +498,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'nav.users': '用户',
     'nav.userGuide': '用户指南',
     'nav.translations': '翻译管理',
+    'nav.approvals': '审批',
+    'nav.vatReports': '增值税报告',
+    'nav.employeePortal': '员工门户',
     'nav.signOut': '退出登录',
     
     // Common
@@ -804,6 +875,71 @@ const defaultTranslations: Record<Language, Translations> = {
     'enhancedReports.totalAmount': '总金额',
     'enhancedReports.percentage': '百分比',
     'enhancedReports.total': '合计',
+    
+    // Approvals Page
+    'approvals.title': '审批',
+    'approvals.subtitle': '审核和批准待处理的发票和费用',
+    'approvals.pendingInvoices': '待审批发票',
+    'approvals.pendingExpenses': '待审批费用',
+    'approvals.noItems': '没有待审批项目',
+    'approvals.approve': '批准',
+    'approvals.reject': '拒绝',
+    'approvals.rejectReason': '拒绝原因',
+    'approvals.rejectReasonPlaceholder': '输入拒绝原因...',
+    'approvals.accountantApproval': '会计审批',
+    'approvals.adminApproval': '管理员审批',
+    'approvals.awaitingAccountant': '等待会计审批',
+    'approvals.awaitingAdmin': '等待管理员审批',
+    'approvals.approved': '已批准',
+    'approvals.rejected': '已拒绝',
+    
+    // VAT Reports Page
+    'vatReports.title': '增值税申报',
+    'vatReports.subtitle': '生成增值税申报表提交给税务局',
+    'vatReports.irdSummary': '税务局增值税申报摘要',
+    'vatReports.totalSales': '销售总额 (Box 1)',
+    'vatReports.outputVat': '销项税 (Box 2)',
+    'vatReports.totalPurchases': '采购总额 (Box 3)',
+    'vatReports.inputVat': '进项税 (Box 4)',
+    'vatReports.netVatPayable': '应缴增值税 (Box 5)',
+    'vatReports.vatRefundable': '可退增值税 (Box 6)',
+    'vatReports.salesInvoices': '销项税 - 销售发票',
+    'vatReports.expensesInput': '进项税 - 费用',
+    
+    // Employee Portal Page
+    'employeePortal.title': '员工门户',
+    'employeePortal.welcome': '欢迎',
+    'employeePortal.myProfile': '我的资料',
+    'employeePortal.myPayslips': '我的工资单',
+    'employeePortal.updateRequests': '更新请求',
+    'employeePortal.personalInfo': '个人信息',
+    'employeePortal.bankInfo': '银行信息',
+    'employeePortal.requestUpdate': '请求更新',
+    'employeePortal.pendingRequests': '待处理请求',
+    'employeePortal.noPayslips': '暂无工资单',
+    'employeePortal.downloadPayslip': '下载工资单',
+    'employeePortal.taxDocuments': '税务文件',
+    'employeePortal.updatePending': '您的更新请求正在等待审批',
+    'employeePortal.updateApproved': '更新已批准',
+    'employeePortal.updateRejected': '更新已拒绝',
+    
+    // Employee Login Page
+    'employeeLogin.title': '员工门户',
+    'employeeLogin.subtitle': '访问您的工资单和个人信息',
+    'employeeLogin.login': '员工登录',
+    'employeeLogin.register': '注册',
+    'employeeLogin.employeeId': '员工编号',
+    'employeeLogin.adminLogin': '管理员/会计登录',
+    
+    // Common additions
+    'startDate': '开始日期',
+    'endDate': '结束日期',
+    'generate': '生成',
+    'serial': '序号',
+    'client': '客户',
+    'vendor': '供应商',
+    'subtotal': '小计',
+    'vatAmount': '增值税金额',
   }
 };
 
