@@ -7,7 +7,7 @@ interface User {
   _id: string;
   email: string;
   fullName?: string;
-  role: 'admin' | 'accountant';
+  role: 'admin' | 'accountant' | 'employee';
   createdAt: string;
 }
 
@@ -21,7 +21,7 @@ export default function UserManagement() {
     email: '',
     password: '',
     fullName: '',
-    role: 'accountant' as 'admin' | 'accountant'
+    role: 'accountant' as 'admin' | 'accountant' | 'employee'
   });
 
   useEffect(() => {
@@ -126,9 +126,11 @@ export default function UserManagement() {
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     user.role === 'admin' 
                       ? 'bg-primary/20 text-primary' 
+                      : user.role === 'employee'
+                      ? 'bg-green-500/20 text-green-600'
                       : 'bg-secondary/20 text-secondary-foreground'
                   }`}>
-                    {user.role === 'admin' ? t('users.admin') : t('users.accountant')}
+                    {user.role === 'admin' ? t('users.admin') : user.role === 'employee' ? t('users.employee') : t('users.accountant')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">
@@ -205,11 +207,12 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="accountant">{t('users.accountant')}</option>
                   <option value="admin">{t('users.admin')}</option>
+                  <option value="employee">{t('users.employee')}</option>
                 </select>
               </div>
 

@@ -220,6 +220,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.role': 'Role',
     'users.admin': 'Admin',
     'users.accountant': 'Accountant',
+    'users.employee': 'Employee',
     'users.passwordHint': 'leave blank to keep current',
     
     // Vendors
@@ -682,6 +683,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.role': '角色',
     'users.admin': '管理员',
     'users.accountant': '会计',
+    'users.employee': '员工',
     'users.passwordHint': '留空以保持当前密码',
     
     // Vendors
