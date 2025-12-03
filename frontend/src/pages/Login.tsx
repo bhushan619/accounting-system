@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function Login() {
@@ -83,7 +84,13 @@ export default function Login() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex flex-col p-8">
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
@@ -201,6 +208,7 @@ export default function Login() {
           <p className="mt-8 text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} VeloSync. {t('login.allRightsReserved') || 'All rights reserved.'}
           </p>
+        </div>
         </div>
       </div>
     </div>
