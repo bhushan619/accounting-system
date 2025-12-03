@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import config from '../config';
 
 const router = express.Router();
@@ -57,6 +58,64 @@ router.post('/refresh', async (req, res) => {
 
 router.post('/logout', async (req, res) => {
   res.json({ message: 'Logged out' });
+});
+
+// Forgot password - generate reset token
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      // Return success even if user not found (security)
+      return res.json({ message: 'If an account exists, a reset email will be sent' });
+    }
+    
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = resetTokenExpiry;
+    await user.save();
+    
+    res.json({ 
+      message: 'Reset token generated',
+      resetToken,
+      email: user.email,
+      fullName: user.fullName || 'User'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+});
+
+// Reset password with token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+    
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+    await user.save();
+    
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
 });
 
 export default router;

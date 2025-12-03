@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -153,7 +153,14 @@ export default function Login() {
               </div>
 
               <div className="form-group">
-                <label className="input-label">{t('login.password')}</label>
+                <div className="flex justify-between items-center">
+                  <label className="input-label">{t('login.password')}</label>
+                  {!isSignup && (
+                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      {t('login.forgotPassword') || 'Forgot password?'}
+                    </Link>
+                  )}
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <input
