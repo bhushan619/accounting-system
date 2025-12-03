@@ -46,13 +46,20 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
 }
 
-export function requireRole(role: string) {
+export function requireRole(roles: string | string[]) {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (req.user.role !== role && req.user.role !== 'admin') {
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    
+    // Admin always has access
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

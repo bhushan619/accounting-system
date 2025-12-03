@@ -21,6 +21,9 @@ import exportsRoutes from './routes/exports';
 import auditlogsRoutes from './routes/auditlogs';
 import uploadsRoutes from './routes/uploads';
 import swaggerRoutes from './routes/swagger';
+import approvalRoutes from './routes/approval';
+import employeePortalRoutes from './routes/employee-portal';
+import vatReportsRoutes from './routes/vat-reports';
 import config from './config';
 
 const app = express();
@@ -47,6 +50,9 @@ app.use('/exports', exportsRoutes);
 app.use('/auditlogs', auditlogsRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/docs', swaggerRoutes);
+app.use('/approval', approvalRoutes);
+app.use('/employee-portal', employeePortalRoutes);
+app.use('/vat-reports', vatReportsRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), config.UPLOADS_DIR)));
 
 app.use((err:any, req:any, res:any, next:any)=> { 

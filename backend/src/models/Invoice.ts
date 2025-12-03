@@ -17,8 +17,24 @@ const InvoiceSchema = new Schema({
   tax: { type: Number, default: 0 },
   discount: { type: Number, default: 0 },
   total: { type: Number, required: true },
+  // VAT Support
+  vatAmount: { type: Number, default: 0 },
+  vatRate: { type: Number, default: 18 }, // Sri Lanka VAT rate
+  isVatApplicable: { type: Boolean, default: false },
   notes: String,
   status: { type: String, enum: ['draft', 'sent', 'paid', 'overdue'], default: 'draft' },
+  // Two-level approval workflow
+  approvalStatus: { 
+    type: String, 
+    enum: ['pending_accountant', 'pending_admin', 'approved', 'rejected'], 
+    default: 'pending_accountant' 
+  },
+  approvedByAccountant: { type: Schema.Types.ObjectId, ref: 'User' },
+  accountantApprovalDate: Date,
+  approvedByAdmin: { type: Schema.Types.ObjectId, ref: 'User' },
+  adminApprovalDate: Date,
+  rejectedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  rejectionReason: String,
   attachmentUrl: String,
   receiptUrl: String,
   bank: { type: Schema.Types.ObjectId, ref: 'Bank' },

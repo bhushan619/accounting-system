@@ -17,6 +17,13 @@ const EmployeeSchema = new Schema({
   etfRate: { type: Number, default: 3 },
   apitScenario: { type: String, enum: ['employee', 'employer'], default: 'employee' },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  // Bank details for salary payment
+  bankName: String,
+  bankAccountNumber: String,
+  bankAccountName: String,
+  bankBranch: String,
+  // Link to User account (for self-service portal)
+  userAccount: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
