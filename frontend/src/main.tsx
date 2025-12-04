@@ -44,11 +44,33 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     return <Navigate to="/login" replace />;
   }
   
+  // Redirect employees to employee portal if they try to access admin/accountant pages
   if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (user.role === 'employee') {
+      return <Navigate to="/employee-portal" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
   
   return <Layout>{children}</Layout>;
+}
+
+function DefaultRedirect() {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Redirect based on role
+  if (user?.role === 'employee') {
+    return <Navigate to="/employee-portal" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
 }
 
 function App() {
@@ -80,7 +102,7 @@ function App() {
             <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Approvals /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<DefaultRedirect />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
