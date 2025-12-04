@@ -118,65 +118,75 @@ export default function Layout({ children }: LayoutProps) {
         
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin">
-          {/* Dashboard */}
-          <NavLink to="/dashboard" icon={Home}>{t('nav.dashboard')}</NavLink>
+          {/* Employee-specific navigation */}
+          {user?.role === 'employee' ? (
+            <>
+              <NavLink to="/employee-portal" icon={Home}>{t('nav.employeePortal')}</NavLink>
+              <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
+            </>
+          ) : (
+            <>
+              {/* Dashboard */}
+              <NavLink to="/dashboard" icon={Home}>{t('nav.dashboard')}</NavLink>
 
-          {/* Masters Group */}
-          <NavGroup 
-            title={t('nav.masters')} 
-            icon={Building2}
-            isOpen={mastersOpen} 
-            onToggle={() => setMastersOpen(!mastersOpen)}
-          >
-            <NavLink to="/clients" icon={Users}>{t('nav.clients')}</NavLink>
-            <NavLink to="/vendors" icon={Building2}>{t('nav.vendors')}</NavLink>
-            <NavLink to="/banks" icon={Landmark}>{t('nav.banks')}</NavLink>
-            {user?.role === 'admin' && (
-              <NavLink to="/tax-configurations" icon={SettingsIcon}>{t('nav.taxConfig')}</NavLink>
-            )}
-          </NavGroup>
+              {/* Masters Group */}
+              <NavGroup 
+                title={t('nav.masters')} 
+                icon={Building2}
+                isOpen={mastersOpen} 
+                onToggle={() => setMastersOpen(!mastersOpen)}
+              >
+                <NavLink to="/clients" icon={Users}>{t('nav.clients')}</NavLink>
+                <NavLink to="/vendors" icon={Building2}>{t('nav.vendors')}</NavLink>
+                <NavLink to="/banks" icon={Landmark}>{t('nav.banks')}</NavLink>
+                {user?.role === 'admin' && (
+                  <NavLink to="/tax-configurations" icon={SettingsIcon}>{t('nav.taxConfig')}</NavLink>
+                )}
+              </NavGroup>
 
-          {/* Bookkeeping Group */}
-          <NavGroup 
-            title={t('nav.bookkeeping')} 
-            icon={FileText}
-            isOpen={bookkeepingOpen} 
-            onToggle={() => setBookkeepingOpen(!bookkeepingOpen)}
-          >
-            <NavLink to="/invoices" icon={FileText}>{t('nav.invoices')}</NavLink>
-            <NavLink to="/expenses" icon={Receipt}>{t('nav.expenses')}</NavLink>
-            <NavLink to="/transactions" icon={Wallet}>{t('nav.transactions')}</NavLink>
-            <NavLink to="/approvals" icon={FileText}>{t('nav.approvals')}</NavLink>
-            <NavLink to="/reports" icon={PieChart}>{t('nav.financialReports')}</NavLink>
-            <NavLink to="/tax-reports" icon={FileSpreadsheet}>{t('nav.taxReports')}</NavLink>
-            <NavLink to="/vat-reports" icon={FileSpreadsheet}>{t('nav.vatReports')}</NavLink>
-          </NavGroup>
+              {/* Bookkeeping Group */}
+              <NavGroup 
+                title={t('nav.bookkeeping')} 
+                icon={FileText}
+                isOpen={bookkeepingOpen} 
+                onToggle={() => setBookkeepingOpen(!bookkeepingOpen)}
+              >
+                <NavLink to="/invoices" icon={FileText}>{t('nav.invoices')}</NavLink>
+                <NavLink to="/expenses" icon={Receipt}>{t('nav.expenses')}</NavLink>
+                <NavLink to="/transactions" icon={Wallet}>{t('nav.transactions')}</NavLink>
+                <NavLink to="/approvals" icon={FileText}>{t('nav.approvals')}</NavLink>
+                <NavLink to="/reports" icon={PieChart}>{t('nav.financialReports')}</NavLink>
+                <NavLink to="/tax-reports" icon={FileSpreadsheet}>{t('nav.taxReports')}</NavLink>
+                <NavLink to="/vat-reports" icon={FileSpreadsheet}>{t('nav.vatReports')}</NavLink>
+              </NavGroup>
 
-          {/* Salary Group (Admin only) */}
-          {user?.role === 'admin' && (
-            <NavGroup 
-              title={t('nav.salary')} 
-              icon={DollarSign}
-              isOpen={salaryOpen} 
-              onToggle={() => setSalaryOpen(!salaryOpen)}
-            >
-              <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
-              <NavLink to="/payroll" icon={DollarSign}>{t('nav.payroll')}</NavLink>
-            </NavGroup>
+              {/* Salary Group (Admin only) */}
+              {user?.role === 'admin' && (
+                <NavGroup 
+                  title={t('nav.salary')} 
+                  icon={DollarSign}
+                  isOpen={salaryOpen} 
+                  onToggle={() => setSalaryOpen(!salaryOpen)}
+                >
+                  <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
+                  <NavLink to="/payroll" icon={DollarSign}>{t('nav.payroll')}</NavLink>
+                </NavGroup>
+              )}
+
+              {/* Users (Admin only) */}
+              {user?.role === 'admin' && (
+                <NavLink to="/users" icon={Users}>{t('nav.users')}</NavLink>
+              )}
+
+              {/* Translations (Admin only) */}
+              {user?.role === 'admin' && (
+                <NavLink to="/translations" icon={Globe}>{t('nav.translations')}</NavLink>
+              )}
+
+              {/* User Guide */}
+              <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
+            </>
           )}
-
-          {/* Users (Admin only) */}
-          {user?.role === 'admin' && (
-            <NavLink to="/users" icon={Users}>{t('nav.users')}</NavLink>
-          )}
-
-          {/* Translations (Admin only) */}
-          {user?.role === 'admin' && (
-            <NavLink to="/translations" icon={Globe}>{t('nav.translations')}</NavLink>
-          )}
-
-          {/* User Guide */}
-          <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
         </nav>
 
         {/* User Info & Logout */}
