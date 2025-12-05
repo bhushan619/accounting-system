@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
@@ -34,6 +34,7 @@ export default function UserManagement() {
     role: 'accountant' as 'admin' | 'accountant' | 'employee',
     employeeRef: ''
   });
+  const [showRoleInfo, setShowRoleInfo] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -114,20 +115,97 @@ export default function UserManagement() {
     setShowModal(true);
   };
 
+  const rolePermissions = {
+    admin: {
+      name: t('users.admin'),
+      icon: Shield,
+      color: 'bg-primary/20 text-primary border-primary/30',
+      permissions: [
+        t('users.rolePermissions.fullAccess') || 'Full system access',
+        t('users.rolePermissions.manageUsers') || 'Manage users and roles',
+        t('users.rolePermissions.taxConfig') || 'Tax configuration',
+        t('users.rolePermissions.employees') || 'Employee management',
+        t('users.rolePermissions.payroll') || 'Payroll processing',
+        t('users.rolePermissions.approvals') || 'Approve transactions',
+      ]
+    },
+    accountant: {
+      name: t('users.accountant'),
+      icon: UserCog,
+      color: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
+      permissions: [
+        t('users.rolePermissions.invoices') || 'Create and manage invoices',
+        t('users.rolePermissions.expenses') || 'Record and manage expenses',
+        t('users.rolePermissions.reports') || 'View financial reports',
+        t('users.rolePermissions.clients') || 'Manage clients and vendors',
+        t('users.rolePermissions.banks') || 'View bank accounts',
+      ]
+    },
+    employee: {
+      name: t('users.employee'),
+      icon: Users,
+      color: 'bg-green-500/20 text-green-600 border-green-500/30',
+      permissions: [
+        t('users.rolePermissions.viewPayslips') || 'View own payslips',
+        t('users.rolePermissions.viewProfile') || 'View personal profile',
+        t('users.rolePermissions.requestUpdates') || 'Request profile updates',
+      ]
+    }
+  };
+
   if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
-        <button
-          onClick={openNewModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-        >
-          <Plus size={20} />
-          {t('users.addUser')}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowRoleInfo(!showRoleInfo)}
+            className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+          >
+            <Shield size={20} />
+            {t('users.rolePermissionsTitle') || 'Role Permissions'}
+            {showRoleInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          <button
+            onClick={openNewModal}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            <Plus size={20} />
+            {t('users.addUser')}
+          </button>
+        </div>
       </div>
+
+      {/* Role Permissions Overview */}
+      {showRoleInfo && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {Object.entries(rolePermissions).map(([role, info]) => {
+            const Icon = info.icon;
+            const usersWithRole = users.filter(u => u.role === role).length;
+            return (
+              <div key={role} className={`p-4 rounded-lg border ${info.color}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon size={20} />
+                  <h3 className="font-semibold">{info.name}</h3>
+                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-background/50">
+                    {usersWithRole} {t('users.usersCount') || 'users'}
+                  </span>
+                </div>
+                <ul className="space-y-1 text-sm">
+                  {info.permissions.map((perm, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                      {perm}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="bg-card rounded-lg shadow overflow-hidden">
         <table className="w-full">

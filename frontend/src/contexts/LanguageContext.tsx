@@ -225,6 +225,22 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.passwordHint': 'leave blank to keep current',
     'users.linkEmployee': 'Link to Employee',
     'users.linkEmployeeHint': 'Only employees without linked accounts are shown',
+    'users.rolePermissionsTitle': 'Role Permissions',
+    'users.usersCount': 'users',
+    'users.rolePermissions.fullAccess': 'Full system access',
+    'users.rolePermissions.manageUsers': 'Manage users and roles',
+    'users.rolePermissions.taxConfig': 'Tax configuration',
+    'users.rolePermissions.employees': 'Employee management',
+    'users.rolePermissions.payroll': 'Payroll processing',
+    'users.rolePermissions.approvals': 'Approve transactions',
+    'users.rolePermissions.invoices': 'Create and manage invoices',
+    'users.rolePermissions.expenses': 'Record and manage expenses',
+    'users.rolePermissions.reports': 'View financial reports',
+    'users.rolePermissions.clients': 'Manage clients and vendors',
+    'users.rolePermissions.banks': 'View bank accounts',
+    'users.rolePermissions.viewPayslips': 'View own payslips',
+    'users.rolePermissions.viewProfile': 'View personal profile',
+    'users.rolePermissions.requestUpdates': 'Request profile updates',
     
     // Vendors
     'vendors.taxId': 'Tax ID',
@@ -391,6 +407,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenseBreakdown': 'Expense Breakdown',
     'expenseBreakdownDesc': 'Expenses by category',
     'generate': 'Generate',
+    'startDate': 'Start Date',
+    'endDate': 'End Date',
     
     // Enhanced Reports Page
     'enhancedReports.overview': 'Overview',
@@ -512,6 +530,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.addLine': 'Add Line',
     'invoices.subtotal': 'Subtotal',
     'invoices.total': 'Total',
+    'invoices.delete': 'Delete',
+    
     
     // Additional expense labels
     'expenses.createNew': 'Add New Expense',
@@ -525,6 +545,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.bill': 'Bill',
     'expenses.receipt': 'Receipt',
     'expenses.uploading': 'Uploading...',
+    'expenses.delete': 'Delete',
+    
     
     // Additional employee labels
     'employees.addNew': 'Add New Employee',
@@ -554,6 +576,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.etf': 'ETF',
     'employees.totalCTC': 'Total CTC',
     'employees.epfRates': 'EPF/ETF Rates (from Tax Config)',
+    'employees.edit': 'Edit',
+    'employees.delete': 'Delete',
+    
     
     // Additional bank labels
     'banks.branchLabel': 'Branch',
@@ -783,6 +808,22 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.passwordHint': '留空以保持当前密码',
     'users.linkEmployee': '关联员工',
     'users.linkEmployeeHint': '仅显示未关联账户的员工',
+    'users.rolePermissionsTitle': '角色权限',
+    'users.usersCount': '位用户',
+    'users.rolePermissions.fullAccess': '完全系统访问权限',
+    'users.rolePermissions.manageUsers': '管理用户和角色',
+    'users.rolePermissions.taxConfig': '税务配置',
+    'users.rolePermissions.employees': '员工管理',
+    'users.rolePermissions.payroll': '工资处理',
+    'users.rolePermissions.approvals': '审批交易',
+    'users.rolePermissions.invoices': '创建和管理发票',
+    'users.rolePermissions.expenses': '记录和管理费用',
+    'users.rolePermissions.reports': '查看财务报告',
+    'users.rolePermissions.clients': '管理客户和供应商',
+    'users.rolePermissions.banks': '查看银行账户',
+    'users.rolePermissions.viewPayslips': '查看个人工资单',
+    'users.rolePermissions.viewProfile': '查看个人资料',
+    'users.rolePermissions.requestUpdates': '请求资料更新',
     
     // Vendors
     'vendors.taxId': '税号',
@@ -1079,6 +1120,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.addLine': '添加行',
     'invoices.subtotal': '小计',
     'invoices.total': '总计',
+    'invoices.delete': '删除',
     
     // Additional expense labels
     'expenses.createNew': '添加新费用',
@@ -1092,6 +1134,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.bill': '账单',
     'expenses.receipt': '收据',
     'expenses.uploading': '上传中...',
+    'expenses.delete': '删除',
     
     // Additional employee labels
     'employees.addNew': '添加新员工',
@@ -1121,6 +1164,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.etf': 'ETF',
     'employees.totalCTC': '总人力成本',
     'employees.epfRates': 'EPF/ETF费率（来自税务配置）',
+    'employees.edit': '编辑',
+    'employees.delete': '删除',
     
     // Additional bank labels
     'banks.branchLabel': '支行',
@@ -1140,7 +1185,7 @@ const defaultTranslations: Record<Language, Translations> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // Version number to force translation reset when structure changes
-const TRANSLATIONS_VERSION = '2.0';
+const TRANSLATIONS_VERSION = '2.2';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
