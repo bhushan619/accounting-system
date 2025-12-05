@@ -8,12 +8,22 @@ interface User {
   email: string;
   fullName?: string;
   role: 'admin' | 'accountant' | 'employee';
+  employeeRef?: string;
   createdAt: string;
+}
+
+interface Employee {
+  _id: string;
+  employeeId: string;
+  fullName: string;
+  email: string;
+  userAccount?: string;
 }
 
 export default function UserManagement() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -21,11 +31,13 @@ export default function UserManagement() {
     email: '',
     password: '',
     fullName: '',
-    role: 'accountant' as 'admin' | 'accountant' | 'employee'
+    role: 'accountant' as 'admin' | 'accountant' | 'employee',
+    employeeRef: ''
   });
 
   useEffect(() => {
     loadUsers();
+    loadEmployees();
   }, []);
 
   const loadUsers = async () => {
@@ -36,6 +48,15 @@ export default function UserManagement() {
       console.error('Failed to load users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadEmployees = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/employees`);
+      setEmployees(res.data);
+    } catch (error) {
+      console.error('Failed to load employees:', error);
     }
   };
 
@@ -60,7 +81,8 @@ export default function UserManagement() {
       email: user.email,
       password: '',
       fullName: user.fullName || '',
-      role: user.role
+      role: user.role,
+      employeeRef: user.employeeRef || ''
     });
     setShowModal(true);
   };
@@ -80,7 +102,8 @@ export default function UserManagement() {
       email: '',
       password: '',
       fullName: '',
-      role: 'accountant'
+      role: 'accountant',
+      employeeRef: ''
     });
     setEditingId(null);
     setShowModal(false);
@@ -207,7 +230,7 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee', employeeRef: '' })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="accountant">{t('users.accountant')}</option>
@@ -215,6 +238,30 @@ export default function UserManagement() {
                   <option value="employee">{t('users.employee')}</option>
                 </select>
               </div>
+
+              {formData.role === 'employee' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">{t('users.linkEmployee') || 'Link to Employee'}</label>
+                  <select
+                    value={formData.employeeRef}
+                    onChange={(e) => setFormData({ ...formData, employeeRef: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    required
+                  >
+                    <option value="">{t('common.select') || 'Select Employee'}</option>
+                    {employees
+                      .filter(emp => !emp.userAccount || emp._id === formData.employeeRef)
+                      .map(emp => (
+                        <option key={emp._id} value={emp._id}>
+                          {emp.employeeId} - {emp.fullName}
+                        </option>
+                      ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('users.linkEmployeeHint') || 'Only employees without linked accounts are shown'}
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button
