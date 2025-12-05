@@ -158,8 +158,8 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">{t('employeePortal.title') || 'Employee Portal'}</h1>
-        <p className="text-muted-foreground mt-2">{t('employeePortal.subtitle') || 'View your payslips and manage your profile'}</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('employeePortal.title')}</h1>
+        <p className="text-muted-foreground mt-2">{t('employeePortal.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -173,7 +173,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
           }`}
         >
           <User className="inline mr-2" size={18} />
-          {t('employeePortal.profile') || 'My Profile'}
+          {t('employeePortal.profile')}
         </button>
         <button
           onClick={() => setActiveTab('payslips')}
@@ -184,7 +184,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
           }`}
         >
           <FileText className="inline mr-2" size={18} />
-          {t('employeePortal.payslips') || 'Payslips'}
+          {t('employeePortal.payslips')}
         </button>
         <button
           onClick={() => setActiveTab('requests')}
@@ -195,7 +195,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
           }`}
         >
           <Clock className="inline mr-2" size={18} />
-          {t('employeePortal.updateRequests') || 'Update Requests'}
+          {t('employeePortal.updateRequests')}
         </button>
       </div>
 
@@ -209,14 +209,14 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
           {activeTab === 'profile' && profile && (
             <div className="bg-card rounded-xl shadow-sm border border-border p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">{t('employeePortal.personalInfo') || 'Personal Information'}</h2>
+                <h2 className="text-xl font-semibold">{t('employeePortal.personalInfo')}</h2>
                 {!editMode ? (
                   <button
                     onClick={() => setEditMode(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                   >
                     <Edit size={16} />
-                    {t('employeePortal.requestUpdate') || 'Request Update'}
+                    {t('employeePortal.requestUpdate')}
                   </button>
                 ) : (
                   <div className="flex gap-2">
@@ -225,7 +225,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                       className="flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80"
                     >
                       <X size={16} />
-                      {t('cancel') || 'Cancel'}
+                      {t('common.cancel')}
                     </button>
                     <button
                       onClick={handleSubmitUpdateRequest}
@@ -233,7 +233,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                       className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                     >
                       <Check size={16} />
-                      {t('employeePortal.submitRequest') || 'Submit Request'}
+                      {t('employeePortal.submitRequest')}
                     </button>
                   </div>
                 )}
@@ -242,19 +242,19 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Read-only fields */}
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('employeeId') || 'Employee ID'}</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('employees.employeeId')}</label>
                   <p className="text-foreground font-medium">{profile.employeeId}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('fullName') || 'Full Name'}</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.fullName')}</label>
                   <p className="text-foreground font-medium">{profile.fullName}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('designation') || 'Designation'}</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('employees.designation')}</label>
                   <p className="text-foreground">{profile.designation || '-'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('department') || 'Department'}</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('employees.department')}</label>
                   <p className="text-foreground">{profile.department || '-'}</p>
                 </div>
 
@@ -262,7 +262,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     <Mail className="inline mr-1" size={14} />
-                    {t('email') || 'Email'}
+                    {t('common.email')}
                   </label>
                   {editMode ? (
                     <input
@@ -278,7 +278,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     <Phone className="inline mr-1" size={14} />
-                    {t('phone') || 'Phone'}
+                    {t('common.phone')}
                   </label>
                   {editMode ? (
                     <input
@@ -294,7 +294,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     <MapPin className="inline mr-1" size={14} />
-                    {t('address') || 'Address'}
+                    {t('common.address')}
                   </label>
                   {editMode ? (
                     <textarea
@@ -313,11 +313,11 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
               <div className="mt-8 pt-6 border-t border-border">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <CreditCard size={20} />
-                  {t('employeePortal.bankDetails') || 'Bank Details'}
+                  {t('employeePortal.bankDetails')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('bankName') || 'Bank Name'}</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('banks.bankName')}</label>
                     {editMode ? (
                       <input
                         type="text"
@@ -330,7 +330,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('accountNumber') || 'Account Number'}</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('banks.accountNumber')}</label>
                     {editMode ? (
                       <input
                         type="text"
@@ -343,7 +343,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('accountName') || 'Account Name'}</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('banks.accountName')}</label>
                     {editMode ? (
                       <input
                         type="text"
@@ -356,7 +356,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('branch') || 'Branch'}</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('banks.branch')}</label>
                     {editMode ? (
                       <input
                         type="text"
@@ -379,19 +379,19 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('period') || 'Period'}</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('grossSalary') || 'Gross'}</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('deductions') || 'Deductions'}</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('netSalary') || 'Net'}</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('status') || 'Status'}</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('actions') || 'Actions'}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('payroll.period')}</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('payroll.grossSalary')}</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('payroll.deductions')}</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">{t('payroll.netSalary')}</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('common.status')}</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {payslips.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                        {t('employeePortal.noPayslips') || 'No payslips available'}
+                        {t('employeePortal.noPayslips')}
                       </td>
                     </tr>
                   ) : (
@@ -414,7 +414,7 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
                           <button
                             onClick={() => downloadPayslip(payslip)}
                             className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                            title={t('download') || 'Download'}
+                            title={t('employeePortal.downloadPayslip')}
                           >
                             <Download size={18} />
                           </button>
@@ -433,17 +433,17 @@ NET SALARY: LKR ${payslip.netSalary.toLocaleString()}
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('date') || 'Date'}</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('changes') || 'Requested Changes'}</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('status') || 'Status'}</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('notes') || 'Notes'}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('common.date')}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employeePortal.requestedChanges')}</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('common.status')}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employeePortal.reviewNotes')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {requests.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                        {t('employeePortal.noRequests') || 'No update requests'}
+                        {t('employeePortal.noRequests')}
                       </td>
                     </tr>
                   ) : (
