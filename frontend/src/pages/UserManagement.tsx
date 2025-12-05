@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp, Save, RotateCcw } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp, Save, RotateCcw, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
@@ -26,6 +26,36 @@ interface RolePermission {
   permissions: string[];
 }
 
+// Predefined permission options for easy selection
+const availablePermissions = {
+  admin: [
+    'Full system access',
+    'Manage users and roles',
+    'Tax configuration',
+    'Employee management',
+    'Payroll processing',
+    'Approve transactions',
+    'View audit logs',
+    'System settings'
+  ],
+  accountant: [
+    'Create and manage invoices',
+    'Record and manage expenses',
+    'View financial reports',
+    'Manage clients and vendors',
+    'View bank accounts',
+    'Export reports',
+    'View dashboard'
+  ],
+  employee: [
+    'View own payslips',
+    'View personal profile',
+    'Request profile updates',
+    'View attendance records',
+    'Download tax documents'
+  ]
+};
+
 export default function UserManagement() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
@@ -42,6 +72,7 @@ export default function UserManagement() {
   });
   const [showRoleInfo, setShowRoleInfo] = useState(false);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [newPermission, setNewPermission] = useState('');
@@ -152,12 +183,14 @@ export default function UserManagement() {
     setEditingRole(role);
     setEditPermissions(rolePerm?.permissions || []);
     setNewPermission('');
+    setShowPermissionModal(true);
   };
 
   const cancelEditingRole = () => {
     setEditingRole(null);
     setEditPermissions([]);
     setNewPermission('');
+    setShowPermissionModal(false);
   };
 
   const saveRolePermissions = async () => {
@@ -174,15 +207,23 @@ export default function UserManagement() {
     }
   };
 
-  const addPermission = () => {
+  const togglePermission = (permission: string) => {
+    if (editPermissions.includes(permission)) {
+      setEditPermissions(editPermissions.filter(p => p !== permission));
+    } else {
+      setEditPermissions([...editPermissions, permission]);
+    }
+  };
+
+  const addCustomPermission = () => {
     if (newPermission.trim() && !editPermissions.includes(newPermission.trim())) {
       setEditPermissions([...editPermissions, newPermission.trim()]);
       setNewPermission('');
     }
   };
 
-  const removePermission = (index: number) => {
-    setEditPermissions(editPermissions.filter((_, i) => i !== index));
+  const removePermission = (permission: string) => {
+    setEditPermissions(editPermissions.filter(p => p !== permission));
   };
 
   const resetAllPermissions = async () => {
@@ -248,7 +289,6 @@ export default function UserManagement() {
               const usersWithRole = users.filter(u => u.role === role).length;
               const rolePerm = rolePermissions.find(rp => rp.role === role);
               const permissions = rolePerm?.permissions || [];
-              const isEditing = editingRole === role;
 
               return (
                 <div key={role} className={`p-4 rounded-lg border ${roleColors[role]}`}>
@@ -259,77 +299,137 @@ export default function UserManagement() {
                       {usersWithRole} {t('users.usersCount') || 'users'}
                     </span>
                   </div>
-
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <ul className="space-y-1 text-sm max-h-40 overflow-y-auto">
-                        {editPermissions.map((perm, idx) => (
-                          <li key={idx} className="flex items-center gap-2 group">
-                            <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
-                            <span className="flex-1 truncate">{perm}</span>
-                            <button
-                              onClick={() => removePermission(idx)}
-                              className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
-                            >
-                              <X size={14} />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex gap-2 mt-2">
-                        <input
-                          type="text"
-                          value={newPermission}
-                          onChange={(e) => setNewPermission(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && addPermission()}
-                          placeholder={t('users.addPermission') || 'Add permission...'}
-                          className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
-                        />
-                        <button
-                          onClick={addPermission}
-                          className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={cancelEditingRole}
-                          className="flex-1 px-2 py-1 text-sm border border-border rounded hover:bg-background/50"
-                        >
-                          {t('common.cancel')}
-                        </button>
-                        <button
-                          onClick={saveRolePermissions}
-                          className="flex-1 px-2 py-1 text-sm bg-primary text-primary-foreground rounded flex items-center justify-center gap-1"
-                        >
-                          <Save size={14} />
-                          {t('common.save')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <ul className="space-y-1 text-sm">
-                        {permissions.map((perm, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            {perm}
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        onClick={() => startEditingRole(role)}
-                        className="mt-3 w-full px-3 py-1.5 text-sm border border-current/30 rounded hover:bg-background/30 flex items-center justify-center gap-2"
-                      >
-                        <Pencil size={14} />
-                        {t('users.editPermissions') || 'Edit Permissions'}
-                      </button>
-                    </>
-                  )}
+                  <ul className="space-y-1 text-sm mb-3">
+                    {permissions.slice(0, 4).map((perm, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <Check size={12} className="text-current" />
+                        <span className="truncate">{perm}</span>
+                      </li>
+                    ))}
+                    {permissions.length > 4 && (
+                      <li className="text-xs text-muted-foreground">
+                        +{permissions.length - 4} more permissions
+                      </li>
+                    )}
+                  </ul>
+                  <button
+                    onClick={() => startEditingRole(role)}
+                    className="w-full px-3 py-2 text-sm border border-current/30 rounded-lg hover:bg-background/30 flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Pencil size={14} />
+                    {t('users.editPermissions') || 'Edit Permissions'}
+                  </button>
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Permission Edit Modal */}
+      {showPermissionModal && editingRole && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                {React.createElement(roleIcons[editingRole], { size: 24 })}
+                <h2 className="text-xl font-semibold text-foreground">
+                  {t('users.editPermissions') || 'Edit Permissions'} - {getRoleName(editingRole)}
+                </h2>
+              </div>
+              <button onClick={cancelEditingRole} className="text-muted-foreground hover:text-foreground">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Predefined Permissions */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                {t('users.selectPermissions') || 'Select Permissions'}
+              </h3>
+              <div className="space-y-2">
+                {availablePermissions[editingRole as keyof typeof availablePermissions]?.map((permission) => (
+                  <label
+                    key={permission}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={editPermissions.includes(permission)}
+                      onChange={() => togglePermission(permission)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-foreground">{permission}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Permissions */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                {t('users.customPermissions') || 'Custom Permissions'}
+              </h3>
+              <div className="space-y-2 mb-3">
+                {editPermissions
+                  .filter(p => !availablePermissions[editingRole as keyof typeof availablePermissions]?.includes(p))
+                  .map((permission) => (
+                    <div
+                      key={permission}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border bg-accent/30"
+                    >
+                      <span className="text-sm text-foreground">{permission}</span>
+                      <button
+                        onClick={() => removePermission(permission)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newPermission}
+                  onChange={(e) => setNewPermission(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCustomPermission()}
+                  placeholder={t('users.addCustomPermission') || 'Add custom permission...'}
+                  className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                />
+                <button
+                  onClick={addCustomPermission}
+                  disabled={!newPermission.trim()}
+                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="mb-6 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{editPermissions.length}</span> {t('users.permissionsSelected') || 'permissions selected'}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={cancelEditingRole}
+                className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={saveRolePermissions}
+                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center justify-center gap-2"
+              >
+                <Save size={18} />
+                {t('common.save')}
+              </button>
+            </div>
           </div>
         </div>
       )}
