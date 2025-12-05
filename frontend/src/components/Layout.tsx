@@ -154,7 +154,9 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink to="/invoices" icon={FileText}>{t('nav.invoices')}</NavLink>
                 <NavLink to="/expenses" icon={Receipt}>{t('nav.expenses')}</NavLink>
                 <NavLink to="/transactions" icon={Wallet}>{t('nav.transactions')}</NavLink>
-                <NavLink to="/approvals" icon={FileText}>{t('nav.approvals')}</NavLink>
+                {user?.role === 'admin' && (
+                  <NavLink to="/approvals" icon={FileText}>{t('nav.approvals')}</NavLink>
+                )}
                 <NavLink to="/reports" icon={PieChart}>{t('nav.financialReports')}</NavLink>
                 <NavLink to="/tax-reports" icon={FileSpreadsheet}>{t('nav.taxReports')}</NavLink>
                 <NavLink to="/vat-reports" icon={FileSpreadsheet}>{t('nav.vatReports')}</NavLink>

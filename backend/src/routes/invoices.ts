@@ -42,6 +42,9 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
   
   const serialNumber = await getNextSequence('invoice', 'INV');
   
+  // Admin-created invoices are auto-approved, others need approval
+  const approvalStatus = req.user.role === 'admin' ? 'approved' : 'pending_accountant';
+  
   const invoice = await Invoice.create({
     ...rest,
     lines,
@@ -50,6 +53,7 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
     tax,
     discount,
     total,
+    approvalStatus,
     createdBy: req.user._id
   });
   

@@ -32,9 +32,16 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
   const serialNumber = await getNextSequence('expense', 'EXP');
+  
+  // Admin-created expenses are auto-approved, others need approval
+  const approvalStatus = req.user.role === 'admin' ? 'approved' : 'pending_accountant';
+  const status = req.user.role === 'admin' ? 'approved' : 'pending';
+  
   const expense = await Expense.create({
     ...req.body,
     serialNumber,
+    approvalStatus,
+    status,
     createdBy: req.user._id
   });
   res.json(expense);
