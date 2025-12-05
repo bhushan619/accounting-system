@@ -19,7 +19,10 @@ const defaultPermissions: Record<string, string[]> = {
     'Record and manage expenses',
     'View financial reports',
     'Manage clients and vendors',
-    'View bank accounts'
+    'View bank accounts',
+    'Export reports',
+    'View dashboard',
+    'Payroll management (requires admin approval)'
   ],
   employee: [
     'View own payslips',
