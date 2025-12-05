@@ -99,7 +99,7 @@ function App() {
             <Route path="/tax-configurations" element={<ProtectedRoute allowedRoles={['admin']}><TaxConfigurations /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Transactions /></ProtectedRoute>} />
             <Route path="/translations" element={<ProtectedRoute allowedRoles={['admin']}><TranslationManagement /></ProtectedRoute>} />
-            <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Approvals /></ProtectedRoute>} />
+            <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin']}><Approvals /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
             <Route path="/" element={<DefaultRedirect />} />

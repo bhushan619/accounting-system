@@ -10,20 +10,11 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-// Get pending approvals for current user based on role
-router.get('/pending', async (req: any, res) => {
-  const userRole = req.user.role;
-  
-  let invoiceQuery = {};
-  let expenseQuery = {};
-  
-  if (userRole === 'accountant') {
-    invoiceQuery = { approvalStatus: 'pending_accountant' };
-    expenseQuery = { approvalStatus: 'pending_accountant' };
-  } else if (userRole === 'admin') {
-    invoiceQuery = { approvalStatus: 'pending_admin' };
-    expenseQuery = { approvalStatus: 'pending_admin' };
-  }
+// Get pending approvals for admin only
+router.get('/pending', requireRole(['admin']), async (req: any, res) => {
+  // Admin sees all pending items (both accountant and admin level)
+  const invoiceQuery = { approvalStatus: { $in: ['pending_accountant', 'pending_admin'] } };
+  const expenseQuery = { approvalStatus: { $in: ['pending_accountant', 'pending_admin'] } };
   
   const [invoices, expenses, profileRequests] = await Promise.all([
     Invoice.find(invoiceQuery)
@@ -34,43 +25,22 @@ router.get('/pending', async (req: any, res) => {
       .populate('vendor')
       .populate('createdBy', 'email fullName')
       .sort({ createdAt: -1 }),
-    // Profile update requests are admin-only
-    userRole === 'admin' 
-      ? ProfileUpdateRequest.find({ status: 'pending' })
-          .populate('employee', 'employeeId fullName email')
-          .populate('requestedBy', 'email fullName')
-          .sort({ createdAt: -1 })
-      : []
+    ProfileUpdateRequest.find({ status: 'pending' })
+      .populate('employee', 'employeeId fullName email')
+      .populate('requestedBy', 'email fullName')
+      .sort({ createdAt: -1 })
   ]);
   
   res.json({ invoices, expenses, profileRequests });
 });
 
-// Approve invoice (accountant level)
-router.post('/invoices/:id/approve-accountant', requireRole(['accountant', 'admin']), auditLog('approve_accountant', 'invoice'), async (req: any, res) => {
+// Approve invoice (admin only)
+router.post('/invoices/:id/approve', requireRole(['admin']), auditLog('approve', 'invoice'), async (req: any, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
   
-  if (invoice.approvalStatus !== 'pending_accountant') {
-    return res.status(400).json({ error: 'Invoice is not pending accountant approval' });
-  }
-  
-  invoice.approvalStatus = 'pending_admin';
-  invoice.approvedByAccountant = req.user._id;
-  invoice.accountantApprovalDate = new Date();
-  invoice.updatedAt = new Date();
-  await invoice.save();
-  
-  res.json(invoice);
-});
-
-// Approve invoice (admin level - final approval)
-router.post('/invoices/:id/approve-admin', requireRole(['admin']), auditLog('approve_admin', 'invoice'), async (req: any, res) => {
-  const invoice = await Invoice.findById(req.params.id);
-  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-  
-  if (invoice.approvalStatus !== 'pending_admin') {
-    return res.status(400).json({ error: 'Invoice is not pending admin approval' });
+  if (!['pending_accountant', 'pending_admin'].includes(invoice.approvalStatus)) {
+    return res.status(400).json({ error: 'Invoice is not pending approval' });
   }
   
   invoice.approvalStatus = 'approved';
@@ -82,8 +52,8 @@ router.post('/invoices/:id/approve-admin', requireRole(['admin']), auditLog('app
   res.json(invoice);
 });
 
-// Reject invoice
-router.post('/invoices/:id/reject', requireRole(['accountant', 'admin']), auditLog('reject', 'invoice'), async (req: any, res) => {
+// Reject invoice (admin only)
+router.post('/invoices/:id/reject', requireRole(['admin']), auditLog('reject', 'invoice'), async (req: any, res) => {
   const { reason } = req.body;
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
@@ -97,32 +67,14 @@ router.post('/invoices/:id/reject', requireRole(['accountant', 'admin']), auditL
   res.json(invoice);
 });
 
-// Approve expense (accountant level)
-router.post('/expenses/:id/approve-accountant', requireRole(['accountant', 'admin']), auditLog('approve_accountant', 'expense'), async (req: any, res) => {
-  const expense = await Expense.findById(req.params.id);
-  if (!expense) return res.status(404).json({ error: 'Expense not found' });
-  
-  if (expense.approvalStatus !== 'pending_accountant') {
-    return res.status(400).json({ error: 'Expense is not pending accountant approval' });
-  }
-  
-  expense.approvalStatus = 'pending_admin';
-  expense.approvedByAccountant = req.user._id;
-  expense.accountantApprovalDate = new Date();
-  expense.updatedAt = new Date();
-  await expense.save();
-  
-  res.json(expense);
-});
-
-// Approve expense (admin level - final approval)
-router.post('/expenses/:id/approve-admin', requireRole(['admin']), auditLog('approve_admin', 'expense'), async (req: any, res) => {
+// Approve expense (admin only)
+router.post('/expenses/:id/approve', requireRole(['admin']), auditLog('approve', 'expense'), async (req: any, res) => {
   const { bankId } = req.body;
   const expense = await Expense.findById(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Expense not found' });
   
-  if (expense.approvalStatus !== 'pending_admin') {
-    return res.status(400).json({ error: 'Expense is not pending admin approval' });
+  if (!['pending_accountant', 'pending_admin'].includes(expense.approvalStatus)) {
+    return res.status(400).json({ error: 'Expense is not pending approval' });
   }
   
   // Update bank balance if applicable
@@ -147,8 +99,8 @@ router.post('/expenses/:id/approve-admin', requireRole(['admin']), auditLog('app
   res.json(expense);
 });
 
-// Reject expense
-router.post('/expenses/:id/reject', requireRole(['accountant', 'admin']), auditLog('reject', 'expense'), async (req: any, res) => {
+// Reject expense (admin only)
+router.post('/expenses/:id/reject', requireRole(['admin']), auditLog('reject', 'expense'), async (req: any, res) => {
   const { reason } = req.body;
   const expense = await Expense.findById(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Expense not found' });

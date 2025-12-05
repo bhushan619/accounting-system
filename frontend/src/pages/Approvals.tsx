@@ -71,8 +71,7 @@ export default function Approvals() {
       if (type === 'profile-request') {
         await axios.post(`${import.meta.env.VITE_API_URL}/approval/profile-requests/${id}/approve`);
       } else {
-        const endpoint = user?.role === 'accountant' ? 'approve-accountant' : 'approve-admin';
-        await axios.post(`${import.meta.env.VITE_API_URL}/approval/${type}s/${id}/${endpoint}`);
+        await axios.post(`${import.meta.env.VITE_API_URL}/approval/${type}s/${id}/approve`);
       }
       fetchPendingApprovals();
     } catch (error: any) {
@@ -97,16 +96,12 @@ export default function Approvals() {
     setProcessing(null);
   };
 
-  const getApprovalLevel = () => {
-    return user?.role === 'accountant' ? t('approvals.accountantLevel') : t('approvals.adminLevel');
-  };
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">{t('approvals.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          {t('approvals.subtitle')} • {getApprovalLevel()}
+          {t('approvals.subtitle')}
         </p>
       </div>
 
@@ -244,77 +239,75 @@ export default function Approvals() {
             )}
           </div>
 
-          {/* Pending Profile Update Requests (Admin only) */}
-          {user?.role === 'admin' && (
-            <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-              <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-                <User className="text-primary" size={20} />
-                <h2 className="text-lg font-semibold">{t('approvals.profileRequests')}</h2>
-                <span className="ml-auto bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  {profileRequests.length}
-                </span>
-              </div>
-              
-              {profileRequests.length === 0 ? (
-                <div className="px-6 py-8 text-center text-muted-foreground">
-                  <Clock size={40} className="mx-auto mb-3 opacity-50" />
-                  {t('approvals.noProfileRequests')}
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employees.employeeId')}</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('users.fullName')}</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employeePortal.requestedChanges')}</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('common.date')}</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {profileRequests.map((request) => (
-                      <tr key={request._id} className="hover:bg-muted/30">
-                        <td className="px-4 py-3 font-medium">{request.employee?.employeeId}</td>
-                        <td className="px-4 py-3">{request.employee?.fullName}</td>
-                        <td className="px-4 py-3">
-                          <ul className="text-sm space-y-1">
-                            {Object.entries(request.requestedChanges)
-                              .filter(([_, value]) => value)
-                              .map(([key, value]) => (
-                                <li key={key}>
-                                  <span className="text-muted-foreground">{key}:</span> {value as string}
-                                </li>
-                              ))}
-                          </ul>
-                        </td>
-                        <td className="px-4 py-3 text-sm">{new Date(request.createdAt).toLocaleDateString()}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleApprove('profile-request', request._id)}
-                              disabled={processing === request._id}
-                              className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
-                              title={t('approvals.approve')}
-                            >
-                              <Check size={18} />
-                            </button>
-                            <button
-                              onClick={() => setRejectModal({ type: 'profile-request', id: request._id })}
-                              disabled={processing === request._id}
-                              className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50"
-                              title={t('approvals.reject')}
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+          {/* Pending Profile Update Requests */}
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+              <User className="text-primary" size={20} />
+              <h2 className="text-lg font-semibold">{t('approvals.profileRequests')}</h2>
+              <span className="ml-auto bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {profileRequests.length}
+              </span>
             </div>
-          )}
+            
+            {profileRequests.length === 0 ? (
+              <div className="px-6 py-8 text-center text-muted-foreground">
+                <Clock size={40} className="mx-auto mb-3 opacity-50" />
+                {t('approvals.noProfileRequests')}
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employees.employeeId')}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('users.fullName')}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('employeePortal.requestedChanges')}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">{t('common.date')}</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {profileRequests.map((request) => (
+                    <tr key={request._id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium">{request.employee?.employeeId}</td>
+                      <td className="px-4 py-3">{request.employee?.fullName}</td>
+                      <td className="px-4 py-3">
+                        <ul className="text-sm space-y-1">
+                          {Object.entries(request.requestedChanges)
+                            .filter(([_, value]) => value)
+                            .map(([key, value]) => (
+                              <li key={key}>
+                                <span className="text-muted-foreground">{key}:</span> {value as string}
+                              </li>
+                            ))}
+                        </ul>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{new Date(request.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => handleApprove('profile-request', request._id)}
+                            disabled={processing === request._id}
+                            className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
+                            title={t('approvals.approve')}
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            onClick={() => setRejectModal({ type: 'profile-request', id: request._id })}
+                            disabled={processing === request._id}
+                            className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50"
+                            title={t('approvals.reject')}
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
