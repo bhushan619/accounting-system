@@ -188,7 +188,7 @@ export default function TaxConfigurations() {
                   {new Date(config.applicableFrom).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground">
-                  {config.applicableTo ? new Date(config.applicableTo).toLocaleDateString() : 'Ongoing'}
+                  {config.applicableTo ? new Date(config.applicableTo).toLocaleDateString() : t('taxConfig.ongoing')}
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${

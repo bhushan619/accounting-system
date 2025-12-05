@@ -327,7 +327,7 @@ export default function Expenses() {
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
                   >
                     <Trash2 size={14} />
-                    Delete
+                    {t('expenses.delete')}
                   </button>
                 </td>
               </tr>
@@ -335,24 +335,24 @@ export default function Expenses() {
           </tbody>
         </table>
         {expenses.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">No expenses found</div>
+          <div className="text-center py-8 text-muted-foreground">{t('expenses.noExpenses')}</div>
         )}
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Add New Expense</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">{t('expenses.createNew')}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Vendor</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('expenses.vendor')}</label>
                   <select
                     value={formData.vendor}
                     onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
-                    <option value="">Select vendor</option>
+                    <option value="">{t('expenses.selectVendor')}</option>
                     {vendors.map((vendor) => (
                       <option key={vendor._id} value={vendor._id}>{vendor.name}</option>
                     ))}

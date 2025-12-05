@@ -308,14 +308,14 @@ export default function Employees() {
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
                   >
                     <Edit size={14} />
-                    Edit
+                    {t('employees.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(employee._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
                   >
                     <Trash2 size={14} />
-                    Delete
+                    {t('employees.delete')}
                   </button>
                 </td>
               </tr>
@@ -323,7 +323,7 @@ export default function Employees() {
           </tbody>
         </table>
         {employees.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">No employees found</div>
+          <div className="text-center py-8 text-muted-foreground">{t('employees.noEmployees')}</div>
         )}
       </div>
 
@@ -331,12 +331,12 @@ export default function Employees() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4 text-foreground">
-              {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+              {editingEmployee ? t('employees.editTitle') : t('employees.addNew')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Employee ID *</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.employeeId')} *</label>
                   <input
                     type="text"
                     value={formData.employeeId}
@@ -346,7 +346,7 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Full Name *</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.fullName')} *</label>
                   <input
                     type="text"
                     value={formData.fullName}
@@ -359,7 +359,7 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Email *</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.email')} *</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -369,7 +369,7 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Phone</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.phone')}</label>
                   <input
                     type="tel"
                     value={formData.phone}
@@ -381,7 +381,7 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">NIC</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.nic')}</label>
                   <input
                     type="text"
                     value={formData.nic}
@@ -390,20 +390,20 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Status</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active">{t('employees.active')}</option>
+                    <option value="inactive">{t('employees.inactive')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Address</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.address')}</label>
                 <textarea
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -414,7 +414,7 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Designation</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.designation')}</label>
                   <input
                     type="text"
                     value={formData.designation}
@@ -423,7 +423,7 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Department</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
                   <input
                     type="text"
                     value={formData.department}
@@ -435,7 +435,7 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Join Date</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.joinDate')}</label>
                   <input
                     type="date"
                     value={formData.joinDate}
@@ -444,7 +444,7 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Basic Salary *</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.basicSalary')} *</label>
                   <input
                     type="number"
                     value={formData.basicSalary}
@@ -457,7 +457,7 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Allowances</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('payroll.allowances')}</label>
                   <input
                     type="number"
                     value={formData.allowances}
@@ -466,32 +466,32 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">APIT Scenario</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.apitScenario')}</label>
                   <select
                     value={formData.apitScenario}
                     onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value as 'employee' | 'employer' })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
-                    <option value="employee">Employee Pays APIT</option>
-                    <option value="employer">Employer Pays APIT</option>
+                    <option value="employee">{t('employees.scenarioEmployee')}</option>
+                    <option value="employer">{t('employees.scenarioEmployer')}</option>
                   </select>
                 </div>
               </div>
 
               {/* Tax Configuration Info */}
               <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                <h3 className="text-sm font-semibold mb-3 text-foreground">Tax Rates (from Tax Configurations)</h3>
+                <h3 className="text-sm font-semibold mb-3 text-foreground">{t('employees.epfRates')}</h3>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">EPF Employee:</span>
+                    <span className="text-muted-foreground">{t('employees.epfEmployee')}:</span>
                     <span className="ml-2 font-medium text-foreground">{formData.epfEmployeeRate}%</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">EPF Employer:</span>
+                    <span className="text-muted-foreground">{t('employees.epfEmployer')}:</span>
                     <span className="ml-2 font-medium text-foreground">{formData.epfEmployerRate}%</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">ETF:</span>
+                    <span className="text-muted-foreground">{t('employees.etf')}:</span>
                     <span className="ml-2 font-medium text-foreground">{formData.etfRate}%</span>
                   </div>
                 </div>
@@ -499,51 +499,51 @@ export default function Employees() {
 
               {/* Payroll Calculations Preview */}
               <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
-                <h3 className="text-sm font-semibold mb-3 text-foreground">Payroll Calculations Preview</h3>
+                <h3 className="text-sm font-semibold mb-3 text-foreground">{t('employees.salaryPreview')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Gross Salary:</span>
+                    <span className="text-muted-foreground">{t('employees.grossSalary')}:</span>
                     <span className="font-medium text-foreground">LKR {calculations.grossSalary.toLocaleString()}</span>
                   </div>
                   <div className="border-t border-border my-2"></div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">EPF (Employee {formData.epfEmployeeRate}%):</span>
+                    <span className="text-muted-foreground">{t('employees.epfEmployee')} ({formData.epfEmployeeRate}%):</span>
                     <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toLocaleString()}</span>
                   </div>
                   {formData.apitScenario === 'employee' && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">APIT:</span>
+                      <span className="text-muted-foreground">{t('employees.apit')}:</span>
                       <span className="font-medium text-foreground">LKR {calculations.apit.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Stamp Fee:</span>
+                    <span className="text-muted-foreground">{t('employees.stampFee')}:</span>
                     <span className="font-medium text-foreground">LKR {calculations.stampFee.toLocaleString()}</span>
                   </div>
                   <div className="border-t border-border my-2"></div>
                   <div className="flex justify-between font-semibold">
-                    <span className="text-foreground">Net Salary:</span>
+                    <span className="text-foreground">{t('employees.netSalary')}:</span>
                     <span className="text-primary">LKR {calculations.netSalary.toLocaleString()}</span>
                   </div>
                   <div className="border-t border-border my-2"></div>
                   <div className="text-xs text-muted-foreground mt-3">
-                    <div className="font-medium mb-1">Employer Contributions:</div>
+                    <div className="font-medium mb-1">{t('employees.employerCosts')}:</div>
                     <div className="flex justify-between">
-                      <span>EPF (Employer {formData.epfEmployerRate}%):</span>
+                      <span>{t('employees.epfEmployer')} ({formData.epfEmployerRate}%):</span>
                       <span>LKR {calculations.epfEmployer.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>ETF ({formData.etfRate}%):</span>
+                      <span>{t('employees.etf')} ({formData.etfRate}%):</span>
                       <span>LKR {calculations.etf.toLocaleString()}</span>
                     </div>
                     {formData.apitScenario === 'employer' && (
                       <div className="flex justify-between">
-                        <span>APIT (Employer Pays):</span>
+                        <span>{t('employees.apit')} ({t('employees.scenarioEmployer')}):</span>
                         <span>LKR {calculations.apit.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-semibold mt-1 pt-1 border-t border-border">
-                      <span>Total CTC:</span>
+                      <span>{t('employees.totalCTC')}:</span>
                       <span>LKR {calculations.totalCTC.toLocaleString()}</span>
                     </div>
                   </div>
@@ -556,13 +556,13 @@ export default function Employees() {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
-                  {editingEmployee ? 'Update' : 'Create'}
+                  {editingEmployee ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>
