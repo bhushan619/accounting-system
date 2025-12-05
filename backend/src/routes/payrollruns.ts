@@ -599,11 +599,5 @@ router.delete('/:id', requirePayrollAccess, auditLog('delete', 'payrollrun'), as
   await PayrollRun.findByIdAndDelete(req.params.id);
   res.json({ message: 'Deleted' });
 });
-  // Delete associated payroll entries
-  await Payroll.deleteMany({ _id: { $in: run.payrollEntries } });
-  
-  await PayrollRun.findByIdAndDelete(req.params.id);
-  res.json({ message: 'Deleted' });
-});
 
 export default router;
