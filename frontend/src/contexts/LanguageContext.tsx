@@ -245,6 +245,10 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.addPermission': 'Add permission...',
     'users.resetToDefaults': 'Reset to Defaults',
     'users.confirmResetPermissions': 'Reset all permissions to defaults?',
+    'users.selectPermissions': 'Select Permissions',
+    'users.customPermissions': 'Custom Permissions',
+    'users.addCustomPermission': 'Add custom permission...',
+    'users.permissionsSelected': 'permissions selected',
     
     // Vendors
     'vendors.taxId': 'Tax ID',
@@ -832,6 +836,10 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.addPermission': '添加权限...',
     'users.resetToDefaults': '重置为默认',
     'users.confirmResetPermissions': '将所有权限重置为默认值？',
+    'users.selectPermissions': '选择权限',
+    'users.customPermissions': '自定义权限',
+    'users.addCustomPermission': '添加自定义权限...',
+    'users.permissionsSelected': '个权限已选择',
     
     // Vendors
     'vendors.taxId': '税号',
@@ -1193,7 +1201,7 @@ const defaultTranslations: Record<Language, Translations> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // Version number to force translation reset when structure changes
-const TRANSLATIONS_VERSION = '2.3';
+const TRANSLATIONS_VERSION = '2.4';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
