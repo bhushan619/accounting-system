@@ -24,6 +24,7 @@ import swaggerRoutes from './routes/swagger';
 import approvalRoutes from './routes/approval';
 import employeePortalRoutes from './routes/employee-portal';
 import vatReportsRoutes from './routes/vat-reports';
+import rolePermissionsRoutes from './routes/role-permissions';
 import config from './config';
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/docs', swaggerRoutes);
 app.use('/approval', approvalRoutes);
 app.use('/employee-portal', employeePortalRoutes);
 app.use('/vat-reports', vatReportsRoutes);
+app.use('/role-permissions', rolePermissionsRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), config.UPLOADS_DIR)));
 
 app.use((err:any, req:any, res:any, next:any)=> { 

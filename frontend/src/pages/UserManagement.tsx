@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp, Save, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
@@ -20,6 +20,12 @@ interface Employee {
   userAccount?: string;
 }
 
+interface RolePermission {
+  _id: string;
+  role: string;
+  permissions: string[];
+}
+
 export default function UserManagement() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
@@ -35,10 +41,27 @@ export default function UserManagement() {
     employeeRef: ''
   });
   const [showRoleInfo, setShowRoleInfo] = useState(false);
+  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [editingRole, setEditingRole] = useState<string | null>(null);
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [newPermission, setNewPermission] = useState('');
+
+  const roleIcons: Record<string, any> = {
+    admin: Shield,
+    accountant: UserCog,
+    employee: Users
+  };
+
+  const roleColors: Record<string, string> = {
+    admin: 'bg-primary/20 text-primary border-primary/30',
+    accountant: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
+    employee: 'bg-green-500/20 text-green-600 border-green-500/30'
+  };
 
   useEffect(() => {
     loadUsers();
     loadEmployees();
+    loadRolePermissions();
   }, []);
 
   const loadUsers = async () => {
@@ -58,6 +81,15 @@ export default function UserManagement() {
       setEmployees(res.data);
     } catch (error) {
       console.error('Failed to load employees:', error);
+    }
+  };
+
+  const loadRolePermissions = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/role-permissions`);
+      setRolePermissions(res.data);
+    } catch (error) {
+      console.error('Failed to load role permissions:', error);
     }
   };
 
@@ -115,41 +147,61 @@ export default function UserManagement() {
     setShowModal(true);
   };
 
-  const rolePermissions = {
-    admin: {
-      name: t('users.admin'),
-      icon: Shield,
-      color: 'bg-primary/20 text-primary border-primary/30',
-      permissions: [
-        t('users.rolePermissions.fullAccess') || 'Full system access',
-        t('users.rolePermissions.manageUsers') || 'Manage users and roles',
-        t('users.rolePermissions.taxConfig') || 'Tax configuration',
-        t('users.rolePermissions.employees') || 'Employee management',
-        t('users.rolePermissions.payroll') || 'Payroll processing',
-        t('users.rolePermissions.approvals') || 'Approve transactions',
-      ]
-    },
-    accountant: {
-      name: t('users.accountant'),
-      icon: UserCog,
-      color: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
-      permissions: [
-        t('users.rolePermissions.invoices') || 'Create and manage invoices',
-        t('users.rolePermissions.expenses') || 'Record and manage expenses',
-        t('users.rolePermissions.reports') || 'View financial reports',
-        t('users.rolePermissions.clients') || 'Manage clients and vendors',
-        t('users.rolePermissions.banks') || 'View bank accounts',
-      ]
-    },
-    employee: {
-      name: t('users.employee'),
-      icon: Users,
-      color: 'bg-green-500/20 text-green-600 border-green-500/30',
-      permissions: [
-        t('users.rolePermissions.viewPayslips') || 'View own payslips',
-        t('users.rolePermissions.viewProfile') || 'View personal profile',
-        t('users.rolePermissions.requestUpdates') || 'Request profile updates',
-      ]
+  const startEditingRole = (role: string) => {
+    const rolePerm = rolePermissions.find(rp => rp.role === role);
+    setEditingRole(role);
+    setEditPermissions(rolePerm?.permissions || []);
+    setNewPermission('');
+  };
+
+  const cancelEditingRole = () => {
+    setEditingRole(null);
+    setEditPermissions([]);
+    setNewPermission('');
+  };
+
+  const saveRolePermissions = async () => {
+    if (!editingRole) return;
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/role-permissions/${editingRole}`, {
+        permissions: editPermissions
+      });
+      await loadRolePermissions();
+      cancelEditingRole();
+    } catch (error) {
+      console.error('Failed to save permissions:', error);
+      alert('Failed to save permissions');
+    }
+  };
+
+  const addPermission = () => {
+    if (newPermission.trim() && !editPermissions.includes(newPermission.trim())) {
+      setEditPermissions([...editPermissions, newPermission.trim()]);
+      setNewPermission('');
+    }
+  };
+
+  const removePermission = (index: number) => {
+    setEditPermissions(editPermissions.filter((_, i) => i !== index));
+  };
+
+  const resetAllPermissions = async () => {
+    if (!confirm(t('users.confirmResetPermissions') || 'Reset all permissions to defaults?')) return;
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/role-permissions/reset`);
+      await loadRolePermissions();
+      cancelEditingRole();
+    } catch (error) {
+      console.error('Failed to reset permissions:', error);
+    }
+  };
+
+  const getRoleName = (role: string) => {
+    switch (role) {
+      case 'admin': return t('users.admin');
+      case 'accountant': return t('users.accountant');
+      case 'employee': return t('users.employee');
+      default: return role;
     }
   };
 
@@ -180,30 +232,105 @@ export default function UserManagement() {
 
       {/* Role Permissions Overview */}
       {showRoleInfo && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {Object.entries(rolePermissions).map(([role, info]) => {
-            const Icon = info.icon;
-            const usersWithRole = users.filter(u => u.role === role).length;
-            return (
-              <div key={role} className={`p-4 rounded-lg border ${info.color}`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Icon size={20} />
-                  <h3 className="font-semibold">{info.name}</h3>
-                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-background/50">
-                    {usersWithRole} {t('users.usersCount') || 'users'}
-                  </span>
+        <div className="mb-6">
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={resetAllPermissions}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-border text-muted-foreground rounded-lg hover:bg-accent"
+            >
+              <RotateCcw size={16} />
+              {t('users.resetToDefaults') || 'Reset to Defaults'}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {['admin', 'accountant', 'employee'].map((role) => {
+              const Icon = roleIcons[role];
+              const usersWithRole = users.filter(u => u.role === role).length;
+              const rolePerm = rolePermissions.find(rp => rp.role === role);
+              const permissions = rolePerm?.permissions || [];
+              const isEditing = editingRole === role;
+
+              return (
+                <div key={role} className={`p-4 rounded-lg border ${roleColors[role]}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon size={20} />
+                    <h3 className="font-semibold">{getRoleName(role)}</h3>
+                    <span className="ml-auto text-xs px-2 py-1 rounded-full bg-background/50">
+                      {usersWithRole} {t('users.usersCount') || 'users'}
+                    </span>
+                  </div>
+
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <ul className="space-y-1 text-sm max-h-40 overflow-y-auto">
+                        {editPermissions.map((perm, idx) => (
+                          <li key={idx} className="flex items-center gap-2 group">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
+                            <span className="flex-1 truncate">{perm}</span>
+                            <button
+                              onClick={() => removePermission(idx)}
+                              className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
+                            >
+                              <X size={14} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex gap-2 mt-2">
+                        <input
+                          type="text"
+                          value={newPermission}
+                          onChange={(e) => setNewPermission(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && addPermission()}
+                          placeholder={t('users.addPermission') || 'Add permission...'}
+                          className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+                        />
+                        <button
+                          onClick={addPermission}
+                          className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={cancelEditingRole}
+                          className="flex-1 px-2 py-1 text-sm border border-border rounded hover:bg-background/50"
+                        >
+                          {t('common.cancel')}
+                        </button>
+                        <button
+                          onClick={saveRolePermissions}
+                          className="flex-1 px-2 py-1 text-sm bg-primary text-primary-foreground rounded flex items-center justify-center gap-1"
+                        >
+                          <Save size={14} />
+                          {t('common.save')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <ul className="space-y-1 text-sm">
+                        {permissions.map((perm, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            {perm}
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        onClick={() => startEditingRole(role)}
+                        className="mt-3 w-full px-3 py-1.5 text-sm border border-current/30 rounded hover:bg-background/30 flex items-center justify-center gap-2"
+                      >
+                        <Pencil size={14} />
+                        {t('users.editPermissions') || 'Edit Permissions'}
+                      </button>
+                    </>
+                  )}
                 </div>
-                <ul className="space-y-1 text-sm">
-                  {info.permissions.map((perm, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      {perm}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -234,7 +361,7 @@ export default function UserManagement() {
                         ? 'bg-green-500/20 text-green-600'
                         : 'bg-secondary/20 text-secondary-foreground'
                     }`}>
-                      {user.role === 'admin' ? t('users.admin') : user.role === 'employee' ? t('users.employee') : t('users.accountant')}
+                      {getRoleName(user.role)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-foreground">
