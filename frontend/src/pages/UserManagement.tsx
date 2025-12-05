@@ -45,7 +45,8 @@ const availablePermissions = {
     'Manage clients and vendors',
     'View bank accounts',
     'Export reports',
-    'View dashboard'
+    'View dashboard',
+    'Payroll management (requires admin approval)'
   ],
   employee: [
     'View own payslips',
