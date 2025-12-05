@@ -75,6 +75,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'common.endDate': 'End Date',
     'common.showing': 'Showing data from',
     'common.to': 'to',
+    'common.select': 'Select',
     
     // Dashboard
     'dashboard.title': 'Dashboard',
@@ -545,6 +546,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'common.endDate': '结束日期',
     'common.showing': '显示数据从',
     'common.to': '至',
+    'common.select': '选择',
     
     // Dashboard
     'dashboard.title': '仪表板',
