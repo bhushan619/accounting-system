@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import RolePermission from '../models/RolePermission';
-import { authMiddleware } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const defaultPermissions: Record<string, string[]> = {
 };
 
 // Get all role permissions
-router.get('/', authMiddleware, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
     let permissions = await RolePermission.find();
     
@@ -52,7 +52,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // Update role permissions (admin only)
-router.put('/:role', authMiddleware, async (req: Request, res: Response) => {
+router.put('/:role', requireAuth, async (req: Request, res: Response) => {
   try {
     const { role } = req.params;
     const { permissions } = req.body;
@@ -83,7 +83,7 @@ router.put('/:role', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // Reset to default permissions (admin only)
-router.post('/reset', authMiddleware, async (req: Request, res: Response) => {
+router.post('/reset', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
 
