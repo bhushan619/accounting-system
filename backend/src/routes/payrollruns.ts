@@ -10,19 +10,27 @@ import { getActiveTaxRates, calculateAPIT } from '../services/taxService';
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole('admin'));
 
-router.get('/', async (req, res) => {
+// Allow admin and accountant to access payroll routes
+const requirePayrollAccess = requireRole('admin', 'accountant');
+
+router.get('/', requirePayrollAccess, async (req, res) => {
   const runs = await PayrollRun.find()
     .populate('createdBy', 'email')
+    .populate('submittedBy', 'email')
+    .populate('approvedBy', 'email')
+    .populate('rejectedBy', 'email')
     .sort({ year: -1, month: -1 })
     .lean();
   res.json(runs);
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requirePayrollAccess, async (req, res) => {
   const run = await PayrollRun.findById(req.params.id)
     .populate('createdBy', 'email')
+    .populate('submittedBy', 'email')
+    .populate('approvedBy', 'email')
+    .populate('rejectedBy', 'email')
     .populate({
       path: 'payrollEntries',
       populate: { path: 'employee', select: 'fullName employeeId email' }
@@ -31,7 +39,7 @@ router.get('/:id', async (req, res) => {
   res.json(run);
 });
 
-router.post('/preview', async (req: any, res) => {
+router.post('/preview', requirePayrollAccess, async (req: any, res) => {
   try {
     const { month, year, employeeIds } = req.body;
     
@@ -111,7 +119,7 @@ router.post('/preview', async (req: any, res) => {
   }
 });
 
-router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res) => {
+router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'), async (req: any, res) => {
   try {
     const { month, year, employeeIds, employeeData } = req.body;
     
@@ -240,7 +248,7 @@ router.post('/generate', auditLog('create', 'payrollrun'), async (req: any, res)
   }
 });
 
-router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {
+router.put('/:id', requirePayrollAccess, auditLog('update', 'payrollrun'), async (req, res) => {
   const run = await PayrollRun.findByIdAndUpdate(
     req.params.id,
     { ...req.body, updatedAt: new Date() },
@@ -251,7 +259,7 @@ router.put('/:id', auditLog('update', 'payrollrun'), async (req, res) => {
 });
 
 // Update payroll entries for draft payroll run
-router.put('/:id/entries', auditLog('update', 'payrollrun'), async (req: any, res) => {
+router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'), async (req: any, res) => {
   try {
     const { entries } = req.body;
     
@@ -354,7 +362,114 @@ router.put('/:id/entries', auditLog('update', 'payrollrun'), async (req: any, re
   }
 });
 
-router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, res) => {
+// Submit payroll for approval (accountant submits, admin can skip)
+router.post('/:id/submit', requirePayrollAccess, auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const run = await PayrollRun.findById(req.params.id);
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    
+    if (run.status !== 'draft') {
+      return res.status(400).json({ error: 'Can only submit draft payroll runs' });
+    }
+    
+    // If user is admin, auto-approve
+    if (req.user.role === 'admin') {
+      run.status = 'approved';
+      run.approvedBy = req.user._id;
+      run.approvedAt = new Date();
+    } else {
+      // Accountant submits for approval
+      run.status = 'pending_approval';
+      run.submittedBy = req.user._id;
+      run.submittedAt = new Date();
+    }
+    
+    run.updatedAt = new Date();
+    await run.save();
+    
+    res.json(run);
+  } catch (error) {
+    console.error('Submit payroll error:', error);
+    res.status(500).json({ error: 'Failed to submit payroll' });
+  }
+});
+
+// Approve payroll (admin only)
+router.post('/:id/approve', requireRole('admin'), auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const run = await PayrollRun.findById(req.params.id);
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    
+    if (run.status !== 'pending_approval') {
+      return res.status(400).json({ error: 'Payroll is not pending approval' });
+    }
+    
+    run.status = 'approved';
+    run.approvedBy = req.user._id;
+    run.approvedAt = new Date();
+    run.updatedAt = new Date();
+    await run.save();
+    
+    res.json(run);
+  } catch (error) {
+    console.error('Approve payroll error:', error);
+    res.status(500).json({ error: 'Failed to approve payroll' });
+  }
+});
+
+// Reject payroll (admin only)
+router.post('/:id/reject', requireRole('admin'), auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const { reason } = req.body;
+    
+    const run = await PayrollRun.findById(req.params.id);
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    
+    if (run.status !== 'pending_approval') {
+      return res.status(400).json({ error: 'Payroll is not pending approval' });
+    }
+    
+    run.status = 'rejected';
+    run.rejectedBy = req.user._id;
+    run.rejectedAt = new Date();
+    run.rejectionReason = reason || 'No reason provided';
+    run.updatedAt = new Date();
+    await run.save();
+    
+    res.json(run);
+  } catch (error) {
+    console.error('Reject payroll error:', error);
+    res.status(500).json({ error: 'Failed to reject payroll' });
+  }
+});
+
+// Revert rejected payroll to draft for re-editing
+router.post('/:id/revert', requirePayrollAccess, auditLog('update', 'payrollrun'), async (req: any, res) => {
+  try {
+    const run = await PayrollRun.findById(req.params.id);
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    
+    if (run.status !== 'rejected') {
+      return res.status(400).json({ error: 'Can only revert rejected payroll runs' });
+    }
+    
+    run.status = 'draft';
+    run.rejectionReason = undefined;
+    run.rejectedBy = undefined;
+    run.rejectedAt = undefined;
+    run.submittedBy = undefined;
+    run.submittedAt = undefined;
+    run.updatedAt = new Date();
+    await run.save();
+    
+    res.json(run);
+  } catch (error) {
+    console.error('Revert payroll error:', error);
+    res.status(500).json({ error: 'Failed to revert payroll' });
+  }
+});
+
+router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun'), async (req: any, res) => {
   try {
     const { bankId } = req.body;
     
@@ -369,6 +484,11 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
     
     if (!run) return res.status(404).json({ error: 'Not found' });
     if (run.status === 'paid') return res.status(400).json({ error: 'Already processed' });
+    
+    // Only allow processing if approved or draft (for admin direct processing)
+    if (run.status !== 'approved' && run.status !== 'draft') {
+      return res.status(400).json({ error: 'Payroll must be approved before processing' });
+    }
     
     const Bank = require('../models/Bank').default;
     const bank = await Bank.findById(bankId);
@@ -464,10 +584,21 @@ router.post('/:id/process', auditLog('update', 'payrollrun'), async (req: any, r
   }
 });
 
-router.delete('/:id', auditLog('delete', 'payrollrun'), async (req, res) => {
+router.delete('/:id', requirePayrollAccess, auditLog('delete', 'payrollrun'), async (req: any, res) => {
   const run = await PayrollRun.findById(req.params.id);
   if (!run) return res.status(404).json({ error: 'Not found' });
   
+  // Only allow deletion of draft or rejected payrolls
+  if (run.status !== 'draft' && run.status !== 'rejected') {
+    return res.status(400).json({ error: 'Can only delete draft or rejected payroll runs' });
+  }
+  
+  // Delete associated payroll entries
+  await Payroll.deleteMany({ _id: { $in: run.payrollEntries } });
+  
+  await PayrollRun.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Deleted' });
+});
   // Delete associated payroll entries
   await Payroll.deleteMany({ _id: { $in: run.payrollEntries } });
   

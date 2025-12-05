@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Trash2, Plus, X, Eye, Mail, Loader2, Edit, Upload, Download, FileSpreadsheet } from "lucide-react";
+import { Trash2, Plus, X, Eye, Mail, Loader2, Edit, Upload, Download, FileSpreadsheet, Check, XCircle, RotateCcw } from "lucide-react";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 
 interface PayrollRun {
   _id: string;
@@ -18,6 +19,13 @@ interface PayrollRun {
   totalCTC?: number;
   createdAt: string;
   payrollEntries?: any[];
+  rejectionReason?: string;
+  submittedBy?: { email: string };
+  approvedBy?: { email: string };
+  rejectedBy?: { email: string };
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
 }
 
 interface Employee {
@@ -124,6 +132,8 @@ const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 export default function Payroll() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -135,6 +145,9 @@ export default function Payroll() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
   const [selectedRun, setSelectedRun] = useState<PayrollRun | null>(null);
   const [editData, setEditData] = useState<EditEntry[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -1061,8 +1074,72 @@ export default function Payroll() {
         return "bg-blue-100 text-blue-800";
       case "paid":
         return "bg-purple-100 text-purple-800";
+      case "pending_approval":
+        return "bg-amber-100 text-amber-800";
+      case "approved":
+        return "bg-emerald-100 text-emerald-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending_approval":
+        return "Pending Approval";
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
+  // Approval workflow functions
+  const handleSubmitForApproval = async (id: string) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/submit`);
+      loadData();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to submit payroll");
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/approve`);
+      loadData();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to approve payroll");
+    }
+  };
+
+  const openRejectModal = (id: string) => {
+    setPendingRejectId(id);
+    setRejectReason("");
+    setShowRejectModal(true);
+  };
+
+  const handleReject = async () => {
+    if (!pendingRejectId) return;
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${pendingRejectId}/reject`, {
+        reason: rejectReason,
+      });
+      setShowRejectModal(false);
+      setPendingRejectId(null);
+      setRejectReason("");
+      loadData();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to reject payroll");
+    }
+  };
+
+  const handleRevert = async (id: string) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/revert`);
+      loadData();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to revert payroll");
     }
   };
 
@@ -1142,12 +1219,19 @@ export default function Payroll() {
                       Rs. {run.totalNetSalary.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(run.status)}`}>
-                        {run.status}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-1 text-xs rounded-full w-fit ${getStatusColor(run.status)}`}>
+                          {getStatusLabel(run.status)}
+                        </span>
+                        {run.status === "rejected" && run.rejectionReason && (
+                          <span className="text-xs text-red-600" title={run.rejectionReason}>
+                            Reason: {run.rejectionReason.length > 30 ? run.rejectionReason.substring(0, 30) + "..." : run.rejectionReason}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
                         <button
                           onClick={() => handleViewDetails(run._id)}
                           className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 flex items-center gap-1"
@@ -1155,6 +1239,8 @@ export default function Payroll() {
                           <Eye size={14} />
                           View
                         </button>
+                        
+                        {/* Edit - only for draft */}
                         {run.status === "draft" && (
                           <button
                             onClick={() => handleEditPayroll(run._id)}
@@ -1164,6 +1250,60 @@ export default function Payroll() {
                             Edit
                           </button>
                         )}
+                        
+                        {/* Submit for Approval - draft only */}
+                        {run.status === "draft" && (
+                          <button
+                            onClick={() => handleSubmitForApproval(run._id)}
+                            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
+                          >
+                            <Check size={14} />
+                            {isAdmin ? "Approve & Submit" : "Submit for Approval"}
+                          </button>
+                        )}
+                        
+                        {/* Approve/Reject - pending_approval, admin only */}
+                        {run.status === "pending_approval" && isAdmin && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(run._id)}
+                              className="px-3 py-1 text-xs bg-emerald-500 text-white rounded hover:bg-emerald-600 flex items-center gap-1"
+                            >
+                              <Check size={14} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => openRejectModal(run._id)}
+                              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-1"
+                            >
+                              <XCircle size={14} />
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        
+                        {/* Revert to draft - rejected only */}
+                        {run.status === "rejected" && (
+                          <button
+                            onClick={() => handleRevert(run._id)}
+                            className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 flex items-center gap-1"
+                          >
+                            <RotateCcw size={14} />
+                            Revert to Draft
+                          </button>
+                        )}
+                        
+                        {/* Process - approved or draft (admin only for direct processing) */}
+                        {(run.status === "approved" || (run.status === "draft" && isAdmin)) && (
+                          <button
+                            onClick={() => handleProcess(run._id)}
+                            className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                          >
+                            Process Payment
+                          </button>
+                        )}
+                        
+                        {/* Email - paid only */}
                         {run.status === "paid" && (
                           <button
                             onClick={async () => {
@@ -1177,20 +1317,16 @@ export default function Payroll() {
                             Email
                           </button>
                         )}
-                        {(run.status === "draft" || run.status === "completed") && (
+                        
+                        {/* Delete - draft or rejected only */}
+                        {(run.status === "draft" || run.status === "rejected") && (
                           <button
-                            onClick={() => handleProcess(run._id)}
-                            className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                            onClick={() => handleDelete(run._id)}
+                            className="text-destructive hover:text-destructive/80"
                           >
-                            Process
+                            <Trash2 size={18} />
                           </button>
                         )}
-                        <button
-                          onClick={() => handleDelete(run._id)}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          <Trash2 size={18} />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -2228,6 +2364,66 @@ export default function Payroll() {
                 ) : (
                   "Save Changes"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Payroll Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg w-full max-w-md p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-foreground">Reject Payroll</h2>
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setPendingRejectId(null);
+                  setRejectReason("");
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Please provide a reason for rejecting this payroll run. This will be visible to the person who submitted it.
+              </p>
+              
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Rejection Reason <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-input rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter reason for rejection..."
+                />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setPendingRejectId(null);
+                  setRejectReason("");
+                }}
+                className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={!rejectReason.trim()}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+              >
+                Reject Payroll
               </button>
             </div>
           </div>
