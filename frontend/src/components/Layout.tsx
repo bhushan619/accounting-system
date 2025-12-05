@@ -162,15 +162,17 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink to="/vat-reports" icon={FileSpreadsheet}>{t('nav.vatReports')}</NavLink>
               </NavGroup>
 
-              {/* Salary Group (Admin only) */}
-              {user?.role === 'admin' && (
+              {/* Salary Group (Admin and Accountant) */}
+              {(user?.role === 'admin' || user?.role === 'accountant') && (
                 <NavGroup 
                   title={t('nav.salary')} 
                   icon={DollarSign}
                   isOpen={salaryOpen} 
                   onToggle={() => setSalaryOpen(!salaryOpen)}
                 >
-                  <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
+                  {user?.role === 'admin' && (
+                    <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
+                  )}
                   <NavLink to="/payroll" icon={DollarSign}>{t('nav.payroll')}</NavLink>
                 </NavGroup>
               )}
