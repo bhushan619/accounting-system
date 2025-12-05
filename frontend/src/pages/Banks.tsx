@@ -135,7 +135,7 @@ export default function Banks() {
                 <span className="font-mono">{bank.accountNumber}</span>
               </div>
               {bank.branch && (
-                <p className="text-sm text-muted-foreground">Branch: {bank.branch}</p>
+                <p className="text-sm text-muted-foreground">{t('banks.branchLabel')}: {bank.branch}</p>
               )}
             </div>
 

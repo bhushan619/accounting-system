@@ -136,7 +136,7 @@ export default function UserManagement() {
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.email')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.fullName')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.role')}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.linkedEmployee') || 'Linked Employee'}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.linkedEmployee')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.date')}</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('common.actions')}</th>
             </tr>

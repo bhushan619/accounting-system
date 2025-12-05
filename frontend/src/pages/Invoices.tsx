@@ -349,14 +349,14 @@ export default function Invoices() {
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
                   >
                     <Eye size={14} />
-                    View
+                    {t('invoices.view')}
                   </button>
                   <button
                     onClick={() => handleDelete(invoice._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
                   >
                     <Trash2 size={14} />
-                    Delete
+                    {t('invoices.delete')}
                   </button>
                 </td>
               </tr>
@@ -364,32 +364,32 @@ export default function Invoices() {
           </tbody>
         </table>
         {invoices.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">No invoices found</div>
+          <div className="text-center py-8 text-muted-foreground">{t('invoices.noInvoices')}</div>
         )}
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-3xl p-6 m-4 border border-border max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Create New Invoice</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">{t('invoices.createNew')}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Client</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.client')}</label>
                   <select
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     required
                   >
-                    <option value="">Select client</option>
+                    <option value="">{t('invoices.selectClient')}</option>
                     {clients.map((client) => (
                       <option key={client._id} value={client._id}>{client.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Currency</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.currency')}</label>
                   <select
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
@@ -400,7 +400,7 @@ export default function Invoices() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Issue Date</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.issueDate')}</label>
                   <input
                     type="date"
                     value={formData.issueDate}
@@ -410,7 +410,7 @@ export default function Invoices() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Due Date</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.dueDate')}</label>
                   <input
                     type="date"
                     value={formData.dueDate}
@@ -421,12 +421,12 @@ export default function Invoices() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">Line Items</label>
+                <label className="block text-sm font-medium text-foreground">{t('invoices.lineItems')}</label>
                 {formData.lines.map((line, index) => (
                   <div key={index} className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Description"
+                      placeholder={t('invoices.description')}
                       value={line.description}
                       onChange={(e) => updateLine(index, 'description', e.target.value)}
                       className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
@@ -434,7 +434,7 @@ export default function Invoices() {
                     />
                     <input
                       type="number"
-                      placeholder="Qty"
+                      placeholder={t('invoices.quantity')}
                       value={line.quantity}
                       onChange={(e) => updateLine(index, 'quantity', Number(e.target.value))}
                       className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
@@ -442,7 +442,7 @@ export default function Invoices() {
                     />
                     <input
                       type="number"
-                      placeholder="Price"
+                      placeholder={t('invoices.rate')}
                       value={line.unitPrice}
                       onChange={(e) => updateLine(index, 'unitPrice', Number(e.target.value))}
                       className="w-32 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
