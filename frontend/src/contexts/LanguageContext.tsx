@@ -1139,6 +1139,9 @@ const defaultTranslations: Record<Language, Translations> = {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// Version number to force translation reset when structure changes
+const TRANSLATIONS_VERSION = '2.0';
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('language');
@@ -1146,6 +1149,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   });
   
   const [translations, setTranslations] = useState<Record<Language, Translations>>(() => {
+    const savedVersion = localStorage.getItem('translations_version');
+    
+    // If version mismatch, reset to defaults to fix any swapped translations
+    if (savedVersion !== TRANSLATIONS_VERSION) {
+      localStorage.removeItem('translations');
+      localStorage.setItem('translations_version', TRANSLATIONS_VERSION);
+      return defaultTranslations;
+    }
+    
     const saved = localStorage.getItem('translations');
     if (saved) {
       const parsed = JSON.parse(saved);
