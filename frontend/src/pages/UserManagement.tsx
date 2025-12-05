@@ -131,50 +131,57 @@ export default function UserManagement() {
 
       <div className="bg-card rounded-lg shadow overflow-hidden">
         <table className="w-full">
-          <thead className="bg-muted">
+        <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.email')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.fullName')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.role')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('users.linkedEmployee') || 'Linked Employee'}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.date')}</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {users.map((user) => (
-              <tr key={user._id} className="hover:bg-accent/50">
-                <td className="px-6 py-4 text-sm text-foreground">{user.email}</td>
-                <td className="px-6 py-4 text-sm text-foreground">{user.fullName || '-'}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    user.role === 'admin' 
-                      ? 'bg-primary/20 text-primary' 
-                      : user.role === 'employee'
-                      ? 'bg-green-500/20 text-green-600'
-                      : 'bg-secondary/20 text-secondary-foreground'
-                  }`}>
-                    {user.role === 'admin' ? t('users.admin') : user.role === 'employee' ? t('users.employee') : t('users.accountant')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="text-primary hover:text-primary/80 mr-3"
-                  >
-                    <Pencil size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user._id)}
-                    className="text-destructive hover:text-destructive/80"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {users.map((user) => {
+              const linkedEmployee = user.employeeRef ? employees.find(e => e._id === user.employeeRef) : null;
+              return (
+                <tr key={user._id} className="hover:bg-accent/50">
+                  <td className="px-6 py-4 text-sm text-foreground">{user.email}</td>
+                  <td className="px-6 py-4 text-sm text-foreground">{user.fullName || '-'}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      user.role === 'admin' 
+                        ? 'bg-primary/20 text-primary' 
+                        : user.role === 'employee'
+                        ? 'bg-green-500/20 text-green-600'
+                        : 'bg-secondary/20 text-secondary-foreground'
+                    }`}>
+                      {user.role === 'admin' ? t('users.admin') : user.role === 'employee' ? t('users.employee') : t('users.accountant')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {linkedEmployee ? `${linkedEmployee.employeeId} - ${linkedEmployee.fullName}` : '-'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="text-primary hover:text-primary/80 mr-3"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
