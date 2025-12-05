@@ -222,6 +222,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.accountant': 'Accountant',
     'users.employee': 'Employee',
     'users.passwordHint': 'leave blank to keep current',
+    'users.linkEmployee': 'Link to Employee',
+    'users.linkEmployeeHint': 'Only employees without linked accounts are shown',
     
     // Vendors
     'vendors.taxId': 'Tax ID',
@@ -690,6 +692,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.accountant': '会计',
     'users.employee': '员工',
     'users.passwordHint': '留空以保持当前密码',
+    'users.linkEmployee': '关联员工',
+    'users.linkEmployeeHint': '仅显示未关联账户的员工',
     
     // Vendors
     'vendors.taxId': '税号',
