@@ -91,7 +91,7 @@ function App() {
             <Route path="/vendors" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Vendors /></ProtectedRoute>} />
             <Route path="/banks" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Banks /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute allowedRoles={['admin']}><Employees /></ProtectedRoute>} />
-            <Route path="/payroll" element={<ProtectedRoute allowedRoles={['admin']}><Payroll /></ProtectedRoute>} />
+            <Route path="/payroll" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Payroll /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><EnhancedReports /></ProtectedRoute>} />
             <Route path="/tax-reports" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><TaxReports /></ProtectedRoute>} />
