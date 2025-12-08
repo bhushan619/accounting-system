@@ -12,7 +12,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 // Allow admin and accountant to access payroll routes
-const requirePayrollAccess = requireRole('admin', 'accountant');
+const requirePayrollAccess = requireRole(['admin', 'accountant']);
 
 router.get('/', requirePayrollAccess, async (req, res) => {
   const runs = await PayrollRun.find()
