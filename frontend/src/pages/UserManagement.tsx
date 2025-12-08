@@ -589,18 +589,20 @@ export default function UserManagement() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  {t('login.password')} {editingId && `(${t('users.passwordHint') || 'leave blank to keep current'})`}
-                </label>
-                <input
-                  type="password"
-                  required={!editingId}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                />
-              </div>
+              {formData.role !== 'employee' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('login.password')} {editingId && `(${t('users.passwordHint') || 'leave blank to keep current'})`}
+                  </label>
+                  <input
+                    type="password"
+                    required={!editingId}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.fullName')}</label>
