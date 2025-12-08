@@ -427,8 +427,6 @@ export default function Employees() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.nic')}</label>
                   <input
@@ -438,17 +436,18 @@ export default function Employees() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="active">{t('employees.active')}</option>
-                    <option value="inactive">{t('employees.inactive')}</option>
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="active">{t('employees.active')}</option>
+                  <option value="inactive">{t('employees.inactive')}</option>
+                </select>
               </div>
 
               <div>
