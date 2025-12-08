@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, UserCog, Mail, Phone } from 'lucide-react';
+import { Plus, Edit, Trash2, UserCog, Mail, Phone, Link } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface Employee {
@@ -13,6 +13,14 @@ interface Employee {
   department?: string;
   basicSalary: number;
   status: string;
+  userAccount?: string;
+}
+
+interface User {
+  _id: string;
+  email: string;
+  role: string;
+  fullName?: string;
 }
 
 interface TaxConfig {
@@ -30,6 +38,7 @@ export default function Employees() {
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
     fullName: '',
@@ -46,7 +55,8 @@ export default function Employees() {
     epfEmployerRate: 12,
     etfRate: 3,
     apitScenario: 'employee' as 'employee' | 'employer',
-    status: 'active'
+    status: 'active',
+    userAccount: ''
   });
 
   const [calculations, setCalculations] = useState({
@@ -63,7 +73,19 @@ export default function Employees() {
   useEffect(() => {
     loadEmployees();
     loadTaxConfigs();
+    loadAvailableUsers();
   }, []);
+
+  const loadAvailableUsers = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/users`);
+      // Filter to only employee role users who are not linked to an employee yet
+      const users = response.data.filter((u: User) => u.role === 'employee');
+      setAvailableUsers(users);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    }
+  };
 
   const loadTaxConfigs = async () => {
     try {
@@ -205,7 +227,8 @@ export default function Employees() {
       epfEmployerRate: (employee as any).epfEmployerRate || 12,
       etfRate: (employee as any).etfRate || 3,
       apitScenario: (employee as any).apitScenario || 'employee',
-      status: employee.status
+      status: employee.status,
+      userAccount: employee.userAccount || ''
     });
     setShowModal(true);
   };
@@ -238,7 +261,8 @@ export default function Employees() {
       epfEmployerRate: 12,
       etfRate: 3,
       apitScenario: 'employee',
-      status: 'active'
+      status: 'active',
+      userAccount: ''
     });
   };
 
@@ -475,7 +499,35 @@ export default function Employees() {
                     <option value="employee">{t('employees.scenarioEmployee')}</option>
                     <option value="employer">{t('employees.scenarioEmployer')}</option>
                   </select>
-                </div>
+              </div>
+
+              {/* Link to User Account */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">
+                  <span className="flex items-center gap-1">
+                    <Link size={14} />
+                    {t('employees.linkUserAccount') || 'Link to User Account'}
+                  </span>
+                </label>
+                <select
+                  value={formData.userAccount}
+                  onChange={(e) => setFormData({ ...formData, userAccount: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="">{t('employees.noUserLink') || '-- No linked user --'}</option>
+                  {availableUsers
+                    .filter(u => !editingEmployee?.userAccount || u._id === editingEmployee.userAccount || 
+                      !employees.some(e => e.userAccount === u._id && e._id !== editingEmployee?._id))
+                    .map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.fullName || user.email} ({user.email})
+                      </option>
+                    ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('employees.linkUserHelp') || 'Link this employee to a user account for portal access'}
+                </p>
+              </div>
               </div>
 
               {/* Tax Configuration Info */}
