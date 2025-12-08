@@ -384,7 +384,8 @@ export default function Employees() {
                       setFormData({ 
                         ...formData, 
                         userAccount: selectedUserId,
-                        email: selectedUser?.email || formData.email
+                        email: selectedUser?.email || formData.email,
+                        fullName: selectedUser?.fullName || formData.fullName
                       });
                     }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
