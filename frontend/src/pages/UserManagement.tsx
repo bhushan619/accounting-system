@@ -534,6 +534,50 @@ export default function UserManagement() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Link to Employee - moved to top */}
+              {formData.role === 'employee' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">{t('users.linkEmployee') || 'Link to Employee'}</label>
+                  <select
+                    value={formData.employeeRef}
+                    onChange={(e) => {
+                      const selectedEmpId = e.target.value;
+                      const selectedEmployee = employees.find(emp => emp._id === selectedEmpId);
+                      if (selectedEmployee) {
+                        setFormData({ 
+                          ...formData, 
+                          employeeRef: selectedEmpId,
+                          email: selectedEmployee.email,
+                          fullName: selectedEmployee.fullName
+                        });
+                      } else {
+                        // Clear fields when no employee selected
+                        setFormData({ 
+                          ...formData, 
+                          employeeRef: '',
+                          email: '',
+                          fullName: ''
+                        });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    required
+                  >
+                    <option value="">{t('common.select') || 'Select Employee'}</option>
+                    {employees
+                      .filter(emp => !emp.userAccount || emp._id === formData.employeeRef)
+                      .map(emp => (
+                        <option key={emp._id} value={emp._id}>
+                          {emp.employeeId} - {emp.fullName}
+                        </option>
+                      ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('users.linkEmployeeHint') || 'Only employees without linked accounts are shown'}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">{t('common.email')}</label>
                 <input
@@ -572,7 +616,7 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' | 'unmarked', employeeRef: '' })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' | 'unmarked', employeeRef: '', email: '', fullName: '' })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="accountant">{t('users.accountant')}</option>
@@ -588,30 +632,6 @@ export default function UserManagement() {
                   </p>
                 )}
               </div>
-
-              {formData.role === 'employee' && (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">{t('users.linkEmployee') || 'Link to Employee'}</label>
-                  <select
-                    value={formData.employeeRef}
-                    onChange={(e) => setFormData({ ...formData, employeeRef: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    required
-                  >
-                    <option value="">{t('common.select') || 'Select Employee'}</option>
-                    {employees
-                      .filter(emp => !emp.userAccount || emp._id === formData.employeeRef)
-                      .map(emp => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.employeeId} - {emp.fullName}
-                        </option>
-                      ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t('users.linkEmployeeHint') || 'Only employees without linked accounts are shown'}
-                  </p>
-                </div>
-              )}
 
               <div className="flex gap-3 pt-4">
                 <button
