@@ -79,8 +79,8 @@ export default function Employees() {
   const loadAvailableUsers = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/users`);
-      // Filter to only employee role users who are not linked to an employee yet
-      const users = response.data.filter((u: User) => u.role === 'employee');
+      // Filter to only users with unmarked role
+      const users = response.data.filter((u: User) => u.role === 'unmarked');
       setAvailableUsers(users);
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -370,6 +370,32 @@ export default function Employees() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">
+                    <span className="flex items-center gap-1">
+                      <Link size={14} />
+                      {t('employees.linkUserAccount') || 'Link to User Account'}
+                    </span>
+                  </label>
+                  <select
+                    value={formData.userAccount}
+                    onChange={(e) => setFormData({ ...formData, userAccount: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="">{t('employees.noUserLink') || '-- No linked user --'}</option>
+                    {availableUsers
+                      .filter(u => !editingEmployee?.userAccount || u._id === editingEmployee.userAccount || 
+                        !employees.some(e => e.userAccount === u._id && e._id !== editingEmployee?._id))
+                      .map(user => (
+                        <option key={user._id} value={user._id}>
+                          {user.fullName || user.email} ({user.email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.fullName')} *</label>
                   <input
                     type="text"
@@ -379,7 +405,6 @@ export default function Employees() {
                     required
                   />
                 </div>
-              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -501,33 +526,6 @@ export default function Employees() {
                   </select>
               </div>
 
-              {/* Link to User Account */}
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">
-                  <span className="flex items-center gap-1">
-                    <Link size={14} />
-                    {t('employees.linkUserAccount') || 'Link to User Account'}
-                  </span>
-                </label>
-                <select
-                  value={formData.userAccount}
-                  onChange={(e) => setFormData({ ...formData, userAccount: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="">{t('employees.noUserLink') || '-- No linked user --'}</option>
-                  {availableUsers
-                    .filter(u => !editingEmployee?.userAccount || u._id === editingEmployee.userAccount || 
-                      !employees.some(e => e.userAccount === u._id && e._id !== editingEmployee?._id))
-                    .map(user => (
-                      <option key={user._id} value={user._id}>
-                        {user.fullName || user.email} ({user.email})
-                      </option>
-                    ))}
-                </select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('employees.linkUserHelp') || 'Link this employee to a user account for portal access'}
-                </p>
-              </div>
               </div>
 
               {/* Tax Configuration Info */}
