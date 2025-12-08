@@ -524,8 +524,7 @@ export default function Employees() {
                     <option value="employee">{t('employees.scenarioEmployee')}</option>
                     <option value="employer">{t('employees.scenarioEmployer')}</option>
                   </select>
-              </div>
-
+                </div>
               </div>
 
               {/* Tax Configuration Info */}
