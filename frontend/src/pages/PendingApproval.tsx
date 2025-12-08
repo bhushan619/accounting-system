@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Clock, LogOut } from 'lucide-react';
@@ -6,6 +7,12 @@ import { Clock, LogOut } from 'lucide-react';
 export default function PendingApproval() {
   const { logout, user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -30,7 +37,7 @@ export default function PendingApproval() {
         </div>
         
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           <LogOut size={20} />
