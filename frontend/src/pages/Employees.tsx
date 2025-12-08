@@ -378,7 +378,15 @@ export default function Employees() {
                   </label>
                   <select
                     value={formData.userAccount}
-                    onChange={(e) => setFormData({ ...formData, userAccount: e.target.value })}
+                    onChange={(e) => {
+                      const selectedUserId = e.target.value;
+                      const selectedUser = availableUsers.find(u => u._id === selectedUserId);
+                      setFormData({ 
+                        ...formData, 
+                        userAccount: selectedUserId,
+                        email: selectedUser?.email || formData.email
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     <option value="">{t('employees.noUserLink') || '-- No linked user --'}</option>
