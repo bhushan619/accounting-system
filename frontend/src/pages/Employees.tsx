@@ -196,10 +196,16 @@ export default function Employees() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Don't send empty string for userAccount - send null instead
+      const submitData = {
+        ...formData,
+        userAccount: formData.userAccount || null
+      };
+      
       if (editingEmployee) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/employees/${editingEmployee._id}`, formData);
+        await axios.put(`${import.meta.env.VITE_API_URL}/employees/${editingEmployee._id}`, submitData);
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/employees`, formData);
+        await axios.post(`${import.meta.env.VITE_API_URL}/employees`, submitData);
       }
       setShowModal(false);
       resetForm();
