@@ -424,6 +424,7 @@ const defaultTranslations: Record<Language, Translations> = {
     
     // Reports Page
     'reports': 'Reports',
+    'reports.title': 'Reports',
     'overviewReport': 'Overview Report',
     'overviewReportDesc': 'Financial summary and key metrics',
     'profitLoss': 'Profit & Loss',
@@ -1031,6 +1032,7 @@ const defaultTranslations: Record<Language, Translations> = {
     
     // Reports Page
     'reports': '报告',
+    'reports.title': '报告',
     'overviewReport': '概览报告',
     'overviewReportDesc': '财务摘要和关键指标',
     'profitLoss': '损益表',
