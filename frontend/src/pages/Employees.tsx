@@ -405,8 +405,6 @@ export default function Employees() {
                     required
                   />
                 </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.email')} *</label>
                   <input
@@ -417,6 +415,9 @@ export default function Employees() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.phone')}</label>
                   <input
@@ -426,7 +427,6 @@ export default function Employees() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
-              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
