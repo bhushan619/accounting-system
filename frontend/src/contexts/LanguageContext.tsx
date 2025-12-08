@@ -614,6 +614,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.epfRates': 'EPF/ETF Rates (from Tax Config)',
     'employees.edit': 'Edit',
     'employees.delete': 'Delete',
+    'employees.linkUserAccount': 'Link to User Account',
+    'employees.noUserLink': '-- No linked user --',
+    'employees.linkUserHelp': 'Link this employee to a user account for portal access',
     
     
     // Additional bank labels
@@ -1238,6 +1241,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.epfRates': 'EPF/ETF费率（来自税务配置）',
     'employees.edit': '编辑',
     'employees.delete': '删除',
+    'employees.linkUserAccount': '关联用户账户',
+    'employees.noUserLink': '-- 无关联用户 --',
+    'employees.linkUserHelp': '将此员工关联到用户账户以便访问门户',
     
     // Additional bank labels
     'banks.branchLabel': '支行',
