@@ -387,12 +387,22 @@ export default function Employees() {
                     onChange={(e) => {
                       const selectedUserId = e.target.value;
                       const selectedUser = availableUsers.find(u => u._id === selectedUserId);
-                      setFormData({ 
-                        ...formData, 
-                        userAccount: selectedUserId,
-                        email: selectedUser?.email || formData.email,
-                        fullName: selectedUser?.fullName || formData.fullName
-                      });
+                      if (selectedUser) {
+                        setFormData({ 
+                          ...formData, 
+                          userAccount: selectedUserId,
+                          email: selectedUser.email,
+                          fullName: selectedUser.fullName || formData.fullName
+                        });
+                      } else {
+                        // Clear fields when no user selected
+                        setFormData({ 
+                          ...formData, 
+                          userAccount: '',
+                          email: '',
+                          fullName: ''
+                        });
+                      }
                     }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
