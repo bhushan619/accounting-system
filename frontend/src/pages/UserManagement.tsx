@@ -7,7 +7,7 @@ interface User {
   _id: string;
   email: string;
   fullName?: string;
-  role: 'admin' | 'accountant' | 'employee';
+  role: 'admin' | 'accountant' | 'employee' | 'unmarked';
   employeeRef?: string;
   createdAt: string;
 }
@@ -68,7 +68,7 @@ export default function UserManagement() {
     email: '',
     password: '',
     fullName: '',
-    role: 'accountant' as 'admin' | 'accountant' | 'employee',
+    role: 'accountant' as 'admin' | 'accountant' | 'employee' | 'unmarked',
     employeeRef: ''
   });
   const [showRoleInfo, setShowRoleInfo] = useState(false);
@@ -81,13 +81,15 @@ export default function UserManagement() {
   const roleIcons: Record<string, any> = {
     admin: Shield,
     accountant: UserCog,
-    employee: Users
+    employee: Users,
+    unmarked: Users
   };
 
   const roleColors: Record<string, string> = {
     admin: 'bg-primary/20 text-primary border-primary/30',
     accountant: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
-    employee: 'bg-green-500/20 text-green-600 border-green-500/30'
+    employee: 'bg-green-500/20 text-green-600 border-green-500/30',
+    unmarked: 'bg-orange-500/20 text-orange-600 border-orange-500/30'
   };
 
   useEffect(() => {
@@ -243,14 +245,39 @@ export default function UserManagement() {
       case 'admin': return t('users.admin');
       case 'accountant': return t('users.accountant');
       case 'employee': return t('users.employee');
+      case 'unmarked': return t('users.unmarked') || 'Unmarked';
       default: return role;
     }
   };
+
+  const unmarkedUsers = users.filter(u => u.role === 'unmarked');
 
   if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
 
   return (
     <div>
+      {/* Unmarked Users Reminder Banner */}
+      {unmarkedUsers.length > 0 && (
+        <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+            <Users size={20} className="text-orange-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-orange-600">
+              {t('users.unmarkedUsersReminder') || 'Action Required: Assign User Roles'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t('users.unmarkedUsersMessage') || `${unmarkedUsers.length} user(s) are waiting for role assignment. Please assign roles to enable their access.`}
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <span className="px-3 py-1 bg-orange-500/20 text-orange-600 text-sm font-medium rounded-full">
+              {unmarkedUsers.length} {t('users.pending') || 'pending'}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
         <div className="flex gap-3">
@@ -460,6 +487,8 @@ export default function UserManagement() {
                         ? 'bg-primary/20 text-primary' 
                         : user.role === 'employee'
                         ? 'bg-green-500/20 text-green-600'
+                        : user.role === 'unmarked'
+                        ? 'bg-orange-500/20 text-orange-600'
                         : 'bg-secondary/20 text-secondary-foreground'
                     }`}>
                       {getRoleName(user.role)}
@@ -543,13 +572,21 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee', employeeRef: '' })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' | 'unmarked', employeeRef: '' })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="accountant">{t('users.accountant')}</option>
                   <option value="admin">{t('users.admin')}</option>
                   <option value="employee">{t('users.employee')}</option>
+                  {formData.role === 'unmarked' && (
+                    <option value="unmarked" disabled>{t('users.unmarked') || 'Unmarked'}</option>
+                  )}
                 </select>
+                {formData.role === 'unmarked' && editingId && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    {t('users.pleaseAssignRole') || 'Please assign a role to this user'}
+                  </p>
+                )}
               </div>
 
               {formData.role === 'employee' && (

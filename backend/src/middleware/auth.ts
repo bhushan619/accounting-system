@@ -52,6 +52,11 @@ export function requireRole(roles: string | string[]) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Block unmarked users from all protected routes
+    if (req.user.role === 'unmarked') {
+      return res.status(403).json({ error: 'Your account is pending role assignment. Please contact an administrator.' });
+    }
+
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
     
     // Admin always has access

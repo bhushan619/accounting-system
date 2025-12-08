@@ -27,6 +27,7 @@ import EmployeeLogin from './pages/EmployeeLogin';
 import EmployeePortal from './pages/EmployeePortal';
 import Approvals from './pages/Approvals';
 import VATReports from './pages/VATReports';
+import PendingApproval from './pages/PendingApproval';
 import './styles.css';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -42,6 +43,11 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   
   if (!token || !user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect unmarked users to pending approval page
+  if (user.role === 'unmarked') {
+    return <Navigate to="/pending-approval" replace />;
   }
   
   // Redirect employees to employee portal if they try to access admin/accountant pages
@@ -67,6 +73,9 @@ function DefaultRedirect() {
   }
   
   // Redirect based on role
+  if (user?.role === 'unmarked') {
+    return <Navigate to="/pending-approval" replace />;
+  }
   if (user?.role === 'employee') {
     return <Navigate to="/employee-portal" replace />;
   }
@@ -83,6 +92,7 @@ function App() {
             <Route path="/employee-login" element={<EmployeeLogin />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Dashboard /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin', 'accountant']}><Clients /></ProtectedRoute>} />
