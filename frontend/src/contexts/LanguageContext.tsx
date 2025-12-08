@@ -40,6 +40,12 @@ const defaultTranslations: Record<Language, Translations> = {
     'nav.employeePortal': 'Employee Portal',
     'nav.signOut': 'Sign Out',
     
+    // Pending Approval Page
+    'pending.title': 'Account Pending Approval',
+    'pending.message': 'Your account has been created successfully. Please wait for an administrator to assign your role before you can access the system.',
+    'pending.loggedAs': 'Logged in as',
+    'pending.contactAdmin': 'If you believe this is an error, please contact your system administrator.',
+    
     // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
@@ -222,6 +228,11 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.admin': 'Admin',
     'users.accountant': 'Accountant',
     'users.employee': 'Employee',
+    'users.unmarked': 'Unmarked',
+    'users.unmarkedUsersReminder': 'Action Required: Assign User Roles',
+    'users.unmarkedUsersMessage': 'user(s) are waiting for role assignment. Please assign roles to enable their access.',
+    'users.pending': 'pending',
+    'users.pleaseAssignRole': 'Please assign a role to this user',
     'users.passwordHint': 'leave blank to keep current',
     'users.linkEmployee': 'Link to Employee',
     'users.linkEmployeeHint': 'Only employees without linked accounts are shown',
@@ -648,6 +659,12 @@ const defaultTranslations: Record<Language, Translations> = {
     'nav.employeePortal': '员工门户',
     'nav.signOut': '退出登录',
     
+    // Pending Approval Page
+    'pending.title': '账户待审批',
+    'pending.message': '您的账户已成功创建。请等待管理员分配您的角色后才能访问系统。',
+    'pending.loggedAs': '登录账户',
+    'pending.contactAdmin': '如果您认为这是一个错误，请联系您的系统管理员。',
+    
     // Common
     'common.save': '保存',
     'common.cancel': '取消',
@@ -830,6 +847,11 @@ const defaultTranslations: Record<Language, Translations> = {
     'users.admin': '管理员',
     'users.accountant': '会计',
     'users.employee': '员工',
+    'users.unmarked': '未标记',
+    'users.unmarkedUsersReminder': '需要操作：分配用户角色',
+    'users.unmarkedUsersMessage': '位用户正在等待角色分配。请分配角色以启用其访问权限。',
+    'users.pending': '待处理',
+    'users.pleaseAssignRole': '请为此用户分配角色',
     'users.passwordHint': '留空以保持当前密码',
     'users.linkEmployee': '关联员工',
     'users.linkEmployeeHint': '仅显示未关联账户的员工',

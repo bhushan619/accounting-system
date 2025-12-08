@@ -13,7 +13,7 @@ router.post('/signup', async (req, res) => {
   if (existing) return res.status(400).json({ error: 'User already exists' });
   
   const userCount = await User.countDocuments();
-  const role = userCount === 0 ? 'admin' : 'accountant';
+  const role = userCount === 0 ? 'admin' : 'unmarked';
   
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ email, password: hashed, fullName, role });
