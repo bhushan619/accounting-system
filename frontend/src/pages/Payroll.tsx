@@ -1251,14 +1251,14 @@ export default function Payroll() {
                           </button>
                         )}
                         
-                        {/* Submit for Approval - draft only */}
-                        {run.status === "draft" && (
+                        {/* Submit for Approval - draft only, accountant only */}
+                        {run.status === "draft" && !isAdmin && (
                           <button
                             onClick={() => handleSubmitForApproval(run._id)}
                             className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
                           >
                             <Check size={14} />
-                            {isAdmin ? "Approve & Submit" : "Submit for Approval"}
+                            Submit for Approval
                           </button>
                         )}
                         
