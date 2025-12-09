@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, UserCog, Mail, Phone, Link } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Link } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface Employee {
@@ -31,6 +31,30 @@ interface TaxConfig {
   isActive: boolean;
 }
 
+const DEPARTMENTS = ['HR department', 'R&D department'];
+const STATUS_OPTIONS = [
+  { value: 'under_probation', label: 'Under Probation' },
+  { value: 'confirmed', label: 'Confirmed (Post Probation)' },
+  { value: 'closed', label: 'Closed' }
+];
+
+// Get working days for a specific month
+const getWorkingDaysInMonth = (year: number, month: number): number => {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let workingDays = 0;
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay();
+    // Exclude Saturday (6) and Sunday (0)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workingDays++;
+    }
+  }
+  
+  return workingDays;
+};
+
 export default function Employees() {
   const { t } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -46,16 +70,20 @@ export default function Employees() {
     phone: '',
     nic: '',
     address: '',
+    basicInformation: '',
     designation: '',
     department: '',
     joinDate: new Date().toISOString().split('T')[0],
     basicSalary: 0,
-    allowances: 0,
+    transportAllowance: 0,
+    performanceSalaryProbation: 0,
+    performanceSalaryConfirmed: 0,
+    probationEndDate: '',
+    workingDaysPerMonth: getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
     epfEmployeeRate: 8,
     epfEmployerRate: 12,
     etfRate: 3,
-    apitScenario: 'employee' as 'employee' | 'employer',
-    status: 'active',
+    status: 'under_probation',
     userAccount: ''
   });
 
@@ -79,7 +107,6 @@ export default function Employees() {
   const loadAvailableUsers = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/users`);
-      // Filter to only users with unmarked role
       const users = response.data.filter((u: User) => u.role === 'unmarked');
       setAvailableUsers(users);
     } catch (error) {
@@ -93,7 +120,6 @@ export default function Employees() {
       const configs = response.data.filter((c: TaxConfig) => c.isActive);
       setTaxConfigs(configs);
       
-      // Auto-populate rates from tax configs
       const epfEmployee = configs.find((c: TaxConfig) => c.taxType === 'epf_employee')?.rate || 8;
       const epfEmployer = configs.find((c: TaxConfig) => c.taxType === 'epf_employer')?.rate || 12;
       const etf = configs.find((c: TaxConfig) => c.taxType === 'etf')?.rate || 3;
@@ -109,10 +135,9 @@ export default function Employees() {
     }
   };
 
-  // Calculate APIT based on slab system with standard deductions
-  const calculateAPIT = (grossSalary: number, scenario: 'employee' | 'employer'): number => {
-    // Scenario A: APIT Paid by Employee (Standard)
-    const employeeSlabs = [
+  // Calculate APIT based on slab system - Scenario A only (Employee pays)
+  const calculateAPIT = (grossSalary: number): number => {
+    const slabs = [
       { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
       { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
       { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
@@ -121,19 +146,6 @@ export default function Employees() {
       { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
     ];
 
-    // Scenario B: APIT Paid by Employer
-    const employerSlabs = [
-      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
-      { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
-      { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
-      { minIncome: 262501, maxIncome: 294167, rate: 31.58, standardDeduction: 70398 },
-      { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
-      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
-    ];
-
-    const slabs = scenario === 'employee' ? employeeSlabs : employerSlabs;
-
-    // Find applicable slab
     let applicableSlab = slabs[0];
     for (const slab of slabs) {
       if (grossSalary >= slab.minIncome) {
@@ -144,31 +156,37 @@ export default function Employees() {
       }
     }
 
-    // APIT = (Gross Salary × Tax Rate) - Standard Deduction
     const apit = (grossSalary * applicableSlab.rate / 100) - applicableSlab.standardDeduction;
-    
     return Math.max(0, Math.round(apit * 100) / 100);
+  };
+
+  // Get current performance salary based on status
+  const getCurrentPerformanceSalary = () => {
+    if (formData.status === 'confirmed') {
+      return formData.performanceSalaryConfirmed;
+    }
+    if (formData.status === 'under_probation') {
+      if (formData.probationEndDate && new Date() > new Date(formData.probationEndDate)) {
+        return formData.performanceSalaryConfirmed;
+      }
+      return formData.performanceSalaryProbation;
+    }
+    return 0;
   };
 
   // Recalculate whenever salary or rates change
   useEffect(() => {
-    const grossSalary = formData.basicSalary + formData.allowances;
+    const performanceSalary = getCurrentPerformanceSalary();
+    const grossSalary = formData.basicSalary + formData.transportAllowance + performanceSalary;
     const epfEmployee = (formData.basicSalary * formData.epfEmployeeRate) / 100;
     const epfEmployer = (formData.basicSalary * formData.epfEmployerRate) / 100;
     const etf = (formData.basicSalary * formData.etfRate) / 100;
-    const apit = calculateAPIT(grossSalary, formData.apitScenario);
+    const apit = calculateAPIT(grossSalary);
     const stampFee = 25;
 
-    let netSalary = 0;
-    let totalCTC = 0;
-
-    if (formData.apitScenario === 'employee') {
-      netSalary = grossSalary - epfEmployee - apit - stampFee;
-      totalCTC = grossSalary + epfEmployer + etf;
-    } else {
-      netSalary = grossSalary - epfEmployee - stampFee;
-      totalCTC = grossSalary + epfEmployer + etf + apit;
-    }
+    // Scenario A: Employee pays APIT
+    const netSalary = grossSalary - epfEmployee - apit - stampFee;
+    const totalCTC = grossSalary + epfEmployer + etf;
 
     setCalculations({
       grossSalary: Math.round(grossSalary * 100) / 100,
@@ -180,7 +198,7 @@ export default function Employees() {
       netSalary: Math.round(netSalary * 100) / 100,
       totalCTC: Math.round(totalCTC * 100) / 100
     });
-  }, [formData.basicSalary, formData.allowances, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate, formData.apitScenario]);
+  }, [formData.basicSalary, formData.transportAllowance, formData.performanceSalaryProbation, formData.performanceSalaryConfirmed, formData.status, formData.probationEndDate, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate]);
 
   const loadEmployees = async () => {
     try {
@@ -196,10 +214,10 @@ export default function Employees() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Don't send empty string for userAccount - send null instead
       const submitData = {
         ...formData,
-        userAccount: formData.userAccount || null
+        userAccount: formData.userAccount || null,
+        probationEndDate: formData.probationEndDate || null
       };
       
       if (editingEmployee) {
@@ -217,23 +235,28 @@ export default function Employees() {
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
+    const emp = employee as any;
     setFormData({
       employeeId: employee.employeeId,
       fullName: employee.fullName,
       email: employee.email,
       phone: employee.phone || '',
-      nic: (employee as any).nic || '',
-      address: (employee as any).address || '',
+      nic: emp.nic || '',
+      address: emp.address || '',
+      basicInformation: emp.basicInformation || '',
       designation: employee.designation || '',
       department: employee.department || '',
-      joinDate: (employee as any).joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+      joinDate: emp.joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
       basicSalary: employee.basicSalary,
-      allowances: (employee as any).allowances || 0,
-      epfEmployeeRate: (employee as any).epfEmployeeRate || 8,
-      epfEmployerRate: (employee as any).epfEmployerRate || 12,
-      etfRate: (employee as any).etfRate || 3,
-      apitScenario: (employee as any).apitScenario || 'employee',
-      status: employee.status,
+      transportAllowance: emp.transportAllowance || emp.allowances || 0,
+      performanceSalaryProbation: emp.performanceSalaryProbation || 0,
+      performanceSalaryConfirmed: emp.performanceSalaryConfirmed || 0,
+      probationEndDate: emp.probationEndDate?.split('T')[0] || '',
+      workingDaysPerMonth: emp.workingDaysPerMonth || getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
+      epfEmployeeRate: emp.epfEmployeeRate || 8,
+      epfEmployerRate: emp.epfEmployerRate || 12,
+      etfRate: emp.etfRate || 3,
+      status: employee.status || 'under_probation',
       userAccount: employee.userAccount || ''
     });
     setShowModal(true);
@@ -258,16 +281,20 @@ export default function Employees() {
       phone: '',
       nic: '',
       address: '',
+      basicInformation: '',
       designation: '',
       department: '',
       joinDate: new Date().toISOString().split('T')[0],
       basicSalary: 0,
-      allowances: 0,
+      transportAllowance: 0,
+      performanceSalaryProbation: 0,
+      performanceSalaryConfirmed: 0,
+      probationEndDate: '',
+      workingDaysPerMonth: getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
       epfEmployeeRate: 8,
       epfEmployerRate: 12,
       etfRate: 3,
-      apitScenario: 'employee',
-      status: 'active',
+      status: 'under_probation',
       userAccount: ''
     });
   };
@@ -275,6 +302,24 @@ export default function Employees() {
   const openNewModal = () => {
     resetForm();
     setShowModal(true);
+  };
+
+  const getStatusLabel = (status: string) => {
+    const option = STATUS_OPTIONS.find(s => s.value === status);
+    return option?.label || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'under_probation':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800';
+      case 'closed':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   if (loading) return <div>{t('common.loading')}</div>;
@@ -324,12 +369,8 @@ export default function Employees() {
                   LKR {employee.basicSalary.toLocaleString()}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    employee.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {employee.status}
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(employee.status)}`}>
+                    {getStatusLabel(employee.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
@@ -395,7 +436,6 @@ export default function Employees() {
                           fullName: selectedUser.fullName || formData.fullName
                         });
                       } else {
-                        // Clear fields when no user selected
                         setFormData({ 
                           ...formData, 
                           userAccount: '',
@@ -463,16 +503,32 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="active">{t('employees.active')}</option>
-                  <option value="inactive">{t('employees.inactive')}</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    {STATUS_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="">-- Select Department --</option>
+                    {DEPARTMENTS.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -482,6 +538,17 @@ export default function Employees() {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   rows={2}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">Basic Information</label>
+                <textarea
+                  value={formData.basicInformation}
+                  onChange={(e) => setFormData({ ...formData, basicInformation: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  rows={3}
+                  placeholder="Additional employee information..."
                 />
               </div>
 
@@ -496,18 +563,6 @@ export default function Employees() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
-                  <input
-                    type="text"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.joinDate')}</label>
                   <input
                     type="date"
@@ -516,6 +571,32 @@ export default function Employees() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Probation End Date</label>
+                  <input
+                    type="date"
+                    value={formData.probationEndDate}
+                    onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Working Days/Month</label>
+                  <input
+                    type="number"
+                    value={formData.workingDaysPerMonth}
+                    onChange={(e) => setFormData({ ...formData, workingDaysPerMonth: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    min={1}
+                    max={31}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.basicSalary')} *</label>
                   <input
@@ -524,30 +605,41 @@ export default function Employees() {
                     onChange={(e) => setFormData({ ...formData, basicSalary: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     required
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Transport Allowance</label>
+                  <input
+                    type="number"
+                    value={formData.transportAllowance}
+                    onChange={(e) => setFormData({ ...formData, transportAllowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    min={0}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('payroll.allowances')}</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Performance Salary (Under Probation)</label>
                   <input
                     type="number"
-                    value={formData.allowances}
-                    onChange={(e) => setFormData({ ...formData, allowances: Number(e.target.value) })}
+                    value={formData.performanceSalaryProbation}
+                    onChange={(e) => setFormData({ ...formData, performanceSalaryProbation: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    min={0}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.apitScenario')}</label>
-                  <select
-                    value={formData.apitScenario}
-                    onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value as 'employee' | 'employer' })}
+                  <label className="block text-sm font-medium mb-1 text-foreground">Performance Salary (Post Probation)</label>
+                  <input
+                    type="number"
+                    value={formData.performanceSalaryConfirmed}
+                    onChange={(e) => setFormData({ ...formData, performanceSalaryConfirmed: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="employee">{t('employees.scenarioEmployee')}</option>
-                    <option value="employer">{t('employees.scenarioEmployer')}</option>
-                  </select>
+                    min={0}
+                  />
                 </div>
               </div>
 
@@ -583,12 +675,10 @@ export default function Employees() {
                     <span className="text-muted-foreground">{t('employees.epfEmployee')} ({formData.epfEmployeeRate}%):</span>
                     <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toLocaleString()}</span>
                   </div>
-                  {formData.apitScenario === 'employee' && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t('employees.apit')}:</span>
-                      <span className="font-medium text-foreground">LKR {calculations.apit.toLocaleString()}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('employees.apit')}:</span>
+                    <span className="font-medium text-foreground">LKR {calculations.apit.toLocaleString()}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('employees.stampFee')}:</span>
                     <span className="font-medium text-foreground">LKR {calculations.stampFee.toLocaleString()}</span>
@@ -609,12 +699,6 @@ export default function Employees() {
                       <span>{t('employees.etf')} ({formData.etfRate}%):</span>
                       <span>LKR {calculations.etf.toLocaleString()}</span>
                     </div>
-                    {formData.apitScenario === 'employer' && (
-                      <div className="flex justify-between">
-                        <span>{t('employees.apit')} ({t('employees.scenarioEmployer')}):</span>
-                        <span>LKR {calculations.apit.toLocaleString()}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between font-semibold mt-1 pt-1 border-t border-border">
                       <span>{t('employees.totalCTC')}:</span>
                       <span>LKR {calculations.totalCTC.toLocaleString()}</span>
