@@ -34,8 +34,9 @@ interface Employee {
   fullName: string;
   email: string;
   basicSalary: number;
-  allowances: number;
-  apitScenario?: string;
+  transportAllowance: number;
+  performanceSalaryProbation?: number;
+  performanceSalaryConfirmed?: number;
   status: string;
 }
 
@@ -80,8 +81,8 @@ interface AttendanceWarning {
 interface PayrollPreview {
   employee: Employee;
   basicSalary: number;
-  allowances: number;
-  performanceBonus: number;
+  performanceSalary: number;
+  transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
   attendedDays: number;
@@ -98,11 +99,11 @@ interface PayrollPreview {
   epfEmployer: number;
   etf: number;
   apit: number;
-  apitEmployer: number;
   stampFee: number;
   totalDeductions: number;
   netSalary: number;
   totalCTC: number;
+  workingDays: number;
 }
 
 interface EditEntry {
@@ -110,7 +111,8 @@ interface EditEntry {
   serialNumber: string;
   employee: any;
   basicSalary: number;
-  allowances: number;
+  performanceSalary: number;
+  transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
   grossSalary: number;
@@ -118,7 +120,6 @@ interface EditEntry {
   epfEmployer: number;
   etf: number;
   apit: number;
-  apitEmployer: number;
   stampFee: number;
   totalDeductions: number;
   netSalary: number;
@@ -479,8 +480,8 @@ export default function Payroll() {
 
   const recalculatePayroll = (
     entry: PayrollPreview,
-    newAllowances: number,
-    newPerformanceBonus: number,
+    newPerformanceSalary: number,
+    newTransportAllowance: number,
     newDeductionAmount: number = entry.deductionAmount,
     newDeductionReason: string = entry.deductionReason,
     newAttendedDays: number = entry.attendedDays,
@@ -489,51 +490,38 @@ export default function Payroll() {
     if (!taxRates) return entry;
 
     const basicSalary = entry.basicSalary;
-    const allowances = newAllowances;
-    const performanceBonus = newPerformanceBonus;
+    const performanceSalary = newPerformanceSalary;
+    const transportAllowance = newTransportAllowance;
     const deductionAmount = newDeductionAmount;
     const deductionReason = newDeductionReason;
     const attendedDays = newAttendedDays;
     const absentDays = newAbsentDays;
+    const workingDays = entry.workingDays || workingDaysInMonth;
 
-    // Calculate attendance deduction (per day salary × absent days)
-    const perDaySalary = basicSalary / workingDaysInMonth;
-    const attendanceDeduction = Math.round(perDaySalary * absentDays * 100) / 100;
+    // Calculate attendance deduction based on unpaid leave only
+    const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
+    const unpaidLeave = entry.unpaidLeave || 0;
+    const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
 
-    const totalAllowances = allowances + performanceBonus;
-    const grossSalary = basicSalary + totalAllowances;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance;
 
     const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
     const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
-    const apit = calculateAPIT(grossSalary, entry.employee.apitScenario || "employee");
+    // Scenario A only - employee pays APIT
+    const apit = calculateAPIT(grossSalary, "employee");
 
-    let deductions: number;
-    let netSalary: number;
-    let apitEmployer = 0;
-    let ctc: number;
-
-    // Include attendance deduction in total deductions
-    const totalOtherDeductions = deductionAmount + attendanceDeduction;
-
-    if (entry.employee.apitScenario === "employer") {
-      deductions = epfEmployee + stampFee + totalOtherDeductions;
-      netSalary = grossSalary - deductions;
-      apitEmployer = apit;
-      ctc = grossSalary + epfEmployer + etf + apitEmployer;
-    } else {
-      deductions = epfEmployee + apit + stampFee + totalOtherDeductions;
-      netSalary = grossSalary - deductions;
-      apitEmployer = 0;
-      ctc = grossSalary + epfEmployer + etf;
-    }
+    // Total deductions include EPF, APIT, stamp, other deductions, and attendance deduction
+    const deductions = epfEmployee + apit + stampFee + deductionAmount + attendanceDeduction;
+    const netSalary = grossSalary - deductions;
+    const ctc = grossSalary + epfEmployer + etf;
 
     return {
       ...entry,
-      allowances,
-      performanceBonus,
+      performanceSalary,
+      transportAllowance,
       deductionAmount,
       deductionReason,
       attendedDays,
@@ -544,7 +532,6 @@ export default function Payroll() {
       epfEmployer,
       etf,
       apit,
-      apitEmployer,
       stampFee,
       totalDeductions: deductions,
       netSalary,
@@ -552,13 +539,13 @@ export default function Payroll() {
     };
   };
 
-  const handleAllowanceChange = (index: number, value: string) => {
+  const handlePerformanceSalaryChange = (index: number, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
       updatedPreview[index],
       numValue,
-      updatedPreview[index].performanceBonus,
+      updatedPreview[index].transportAllowance,
       updatedPreview[index].deductionAmount,
       updatedPreview[index].deductionReason,
       updatedPreview[index].attendedDays,
@@ -567,12 +554,12 @@ export default function Payroll() {
     setPreviewData(updatedPreview);
   };
 
-  const handlePerformanceBonusChange = (index: number, value: string) => {
+  const handleTransportAllowanceChange = (index: number, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
       updatedPreview[index],
-      updatedPreview[index].allowances,
+      updatedPreview[index].performanceSalary,
       numValue,
       updatedPreview[index].deductionAmount,
       updatedPreview[index].deductionReason,
@@ -587,8 +574,8 @@ export default function Payroll() {
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
       updatedPreview[index],
-      updatedPreview[index].allowances,
-      updatedPreview[index].performanceBonus,
+      updatedPreview[index].performanceSalary,
+      updatedPreview[index].transportAllowance,
       numValue,
       updatedPreview[index].deductionReason,
       updatedPreview[index].attendedDays,
@@ -623,19 +610,19 @@ export default function Payroll() {
         ...formData,
         employeeIds: selectedEmployees,
       });
-      // Add performanceBonus, deduction fields and attendance to preview data
+      // Add deduction fields and attendance to preview data
       const dataWithExtras = response.data.map((entry: PayrollPreview) => {
         const attendance = getAttendanceForEmployee(entry.employee.employeeId);
-        const attendedDays = attendance?.attendedDays ?? workingDaysInMonth;
+        const attendedDays = attendance?.attendedDays ?? entry.workingDays;
         const absentDays = attendance?.absentDays ?? 0;
-        const perDaySalary = entry.basicSalary / workingDaysInMonth;
+        const grossSalary = entry.basicSalary + entry.performanceSalary + entry.transportAllowance;
+        const perDaySalary = grossSalary / entry.workingDays;
         // Only unpaid leave causes deduction
         const unpaidLeave = attendance?.unpaidLeave ?? 0;
         const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
 
         return {
           ...entry,
-          performanceBonus: 0,
           deductionAmount: 0,
           deductionReason: "",
           attendedDays,
@@ -643,7 +630,7 @@ export default function Payroll() {
           sickLeave: attendance?.sickLeave ?? 0,
           casualLeave: attendance?.casualLeave ?? 0,
           annualLeave: attendance?.annualLeave ?? 0,
-          unpaidLeave: attendance?.unpaidLeave ?? 0,
+          unpaidLeave,
           otherLeave: attendance?.otherLeave ?? 0,
           leaveNotes: attendance?.leaveNotes ?? "",
           attendanceDeduction,
@@ -654,8 +641,8 @@ export default function Payroll() {
       const recalculatedData = dataWithExtras.map((entry: PayrollPreview) =>
         recalculatePayroll(
           entry,
-          entry.allowances,
-          entry.performanceBonus,
+          entry.performanceSalary,
+          entry.transportAllowance,
           entry.deductionAmount,
           entry.deductionReason,
           entry.attendedDays,
@@ -672,10 +659,11 @@ export default function Payroll() {
 
   const handleGenerate = async () => {
     try {
-      // Send preview data with updated allowances, deductions and attendance
+      // Send preview data with performance salary, transport allowance, deductions and attendance
       const employeeData = previewData.map((entry) => ({
         employeeId: entry.employee._id,
-        allowances: entry.allowances + entry.performanceBonus,
+        performanceSalary: entry.performanceSalary,
+        transportAllowance: entry.transportAllowance,
         deductionAmount: entry.deductionAmount + entry.attendanceDeduction,
         deductionReason: entry.deductionReason
           ? `${entry.deductionReason}${entry.unpaidLeave > 0 ? `, Unpaid Leave ${entry.unpaidLeave} days` : ""}`
@@ -968,17 +956,24 @@ export default function Payroll() {
     };
   };
 
-  const handleEditAllowanceChange = (index: number, value: string) => {
+  const handleEditPerformanceSalaryChange = (index: number, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updatedData = [...editData];
-    updatedData[index] = recalculateEditEntry(updatedData[index], numValue, updatedData[index].deductionAmount);
+    updatedData[index] = recalculateEditEntry(updatedData[index], numValue, updatedData[index].transportAllowance, updatedData[index].deductionAmount);
+    setEditData(updatedData);
+  };
+
+  const handleEditTransportAllowanceChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedData = [...editData];
+    updatedData[index] = recalculateEditEntry(updatedData[index], updatedData[index].performanceSalary, numValue, updatedData[index].deductionAmount);
     setEditData(updatedData);
   };
 
   const handleEditDeductionAmountChange = (index: number, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updatedData = [...editData];
-    updatedData[index] = recalculateEditEntry(updatedData[index], updatedData[index].allowances, numValue);
+    updatedData[index] = recalculateEditEntry(updatedData[index], updatedData[index].performanceSalary, updatedData[index].transportAllowance, numValue);
     setEditData(updatedData);
   };
 
@@ -995,7 +990,8 @@ export default function Payroll() {
     try {
       const entries = editData.map((entry) => ({
         _id: entry._id,
-        allowances: entry.allowances,
+        performanceSalary: entry.performanceSalary,
+        transportAllowance: entry.transportAllowance,
         deductionAmount: entry.deductionAmount,
         deductionReason: entry.deductionReason,
       }));
@@ -1602,8 +1598,8 @@ export default function Payroll() {
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Employee</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Basic</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Allowances</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Bonus</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Salary</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Transport</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
                       Days Attended
@@ -1627,7 +1623,6 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(ER)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">ETF</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT(ER)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">CTC</th>
                   </tr>
                 </thead>
@@ -1639,8 +1634,8 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right">
                         <input
                           type="number"
-                          value={entry.allowances}
-                          onChange={(e) => handleAllowanceChange(idx, e.target.value)}
+                          value={entry.performanceSalary}
+                          onChange={(e) => handlePerformanceSalaryChange(idx, e.target.value)}
                           className="w-20 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
                           min="0"
                           step="0.01"
@@ -1649,8 +1644,8 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right">
                         <input
                           type="number"
-                          value={entry.performanceBonus}
-                          onChange={(e) => handlePerformanceBonusChange(idx, e.target.value)}
+                          value={entry.transportAllowance}
+                          onChange={(e) => handleTransportAllowanceChange(idx, e.target.value)}
                           className="w-20 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
                           min="0"
                           step="0.01"
@@ -1661,7 +1656,7 @@ export default function Payroll() {
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-blue-700 font-medium">
                         {Number.isInteger(entry.attendedDays) ? entry.attendedDays : entry.attendedDays.toFixed(1)}/
-                        {workingDaysInMonth}
+                        {entry.workingDays || workingDaysInMonth}
                       </td>
                       <td className="px-3 py-2 text-center bg-blue-50/50 text-red-600 font-medium">
                         {Number.isInteger(entry.absentDays) ? entry.absentDays : entry.absentDays.toFixed(1)}
@@ -1700,7 +1695,6 @@ export default function Payroll() {
                       </td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-orange-600">{entry.apitEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-semibold text-foreground">
                         {entry.totalCTC.toLocaleString()}
                       </td>
@@ -1714,10 +1708,10 @@ export default function Payroll() {
                       {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
-                      {previewData.reduce((sum, e) => sum + e.allowances, 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
-                      {previewData.reduce((sum, e) => sum + e.performanceBonus, 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
@@ -1756,9 +1750,6 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-orange-600">
                       {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-right text-orange-600">
-                      {previewData.reduce((sum, e) => sum + e.apitEmployer, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}
@@ -2014,7 +2005,10 @@ export default function Payroll() {
                         Basic
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
-                        Allowances
+                        Perf. Salary
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Transport
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Gross
@@ -2040,9 +2034,6 @@ export default function Payroll() {
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">ETF</th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
-                        APIT (ER)
-                      </th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Total CTC
                       </th>
                     </tr>
@@ -2059,7 +2050,8 @@ export default function Payroll() {
                             </div>
                           </td>
                           <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-foreground">{entry.allowances.toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-foreground">{(entry.performanceSalary || 0).toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right text-foreground">{(entry.transportAllowance || 0).toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-medium text-foreground">
                             {entry.grossSalary.toLocaleString()}
                           </td>
@@ -2081,9 +2073,6 @@ export default function Payroll() {
                           </td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-orange-600">
-                            {entry.apitEmployer.toLocaleString()}
-                          </td>
                           <td className="px-3 py-3 text-right font-semibold text-foreground">
                             {entry.totalCTC.toLocaleString()}
                           </td>
