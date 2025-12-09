@@ -37,9 +37,9 @@ router.get('/expenses/csv', async (req, res) => {
 router.get('/payroll/csv', async (req, res) => {
   const payrolls = await Payroll.find().populate('employee').lean();
   
-  let csv = 'Serial,Employee,Month,Year,Basic Salary,Allowances,Gross,EPF Employee,EPF Employer,ETF,APIT,Stamp Fee,Deductions,Net Salary,Status\n';
+  let csv = 'Serial,Employee,Month,Year,Basic Salary,Transport Allowance,Performance Salary,Gross,EPF Employee,EPF Employer,ETF,APIT,Stamp Fee,Deductions,Net Salary,Status\n';
   payrolls.forEach(pay => {
-    csv += `${pay.serialNumber},"${(pay.employee as any)?.fullName}",${pay.month},${pay.year},${pay.basicSalary},${pay.allowances},${pay.grossSalary},${pay.epfEmployee},${pay.epfEmployer},${pay.etf},${pay.apit},${pay.stampFee},${pay.totalDeductions},${pay.netSalary},${pay.status}\n`;
+    csv += `${pay.serialNumber},"${(pay.employee as any)?.fullName}",${pay.month},${pay.year},${pay.basicSalary},${pay.transportAllowance},${pay.performanceSalary},${pay.grossSalary},${pay.epfEmployee},${pay.epfEmployer},${pay.etf},${pay.apit},${pay.stampFee},${pay.totalDeductions},${pay.netSalary},${pay.status}\n`;
   });
   
   res.setHeader('Content-Type', 'text/csv');
