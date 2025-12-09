@@ -7,16 +7,29 @@ const EmployeeSchema = new Schema({
   phone: String,
   nic: String,
   address: String,
+  basicInformation: String, // New textarea field
   designation: String,
-  department: String,
+  department: { 
+    type: String, 
+    enum: ['HR department', 'R&D department', ''],
+    default: ''
+  },
   joinDate: { type: Date, default: Date.now },
   basicSalary: { type: Number, required: true },
-  allowances: { type: Number, default: 0 },
+  transportAllowance: { type: Number, default: 0 }, // Renamed from allowances
+  performanceSalaryProbation: { type: Number, default: 0 }, // Under probation
+  performanceSalaryConfirmed: { type: Number, default: 0 }, // Post probation
+  probationEndDate: { type: Date }, // Probation period end date
+  workingDaysPerMonth: { type: Number, default: 22 }, // Working days per calendar month
   epfEmployeeRate: { type: Number, default: 8 },
   epfEmployerRate: { type: Number, default: 12 },
   etfRate: { type: Number, default: 3 },
-  apitScenario: { type: String, enum: ['employee', 'employer'], default: 'employee' },
-  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  // APIT scenario removed - always use Scenario A (employee pays)
+  status: { 
+    type: String, 
+    enum: ['under_probation', 'confirmed', 'closed'], 
+    default: 'under_probation' 
+  },
   // Bank details for salary payment
   bankName: String,
   bankAccountNumber: String,
@@ -26,6 +39,21 @@ const EmployeeSchema = new Schema({
   userAccount: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
+});
+
+// Virtual to get current performance salary based on status/date
+EmployeeSchema.virtual('currentPerformanceSalary').get(function() {
+  if (this.status === 'confirmed') {
+    return this.performanceSalaryConfirmed;
+  }
+  if (this.status === 'under_probation') {
+    // Check if probation period has ended
+    if (this.probationEndDate && new Date() > this.probationEndDate) {
+      return this.performanceSalaryConfirmed;
+    }
+    return this.performanceSalaryProbation;
+  }
+  return 0;
 });
 
 export default model('Employee', EmployeeSchema);
