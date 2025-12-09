@@ -131,6 +131,11 @@ const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
+// Get total calendar days in a month
+const getCalendarDaysInMonth = (month: number, year: number): number => {
+  return new Date(year, month, 0).getDate();
+};
+
 export default function Payroll() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -170,7 +175,7 @@ export default function Payroll() {
   });
   const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
   const [attendanceFile, setAttendanceFile] = useState<File | null>(null);
-  const [workingDaysInMonth, setWorkingDaysInMonth] = useState(22);
+  const [workingDaysInMonth, setWorkingDaysInMonth] = useState(() => getCalendarDaysInMonth(new Date().getMonth() + 1, new Date().getFullYear()));
   const [attendanceWarnings, setAttendanceWarnings] = useState<AttendanceWarning[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -1339,7 +1344,11 @@ export default function Payroll() {
                   <label className="block text-sm font-medium text-foreground mb-1">Month</label>
                   <select
                     value={formData.month}
-                    onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })}
+                    onChange={(e) => {
+                      const newMonth = parseInt(e.target.value);
+                      setFormData({ ...formData, month: newMonth });
+                      setWorkingDaysInMonth(getCalendarDaysInMonth(newMonth, formData.year));
+                    }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     {[...Array(12)].map((_, i) => (
@@ -1356,7 +1365,11 @@ export default function Payroll() {
                     type="number"
                     required
                     value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                    onChange={(e) => {
+                      const newYear = parseInt(e.target.value);
+                      setFormData({ ...formData, year: newYear });
+                      setWorkingDaysInMonth(getCalendarDaysInMonth(formData.month, newYear));
+                    }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
@@ -1389,7 +1402,7 @@ export default function Payroll() {
                       min="1"
                       max="31"
                       value={workingDaysInMonth}
-                      onChange={(e) => setWorkingDaysInMonth(parseInt(e.target.value) || 22)}
+                      onChange={(e) => setWorkingDaysInMonth(parseInt(e.target.value) || getCalendarDaysInMonth(formData.month, formData.year))}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     />
                   </div>
