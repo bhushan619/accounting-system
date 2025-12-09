@@ -6,19 +6,20 @@ const PayrollSchema = new Schema({
   month: { type: Number, required: true, min: 1, max: 12 },
   year: { type: Number, required: true },
   basicSalary: { type: Number, required: true },
-  allowances: { type: Number, default: 0 },
+  performanceSalary: { type: Number, default: 0 }, // Performance salary based on status
+  transportAllowance: { type: Number, default: 0 }, // Transport allowance
   grossSalary: { type: Number, required: true },
   epfEmployee: { type: Number, required: true },
   epfEmployer: { type: Number, required: true },
   etf: { type: Number, required: true },
-  apit: { type: Number, default: 0 }, // The actual APIT tax calculated once per employee
-  apitEmployer: { type: Number, default: 0 }, // Amount employer pays (Scenario B only). 0 for Scenario A, equals apit for Scenario B
+  apit: { type: Number, default: 0 }, // APIT tax - Scenario A only (employee pays)
   stampFee: { type: Number, default: 25 },
   deductionAmount: { type: Number, default: 0 }, // Additional salary deduction amount
   deductionReason: { type: String, default: '' }, // Reason for the deduction
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
   totalCTC: { type: Number, required: true },
+  workingDays: { type: Number, default: 30 }, // Working days in the month
   status: { type: String, enum: ['draft', 'approved', 'paid'], default: 'draft' },
   paidDate: Date,
   notes: String,

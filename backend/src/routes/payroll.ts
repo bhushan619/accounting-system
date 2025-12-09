@@ -32,18 +32,39 @@ router.get('/:id', async (req, res) => {
   res.json(payroll);
 });
 
+// Helper: Get working days for a calendar month (including weekends)
+function getWorkingDaysInMonth(month: number, year: number): number {
+  return new Date(year, month, 0).getDate(); // Returns total days in month
+}
+
 router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: any, res) => {
   try {
-    const { employeeId, month, year, allowances = 0 } = req.body;
+    const { employeeId, month, year, performanceSalary: customPerformance, transportAllowance: customTransport } = req.body;
     
     const employee = await Employee.findById(employeeId);
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     
     // Get active tax rates from TaxConfig
     const taxRates = await getActiveTaxRates();
+    const workingDays = getWorkingDaysInMonth(month, year);
     
     const basicSalary = employee.basicSalary;
-    const grossSalary = basicSalary + allowances;
+    
+    // Get current performance salary based on status/probation
+    let defaultPerformanceSalary = 0;
+    if (employee.status === 'confirmed') {
+      defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+    } else if (employee.status === 'under_probation') {
+      if (employee.probationEndDate && new Date() > employee.probationEndDate) {
+        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+      } else {
+        defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
+      }
+    }
+    
+    const performanceSalary = customPerformance ?? defaultPerformanceSalary;
+    const transportAllowance = customTransport ?? (employee.transportAllowance || 0);
+    const grossSalary = basicSalary + performanceSalary + transportAllowance;
     
     // Use rates from TaxConfig, fall back to employee-specific rates if set
     const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
@@ -55,45 +76,28 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
     const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
     
-    // Calculate APIT once - this is the actual tax amount calculated based on gross salary
-    const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
+    // Calculate APIT - Scenario A only (employee pays)
+    const apit = calculateAPIT(grossSalary, 'employee');
     
-    // APIT Scenarios:
-    // Scenario A (employee): Employee pays APIT - deducted from their salary
-    // Scenario B (employer): Employer pays APIT - NOT deducted from employee, added to CTC
-    let totalDeductions: number;
-    let netSalary: number;
-    let apitEmployer = 0; // Tracks employer's APIT burden (for Scenario B only)
-    let totalCTC: number;
-    
-    if (employee.apitScenario === 'employer') {
-      // Scenario B: Employer pays APIT on behalf of employee
-      totalDeductions = epfEmployee + stampFee; // APIT NOT deducted
-      netSalary = grossSalary - totalDeductions;
-      apitEmployer = apit; // Employer bears this cost
-      totalCTC = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
-    } else {
-      // Scenario A: Employee pays APIT (default)
-      totalDeductions = epfEmployee + apit + stampFee; // APIT deducted from salary
-      netSalary = grossSalary - totalDeductions;
-      apitEmployer = 0; // Employer doesn't bear APIT cost
-      totalCTC = grossSalary + epfEmployer + etf; // Employer costs only
-    }
+    // Scenario A: Employee pays APIT - deducted from salary
+    const totalDeductions = epfEmployee + apit + stampFee;
+    const netSalary = grossSalary - totalDeductions;
+    const totalCTC = grossSalary + epfEmployer + etf;
     
     res.json({
       basicSalary,
-      allowances,
+      performanceSalary,
+      transportAllowance,
       grossSalary,
       epfEmployee,
       epfEmployer,
       etf,
       apit,
-      apitEmployer,
       stampFee,
       totalDeductions,
       netSalary,
       totalCTC,
-      apitScenario: employee.apitScenario
+      workingDays
     });
   } catch (error) {
     console.error('Calculation error:', error);

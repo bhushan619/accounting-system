@@ -39,22 +39,43 @@ router.get('/:id', requirePayrollAccess, async (req, res) => {
   res.json(run);
 });
 
+// Helper: Get working days for a calendar month (including weekends)
+function getWorkingDaysInMonth(month: number, year: number): number {
+  return new Date(year, month, 0).getDate(); // Returns total days in month
+}
+
 router.post('/preview', requirePayrollAccess, async (req: any, res) => {
   try {
     const { month, year, employeeIds } = req.body;
     
+    // Get employees that are not closed
     const employees = await Employee.find({ 
       _id: { $in: employeeIds },
-      status: 'active'
+      status: { $ne: 'closed' }
     });
     
     const taxRates = await getActiveTaxRates();
+    const workingDays = getWorkingDaysInMonth(month, year);
     const previewData = [];
     
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
-      const allowances = employee.allowances || 0;
-      const grossSalary = basicSalary + allowances;
+      
+      // Get current performance salary based on status/probation
+      let performanceSalary = 0;
+      if (employee.status === 'confirmed') {
+        performanceSalary = employee.performanceSalaryConfirmed || 0;
+      } else if (employee.status === 'under_probation') {
+        // Check if probation has ended
+        if (employee.probationEndDate && new Date() > employee.probationEndDate) {
+          performanceSalary = employee.performanceSalaryConfirmed || 0;
+        } else {
+          performanceSalary = employee.performanceSalaryProbation || 0;
+        }
+      }
+      
+      const transportAllowance = employee.transportAllowance || 0;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
       const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
@@ -65,50 +86,34 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
-      // Calculate APIT once - this is the actual tax amount calculated based on gross salary
-      const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
+      // Calculate APIT - Scenario A only (employee pays)
+      const apit = calculateAPIT(grossSalary, 'employee');
       
-      // APIT Scenarios:
-      // Scenario A (employee): Employee pays APIT - deducted from their salary
-      // Scenario B (employer): Employer pays APIT - NOT deducted from employee, added to CTC
-      let deductions: number;
-      let netSalary: number;
-      let apitEmployer = 0; // Tracks employer's APIT burden (for Scenario B only)
-      let ctc: number;
-      
-      if (employee.apitScenario === 'employer') {
-        // Scenario B: Employer pays APIT on behalf of employee
-        deductions = epfEmployee + stampFee; // APIT NOT deducted
-        netSalary = grossSalary - deductions;
-        apitEmployer = apit; // Employer bears this cost
-        ctc = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
-      } else {
-        // Scenario A: Employee pays APIT (default)
-        deductions = epfEmployee + apit + stampFee; // APIT deducted from salary
-        netSalary = grossSalary - deductions;
-        apitEmployer = 0; // Employer doesn't bear APIT cost
-        ctc = grossSalary + epfEmployer + etf; // Employer costs only
-      }
+      // Scenario A: Employee pays APIT - deducted from salary
+      const deductions = epfEmployee + apit + stampFee;
+      const netSalary = grossSalary - deductions;
+      const ctc = grossSalary + epfEmployer + etf;
       
       previewData.push({
         employee: {
           _id: employee._id,
           employeeId: employee.employeeId,
           fullName: employee.fullName,
-          apitScenario: employee.apitScenario
+          status: employee.status
         },
         basicSalary,
-        allowances,
+        performanceSalary,
+        transportAllowance,
         grossSalary,
         epfEmployee,
         epfEmployer,
         etf,
         apit,
-        apitEmployer,
         stampFee,
         totalDeductions: deductions,
         netSalary,
-        totalCTC: ctc
+        totalCTC: ctc,
+        workingDays
       });
     }
     
@@ -124,18 +129,21 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
     const { month, year, employeeIds, employeeData } = req.body;
     
     const runNumber = await getNextSequence('payrollrun', 'RUN');
+    const workingDays = getWorkingDaysInMonth(month, year);
     
+    // Get employees that are not closed
     const employees = await Employee.find({ 
       _id: { $in: employeeIds },
-      status: 'active'
+      status: { $ne: 'closed' }
     });
     
-    // Create a map of employee data from employeeData (allowances and deductions)
+    // Create a map of employee data (performance salary, transport allowance, deductions)
     const employeeDataMap = new Map();
     if (employeeData && Array.isArray(employeeData)) {
       employeeData.forEach((data: any) => {
         employeeDataMap.set(data.employeeId, {
-          allowances: data.allowances,
+          performanceSalary: data.performanceSalary,
+          transportAllowance: data.transportAllowance,
           deductionAmount: data.deductionAmount || 0,
           deductionReason: data.deductionReason || ''
         });
@@ -157,11 +165,25 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       
       // Get employee-specific data from the map
       const empData = employeeDataMap.get(employee._id.toString());
-      const allowances = empData?.allowances ?? (employee.allowances || 0);
+      
+      // Get current performance salary based on status/probation
+      let defaultPerformanceSalary = 0;
+      if (employee.status === 'confirmed') {
+        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+      } else if (employee.status === 'under_probation') {
+        if (employee.probationEndDate && new Date() > employee.probationEndDate) {
+          defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+        } else {
+          defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
+        }
+      }
+      
+      const performanceSalary = empData?.performanceSalary ?? defaultPerformanceSalary;
+      const transportAllowance = empData?.transportAllowance ?? (employee.transportAllowance || 0);
       const deductionAmount = empData?.deductionAmount || 0;
       const deductionReason = empData?.deductionReason || '';
       
-      const grossSalary = basicSalary + allowances;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       // Use rates from TaxConfig, fall back to employee-specific rates if set
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
@@ -173,30 +195,13 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
-      // Calculate APIT once - this is the actual tax amount calculated based on gross salary
-      const apit = calculateAPIT(grossSalary, employee.apitScenario || 'employee');
+      // Calculate APIT - Scenario A only (employee pays)
+      const apit = calculateAPIT(grossSalary, 'employee');
       
-      // APIT Scenarios:
-      // Scenario A (employee): Employee pays APIT - deducted from their salary
-      // Scenario B (employer): Employer pays APIT - NOT deducted from employee, added to CTC
-      let deductions: number;
-      let netSalary: number;
-      let apitEmployer = 0; // Tracks employer's APIT burden (for Scenario B only)
-      let ctc: number;
-      
-      if (employee.apitScenario === 'employer') {
-        // Scenario B: Employer pays APIT on behalf of employee
-        deductions = epfEmployee + stampFee + deductionAmount; // APIT NOT deducted, but other deductions included
-        netSalary = grossSalary - deductions;
-        apitEmployer = apit; // Employer bears this cost
-        ctc = grossSalary + epfEmployer + etf + apitEmployer; // Include employer's APIT in CTC
-      } else {
-        // Scenario A: Employee pays APIT (default)
-        deductions = epfEmployee + apit + stampFee + deductionAmount; // APIT deducted from salary + other deductions
-        netSalary = grossSalary - deductions;
-        apitEmployer = 0; // Employer doesn't bear APIT cost
-        ctc = grossSalary + epfEmployer + etf; // Employer costs only
-      }
+      // Scenario A: Employee pays APIT - deducted from salary
+      const deductions = epfEmployee + apit + stampFee + deductionAmount;
+      const netSalary = grossSalary - deductions;
+      const ctc = grossSalary + epfEmployer + etf;
       
       const payroll = await Payroll.create({
         serialNumber,
@@ -204,19 +209,20 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
         month,
         year,
         basicSalary,
-        allowances,
+        performanceSalary,
+        transportAllowance,
         grossSalary,
         epfEmployee,
         epfEmployer,
         etf,
         apit,
-        apitEmployer,
         stampFee,
         deductionAmount,
         deductionReason,
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,
+        workingDays,
         status: 'draft',
         createdBy: req.user._id
       });
@@ -283,10 +289,11 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       
       const employee = payroll.employee as any;
       const basicSalary = payroll.basicSalary;
-      const allowances = entryData.allowances ?? payroll.allowances;
+      const performanceSalary = entryData.performanceSalary ?? (payroll as any).performanceSalary ?? 0;
+      const transportAllowance = entryData.transportAllowance ?? (payroll as any).transportAllowance ?? 0;
       const deductionAmount = entryData.deductionAmount ?? payroll.deductionAmount;
       const deductionReason = entryData.deductionReason ?? payroll.deductionReason;
-      const grossSalary = basicSalary + allowances;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       const epfEmployeeRate = employee?.epfEmployeeRate || taxRates.epfEmployee;
       const epfEmployerRate = employee?.epfEmployerRate || taxRates.epfEmployer;
@@ -297,33 +304,22 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
-      const apit = calculateAPIT(grossSalary, employee?.apitScenario || 'employee');
+      // APIT - Scenario A only (employee pays)
+      const apit = calculateAPIT(grossSalary, 'employee');
       
-      let deductions: number;
-      let netSalary: number;
-      let apitEmployer = 0;
-      let ctc: number;
-      
-      if (employee?.apitScenario === 'employer') {
-        deductions = epfEmployee + stampFee + deductionAmount;
-        netSalary = grossSalary - deductions;
-        apitEmployer = apit;
-        ctc = grossSalary + epfEmployer + etf + apitEmployer;
-      } else {
-        deductions = epfEmployee + apit + stampFee + deductionAmount;
-        netSalary = grossSalary - deductions;
-        apitEmployer = 0;
-        ctc = grossSalary + epfEmployer + etf;
-      }
+      // Scenario A: Employee pays APIT
+      const deductions = epfEmployee + apit + stampFee + deductionAmount;
+      const netSalary = grossSalary - deductions;
+      const ctc = grossSalary + epfEmployer + etf;
       
       await Payroll.findByIdAndUpdate(entryData._id, {
-        allowances,
+        performanceSalary,
+        transportAllowance,
         grossSalary,
         epfEmployee,
         epfEmployer,
         etf,
         apit,
-        apitEmployer,
         stampFee,
         deductionAmount,
         deductionReason,
@@ -352,7 +348,7 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       .populate('createdBy', 'email')
       .populate({
         path: 'payrollEntries',
-        populate: { path: 'employee', select: 'fullName employeeId apitScenario' }
+        populate: { path: 'employee', select: 'fullName employeeId status' }
       });
     
     res.json(updatedRun);
@@ -500,13 +496,11 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
     // Calculate total statutory contributions
     let totalEPFEmployer = 0;
     let totalETF = 0;
-    let totalAPITEmployer = 0;
     
     // Accumulate statutory contributions from payroll entries
     for (const payrollEntry of run.payrollEntries as any[]) {
       totalEPFEmployer += payrollEntry.epfEmployer || 0;
       totalETF += payrollEntry.etf || 0;
-      totalAPITEmployer += payrollEntry.apitEmployer || 0;
     }
     
     // Create expense entry for EPF employer contribution
@@ -543,25 +537,8 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
       });
     }
     
-    // Create expense entry for APIT employer paid
-    if (totalAPITEmployer > 0) {
-      const apitSerial = await getNextSequence('expense', 'EXP');
-      await Expense.create({
-        serialNumber: apitSerial,
-        category: 'Payroll',
-        description: `APIT Employer Payment (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
-        amount: totalAPITEmployer,
-        currency: 'LKR',
-        date: new Date(),
-        paymentMethod: 'bank',
-        bank: bankId,
-        status: 'approved',
-        createdBy: req.user._id
-      });
-    }
-    
     // Update bank balance - decrease for payroll payment and statutory contributions
-    const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF + totalAPITEmployer;
+    const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF;
     bank.balance -= totalDeduction;
     bank.updatedAt = new Date();
     await bank.save();
