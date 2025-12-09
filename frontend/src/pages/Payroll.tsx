@@ -352,12 +352,22 @@ export default function Payroll() {
           const otherLeave = parseFloat(String(row["Other Leave"])) || 0;
           const leaveNotes = String(row["Leave Notes"] || "").trim();
 
+          // Get calendar days limit for the selected month
+          const calendarDays = getCalendarDaysInMonth(formData.month, formData.year);
+          
           // Validate attended days
           if (attendedDays < 0) {
             warnings.push({
               type: "invalid",
               employeeId,
               message: `${employeeId}: Attended days cannot be negative`,
+            });
+          }
+          if (attendedDays > calendarDays) {
+            warnings.push({
+              type: "invalid",
+              employeeId,
+              message: `${employeeId}: Attended days (${attendedDays}) exceeds calendar days in month (${calendarDays})`,
             });
           }
           if (attendedDays > workingDays) {
