@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import axios, { AxiosError } from 'axios';
 
 interface User {
   id: string;
@@ -23,6 +23,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+    // Redirect to login
+    if (window.location.pathname !== '/login' && 
+        window.location.pathname !== '/forgot-password' && 
+        !window.location.pathname.startsWith('/reset-password')) {
+      window.location.href = '/login';
+    }
+  }, []);
+
+  // Setup axios interceptor for session timeout handling
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        // Handle 401 Unauthorized - session expired/invalid token
+        if (error.response?.status === 401) {
+          console.log('Session expired or invalid token, logging out...');
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [logout]);
+
   useEffect(() => {
     const verifyToken = async () => {
       if (token) {
@@ -37,10 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           console.error('Token verification failed:', error);
           // Token is invalid, clear it
-          setToken(null);
-          setUser(null);
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
+          logout();
         }
       }
       setLoading(false);
@@ -72,13 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
     localStorage.setItem('token', access);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
