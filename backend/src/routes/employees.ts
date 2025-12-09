@@ -8,7 +8,26 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireRole('admin'));
 
+// Auto-update status for employees whose probation has ended
+const updateProbationStatus = async () => {
+  const now = new Date();
+  await Employee.updateMany(
+    {
+      status: 'under_probation',
+      probationEndDate: { $lte: now, $ne: null }
+    },
+    { 
+      $set: { 
+        status: 'confirmed',
+        updatedAt: now
+      }
+    }
+  );
+};
+
 router.get('/', async (req, res) => {
+  // Auto-update probation status before fetching
+  await updateProbationStatus();
   const employees = await Employee.find().sort({ fullName: 1 }).lean();
   res.json(employees);
 });
