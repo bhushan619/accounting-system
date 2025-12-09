@@ -28,7 +28,8 @@ interface Payslip {
   month: number;
   year: number;
   basicSalary: number;
-  allowances: number;
+  transportAllowance: number;
+  performanceSalary: number;
   grossSalary: number;
   epfEmployee: number;
   epfEmployer: number;
@@ -119,7 +120,8 @@ Serial: ${payslip.serialNumber}
 EARNINGS
 --------
 Basic Salary: LKR ${payslip.basicSalary.toLocaleString()}
-Allowances: LKR ${payslip.allowances.toLocaleString()}
+Transport Allowance: LKR ${payslip.transportAllowance.toLocaleString()}
+Performance Salary: LKR ${payslip.performanceSalary.toLocaleString()}
 Gross Salary: LKR ${payslip.grossSalary.toLocaleString()}
 
 DEDUCTIONS
