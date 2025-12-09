@@ -38,21 +38,9 @@ const STATUS_OPTIONS = [
   { value: 'closed', label: 'Closed' }
 ];
 
-// Get working days for a specific month
+// Get total calendar days for a specific month
 const getWorkingDaysInMonth = (year: number, month: number): number => {
-  const daysInMonth = new Date(year, month, 0).getDate();
-  let workingDays = 0;
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month - 1, day);
-    const dayOfWeek = date.getDay();
-    // Exclude Saturday (6) and Sunday (0)
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      workingDays++;
-    }
-  }
-  
-  return workingDays;
+  return new Date(year, month, 0).getDate();
 };
 
 export default function Employees() {
