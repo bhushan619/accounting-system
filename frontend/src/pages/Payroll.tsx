@@ -189,7 +189,7 @@ export default function Payroll() {
         axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`),
       ]);
       setRuns(runsRes.data);
-      setEmployees(employeesRes.data.filter((e: Employee) => e.status === "active"));
+      setEmployees(employeesRes.data.filter((e: Employee) => e.status !== "closed"));
       setBanks(banksRes.data);
 
       // Extract tax rates from tax config
@@ -885,7 +885,8 @@ export default function Payroll() {
           serialNumber: entry.serialNumber,
           employee: entry.employee,
           basicSalary: entry.basicSalary,
-          allowances: entry.allowances,
+          performanceSalary: entry.performanceSalary || 0,
+          transportAllowance: entry.transportAllowance || 0,
           deductionAmount: entry.deductionAmount || 0,
           deductionReason: entry.deductionReason || "",
           grossSalary: entry.grossSalary,
@@ -893,7 +894,6 @@ export default function Payroll() {
           epfEmployer: entry.epfEmployer,
           etf: entry.etf,
           apit: entry.apit || 0,
-          apitEmployer: entry.apitEmployer || 0,
           stampFee: entry.stampFee,
           totalDeductions: entry.totalDeductions,
           netSalary: entry.netSalary,
@@ -907,48 +907,37 @@ export default function Payroll() {
     }
   };
 
-  const recalculateEditEntry = (entry: EditEntry, newAllowances: number, newDeductionAmount: number): EditEntry => {
+  const recalculateEditEntry = (entry: EditEntry, newPerformanceSalary: number, newTransportAllowance: number, newDeductionAmount: number): EditEntry => {
     if (!taxRates) return entry;
 
     const basicSalary = entry.basicSalary;
-    const allowances = newAllowances;
+    const performanceSalary = newPerformanceSalary;
+    const transportAllowance = newTransportAllowance;
     const deductionAmount = newDeductionAmount;
-    const grossSalary = basicSalary + allowances;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance;
 
     const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
     const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
-    const apit = calculateAPIT(grossSalary, entry.employee?.apitScenario || "employee");
+    // Scenario A only - employee pays APIT
+    const apit = calculateAPIT(grossSalary, "employee");
 
-    let deductions: number;
-    let netSalary: number;
-    let apitEmployer = 0;
-    let ctc: number;
-
-    if (entry.employee?.apitScenario === "employer") {
-      deductions = epfEmployee + stampFee + deductionAmount;
-      netSalary = grossSalary - deductions;
-      apitEmployer = apit;
-      ctc = grossSalary + epfEmployer + etf + apitEmployer;
-    } else {
-      deductions = epfEmployee + apit + stampFee + deductionAmount;
-      netSalary = grossSalary - deductions;
-      apitEmployer = 0;
-      ctc = grossSalary + epfEmployer + etf;
-    }
+    const deductions = epfEmployee + apit + stampFee + deductionAmount;
+    const netSalary = grossSalary - deductions;
+    const ctc = grossSalary + epfEmployer + etf;
 
     return {
       ...entry,
-      allowances,
+      performanceSalary,
+      transportAllowance,
       deductionAmount,
       grossSalary,
       epfEmployee,
       epfEmployer,
       etf,
       apit,
-      apitEmployer,
       stampFee,
       totalDeductions: deductions,
       netSalary,
@@ -2099,7 +2088,12 @@ export default function Payroll() {
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries
-                            .reduce((sum: number, e: any) => sum + e.allowances, 0)
+                            .reduce((sum: number, e: any) => sum + (e.performanceSalary || 0), 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-foreground">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + (e.transportAllowance || 0), 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
@@ -2145,11 +2139,6 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-orange-600">
                           {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + e.etf, 0).toLocaleString()}
                         </td>
-                        <td className="px-3 py-3 text-right text-orange-600">
-                          {selectedRun.payrollEntries
-                            .reduce((sum: number, e: any) => sum + e.apitEmployer, 0)
-                            .toLocaleString()}
-                        </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries
                             .reduce((sum: number, e: any) => sum + e.totalCTC, 0)
@@ -2185,7 +2174,7 @@ export default function Payroll() {
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">Edit Payroll Run - {selectedRun.runNumber}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {getMonthName(selectedRun.month)} {selectedRun.year} • Edit allowances and deductions
+                  {getMonthName(selectedRun.month)} {selectedRun.year} • Edit performance salary, transport allowance and deductions
                 </p>
               </div>
               <button
@@ -2212,7 +2201,10 @@ export default function Payroll() {
                         Basic
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
-                        Allowances
+                        Perf. Salary
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
+                        Transport
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Gross
@@ -2251,8 +2243,18 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right">
                           <input
                             type="number"
-                            value={entry.allowances}
-                            onChange={(e) => handleEditAllowanceChange(idx, e.target.value)}
+                            value={entry.performanceSalary}
+                            onChange={(e) => handleEditPerformanceSalaryChange(idx, e.target.value)}
+                            className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
+                            min="0"
+                            step="0.01"
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <input
+                            type="number"
+                            value={entry.transportAllowance}
+                            onChange={(e) => handleEditTransportAllowanceChange(idx, e.target.value)}
                             className="w-24 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
                             min="0"
                             step="0.01"
@@ -2299,7 +2301,10 @@ export default function Payroll() {
                         {editData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}
                       </td>
                       <td className="px-3 py-3 text-right text-foreground">
-                        {editData.reduce((sum, e) => sum + e.allowances, 0).toLocaleString()}
+                        {editData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-foreground">
+                        {editData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}
                       </td>
                       <td className="px-3 py-3 text-right text-foreground">
                         {editData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
