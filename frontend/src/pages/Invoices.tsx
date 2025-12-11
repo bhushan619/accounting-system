@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, FileText, Eye, Upload, FileDown, Receipt } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
-
+import jsPDF from 'jspdf';
 interface Invoice {
   _id: string;
   serialNumber: string;
@@ -22,6 +22,7 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
+  const [companySettings, setCompanySettings] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<any>(null);
@@ -54,7 +55,7 @@ export default function Invoices() {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [invoicesRes, clientsRes, banksRes] = await Promise.all([
+      const [invoicesRes, clientsRes, banksRes, companyRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -63,11 +64,15 @@ export default function Invoices() {
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/banks`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings/company`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: {} }))
       ]);
       setInvoices(invoicesRes.data);
       setClients(clientsRes.data);
       setBanks(banksRes.data);
+      setCompanySettings(companyRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -241,6 +246,152 @@ export default function Invoices() {
       overdue: 'bg-red-100 text-red-800'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const generateInvoicePDF = (invoice: any) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+    
+    // Company header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(companySettings.name || 'Company Name', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    if (companySettings.address) {
+      doc.text(companySettings.address, 20, yPos);
+      yPos += 5;
+    }
+    if (companySettings.phone) {
+      doc.text(`Phone: ${companySettings.phone}`, 20, yPos);
+      yPos += 5;
+    }
+    if (companySettings.email) {
+      doc.text(`Email: ${companySettings.email}`, 20, yPos);
+      yPos += 5;
+    }
+    if (companySettings.taxNumber) {
+      doc.text(`Tax No: ${companySettings.taxNumber}`, 20, yPos);
+      yPos += 5;
+    }
+    
+    // Invoice title
+    yPos += 10;
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', pageWidth - 20, 30, { align: 'right' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Invoice No: ${invoice.serialNumber}`, pageWidth - 20, 40, { align: 'right' });
+    doc.text(`Date: ${new Date(invoice.issueDate).toLocaleDateString()}`, pageWidth - 20, 46, { align: 'right' });
+    if (invoice.dueDate) {
+      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, pageWidth - 20, 52, { align: 'right' });
+    }
+    
+    // Bill To section
+    yPos = 70;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill To:', 20, yPos);
+    yPos += 6;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    if (invoice.client) {
+      doc.text(invoice.client.name || '', 20, yPos);
+      yPos += 5;
+      if (invoice.client.email) {
+        doc.text(invoice.client.email, 20, yPos);
+        yPos += 5;
+      }
+      if (invoice.client.phone) {
+        doc.text(invoice.client.phone, 20, yPos);
+        yPos += 5;
+      }
+      if (invoice.client.address) {
+        doc.text(invoice.client.address, 20, yPos);
+        yPos += 5;
+      }
+    }
+    
+    // Line items table
+    yPos = 110;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos - 5, pageWidth - 40, 10, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', 22, yPos);
+    doc.text('Qty', 110, yPos, { align: 'right' });
+    doc.text('Unit Price', 140, yPos, { align: 'right' });
+    doc.text('Total', pageWidth - 22, yPos, { align: 'right' });
+    
+    yPos += 10;
+    doc.setFont('helvetica', 'normal');
+    
+    invoice.lines?.forEach((line: any) => {
+      doc.text(line.description.substring(0, 40), 22, yPos);
+      doc.text(line.quantity.toString(), 110, yPos, { align: 'right' });
+      doc.text(`${invoice.currency} ${line.unitPrice.toLocaleString()}`, 140, yPos, { align: 'right' });
+      doc.text(`${invoice.currency} ${(line.quantity * line.unitPrice).toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      yPos += 8;
+    });
+    
+    // Totals
+    yPos += 10;
+    doc.line(pageWidth - 80, yPos - 5, pageWidth - 20, yPos - 5);
+    
+    doc.text('Subtotal:', pageWidth - 80, yPos);
+    doc.text(`${invoice.currency} ${invoice.subtotal?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+    yPos += 8;
+    
+    if (invoice.tax > 0) {
+      const taxAmount = (invoice.subtotal * invoice.tax) / 100;
+      doc.text(`Tax (${invoice.tax}%):`, pageWidth - 80, yPos);
+      doc.text(`${invoice.currency} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      yPos += 8;
+    }
+    
+    if (invoice.discount > 0) {
+      doc.text('Discount:', pageWidth - 80, yPos);
+      doc.text(`-${invoice.currency} ${invoice.discount?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      yPos += 8;
+    }
+    
+    yPos += 2;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Total:', pageWidth - 80, yPos);
+    doc.text(`${invoice.currency} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+    
+    // Status badge
+    yPos += 15;
+    doc.setFontSize(10);
+    doc.text(`Status: ${invoice.status.toUpperCase()}`, pageWidth - 80, yPos);
+    
+    // Notes
+    if (invoice.notes) {
+      yPos += 20;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Notes:', 20, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.text(invoice.notes, 20, yPos);
+    }
+    
+    // Footer
+    const footerY = doc.internal.pageSize.getHeight() - 20;
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
+    if (companySettings.name) {
+      doc.text(`Generated by ${companySettings.name}`, pageWidth / 2, footerY + 5, { align: 'center' });
+    }
+    
+    doc.save(`Invoice-${invoice.serialNumber}.pdf`);
   };
 
   if (loading) return <div>{t('common.loading')}</div>;
@@ -670,7 +821,14 @@ export default function Invoices() {
               )}
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => generateInvoicePDF(viewInvoice)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
               <button
                 onClick={() => setViewInvoice(null)}
                 className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
