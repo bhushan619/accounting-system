@@ -534,18 +534,29 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
-                <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="">-- Select Department --</option>
-                  {DEPARTMENTS.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="">-- Select Department --</option>
+                    {DEPARTMENTS.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.designation')}</label>
+                  <input
+                    type="text"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
               </div>
 
               <div>
@@ -571,15 +582,6 @@ export default function Employees() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.designation')}</label>
-                  <input
-                    type="text"
-                    value={formData.designation}
-                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.joinDate')}</label>
                   <input
                     type="date"
@@ -588,16 +590,15 @@ export default function Employees() {
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-foreground">Probation End Date</label>
-                <input
-                  type="date"
-                  value={formData.probationEndDate}
-                  onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Probation End Date</label>
+                  <input
+                    type="date"
+                    value={formData.probationEndDate}
+                    onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
