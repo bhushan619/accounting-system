@@ -79,20 +79,43 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       console.log(`  performanceSalaryProbation:`, probationPerformance);
       console.log(`  performanceSalaryConfirmed:`, confirmedPerformance);
       console.log(`  probationEndDate:`, employee.probationEndDate);
+      console.log(`  statusUpdateDate:`, employee.statusUpdateDate);
       
-      // Calculate performance salary based on probation end date and status
-      let performanceSalary = 0;
+      // Define month boundaries for backdated calculation
+      const monthStart = new Date(year, month - 1, 1);
+      const monthEnd = new Date(year, month, 0);
       
       // Calculate daily rates
       const dailyProbationRate = probationPerformance / workingDays;
       const dailyConfirmedRate = confirmedPerformance / workingDays;
       
-      if (employee.status === 'confirmed') {
-        // Already confirmed - check if probation ended during this month
+      // Determine employee's EFFECTIVE status for this specific payroll month
+      // This is crucial for backdated payroll - we need status AT THAT TIME, not current status
+      let effectiveStatus = employee.status;
+      
+      if (employee.probationEndDate) {
+        const probationEnd = new Date(employee.probationEndDate);
+        
+        // If payroll month ends before probation end date, employee was under probation
+        if (monthEnd < probationEnd) {
+          effectiveStatus = 'under_probation';
+          console.log(`  Backdated: Month ends ${monthEnd.toDateString()} before probation end ${probationEnd.toDateString()} - treating as under_probation`);
+        }
+        // If payroll month starts after probation end date, employee was confirmed
+        else if (monthStart > probationEnd) {
+          effectiveStatus = 'confirmed';
+          console.log(`  Backdated: Month starts ${monthStart.toDateString()} after probation end ${probationEnd.toDateString()} - treating as confirmed`);
+        }
+        // Otherwise probation ends during this month - will be handled in split calculation
+      }
+      
+      // Calculate performance salary based on effective status for this payroll period
+      let performanceSalary = 0;
+      
+      if (effectiveStatus === 'confirmed' || effectiveStatus === 'under_probation') {
+        // Check if probation ended during this specific month
         if (employee.probationEndDate) {
           const probationEnd = new Date(employee.probationEndDate);
-          const monthStart = new Date(year, month - 1, 1);
-          const monthEnd = new Date(year, month, 0);
           
           if (probationEnd >= monthStart && probationEnd <= monthEnd) {
             // Probation ended during this payroll month - split calculation
@@ -100,52 +123,32 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
             const daysConfirmed = workingDays - daysUnderProbation;
             
             performanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
-            console.log(`  Split calculation: ${daysUnderProbation} probation days + ${daysConfirmed} confirmed days`);
+            console.log(`  Split calculation: ${daysUnderProbation} probation days @ ${dailyProbationRate.toFixed(2)} + ${daysConfirmed} confirmed days @ ${dailyConfirmedRate.toFixed(2)} = ${performanceSalary}`);
           } else if (probationEnd < monthStart) {
             // Probation ended before this month - full confirmed rate
             performanceSalary = confirmedPerformance;
+            console.log(`  Full confirmed rate (probation ended before this month)`);
           } else {
-            // Probation ends after this month - shouldn't happen if status is confirmed
-            performanceSalary = confirmedPerformance;
-          }
-        } else {
-          performanceSalary = confirmedPerformance;
-        }
-        console.log(`  RESULT: Status confirmed, performance salary: ${performanceSalary}`);
-      } else if (employee.status === 'under_probation') {
-        // Check if probation ends during this payroll period
-        if (employee.probationEndDate) {
-          const probationEnd = new Date(employee.probationEndDate);
-          const monthStart = new Date(year, month - 1, 1);
-          const monthEnd = new Date(year, month, 0);
-          
-          if (probationEnd >= monthStart && probationEnd <= monthEnd) {
-            // Probation ends during this payroll month - split calculation
-            const daysUnderProbation = probationEnd.getDate();
-            const daysConfirmed = workingDays - daysUnderProbation;
-            
-            performanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
-            console.log(`  Split calculation: ${daysUnderProbation} probation days + ${daysConfirmed} confirmed days`);
-          } else {
-            // Probation doesn't end this month - full probation rate
+            // Probation ends after this month - full probation rate
             performanceSalary = probationPerformance;
+            console.log(`  Full probation rate (probation ends after this month)`);
           }
         } else {
-          performanceSalary = probationPerformance;
+          // No probation end date - use current effective status
+          performanceSalary = effectiveStatus === 'confirmed' ? confirmedPerformance : probationPerformance;
         }
-        console.log(`  RESULT: Status under_probation, performance salary: ${performanceSalary}`);
       } else {
         // Closed or other status
         performanceSalary = confirmedPerformance;
-        console.log(`  RESULT: Status ${employee.status}, performance salary: ${performanceSalary}`);
       }
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
       // Calculate deficit salary if applicable
-      // Deficit = difference owed for days between probation end and status update
-      // where employee should have received confirmed performance salary but got probation rate
+      // Deficit applies ONLY to the payroll month where status was updated to confirmed
+      // This represents the backdated difference owed for days between probation end and status update
       let deficitSalary = 0;
+      
       if (employee.status === 'confirmed' && 
           employee.probationEndDate && 
           employee.statusUpdateDate &&
@@ -154,23 +157,27 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         const probationEnd = new Date(employee.probationEndDate);
         const statusUpdate = new Date(employee.statusUpdateDate);
         
-        // Only calculate if status was updated AFTER probation ended
-        if (statusUpdate > probationEnd) {
-          // Calculate days between probation end and status update
+        // Deficit should be calculated and shown only in the payroll month when status was updated
+        // This ensures deficit is paid once, in the month the confirmation happened
+        const statusUpdateMonth = statusUpdate.getMonth() + 1; // 1-indexed
+        const statusUpdateYear = statusUpdate.getFullYear();
+        
+        if (month === statusUpdateMonth && year === statusUpdateYear && statusUpdate > probationEnd) {
+          // This is the month status was updated - calculate deficit for past months
           const diffTime = statusUpdate.getTime() - probationEnd.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays > 0) {
             // Use fixed 30 days for daily rate calculation (per company policy)
             const STANDARD_WORKING_DAYS = 30;
-            // Daily rate for each performance salary type
             const dailyProbationPerformance = probationPerformance / STANDARD_WORKING_DAYS;
             const dailyConfirmedPerformance = confirmedPerformance / STANDARD_WORKING_DAYS;
-            // Deficit is the difference per day × number of deficit days
             const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
             deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
             console.log(`  Deficit calculation: ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) = ${deficitSalary}`);
           }
+        } else {
+          console.log(`  No deficit for this month (status updated in ${statusUpdateMonth}/${statusUpdateYear}, processing ${month}/${year})`);
         }
       }
       
