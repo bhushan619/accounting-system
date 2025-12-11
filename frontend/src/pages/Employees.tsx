@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -86,6 +86,30 @@ export default function Employees() {
     loadTaxConfigs();
     loadAvailableUsers();
   }, []);
+
+  // Disable swipe gestures when modal is open
+  useEffect(() => {
+    if (showModal) {
+      const preventSwipe = (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          const startX = touch.clientX;
+          
+          if (startX < 30 || startX > window.innerWidth - 30) {
+            e.preventDefault();
+          }
+        }
+      };
+      
+      document.body.style.overscrollBehavior = 'none';
+      document.addEventListener('touchstart', preventSwipe, { passive: false });
+      
+      return () => {
+        document.body.style.overscrollBehavior = '';
+        document.removeEventListener('touchstart', preventSwipe);
+      };
+    }
+  }, [showModal]);
 
   const loadAvailableUsers = async () => {
     try {
