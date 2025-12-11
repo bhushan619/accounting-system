@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
-import { User, Lock, Building, Globe, Mail, Save, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Lock, Building, Globe, Mail, Save, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface CompanySettings {
@@ -25,6 +25,16 @@ interface DefaultSettings {
   autoApproveAdminTransactions: boolean;
 }
 
+interface EmailSettings {
+  emailjsServiceId: string;
+  emailjsTemplateId: string;
+  emailjsPublicKey: string;
+  smtpHost: string;
+  smtpPort: string;
+  smtpUser: string;
+  smtpPassword: string;
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -33,6 +43,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'company' | 'defaults' | 'email'>('profile');
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Password change
@@ -74,7 +85,7 @@ export default function Settings() {
   });
 
   // Email settings (admin only)
-  const [emailSettings, setEmailSettings] = useState({
+  const [emailSettings, setEmailSettings] = useState<EmailSettings>({
     emailjsServiceId: '',
     emailjsTemplateId: '',
     emailjsPublicKey: '',
@@ -93,23 +104,18 @@ export default function Settings() {
   }, [isAdmin]);
 
   const loadSettings = async () => {
+    setLoading(true);
     try {
-      // Load settings from backend or localStorage
-      const savedCompanySettings = localStorage.getItem('companySettings');
-      const savedDefaultSettings = localStorage.getItem('defaultSettings');
-      const savedEmailSettings = localStorage.getItem('emailSettings');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/settings`);
+      const { company, defaults, email } = response.data;
       
-      if (savedCompanySettings) {
-        setCompanySettings(JSON.parse(savedCompanySettings));
-      }
-      if (savedDefaultSettings) {
-        setDefaultSettings(JSON.parse(savedDefaultSettings));
-      }
-      if (savedEmailSettings) {
-        setEmailSettings(JSON.parse(savedEmailSettings));
-      }
+      if (company) setCompanySettings(company);
+      if (defaults) setDefaultSettings(defaults);
+      if (email) setEmailSettings(email);
     } catch (error) {
       console.error('Failed to load settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -165,10 +171,10 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      localStorage.setItem('companySettings', JSON.stringify(companySettings));
+      await axios.put(`${import.meta.env.VITE_API_URL}/settings/company`, companySettings);
       showMessage('success', 'Company settings saved successfully');
-    } catch (error) {
-      showMessage('error', 'Failed to save company settings');
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to save company settings');
     } finally {
       setSaving(false);
     }
@@ -178,10 +184,10 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      localStorage.setItem('defaultSettings', JSON.stringify(defaultSettings));
+      await axios.put(`${import.meta.env.VITE_API_URL}/settings/defaults`, defaultSettings);
       showMessage('success', 'Default settings saved successfully');
-    } catch (error) {
-      showMessage('error', 'Failed to save default settings');
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to save default settings');
     } finally {
       setSaving(false);
     }
@@ -191,10 +197,10 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      localStorage.setItem('emailSettings', JSON.stringify(emailSettings));
+      await axios.put(`${import.meta.env.VITE_API_URL}/settings/email`, emailSettings);
       showMessage('success', 'Email settings saved successfully');
-    } catch (error) {
-      showMessage('error', 'Failed to save email settings');
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to save email settings');
     } finally {
       setSaving(false);
     }
@@ -209,6 +215,14 @@ export default function Settings() {
       { id: 'email', label: t('settings.email') || 'Email', icon: Mail },
     ] : [])
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div>
