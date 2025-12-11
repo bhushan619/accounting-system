@@ -27,6 +27,9 @@ echo "Backend image  : $BACKEND_IMAGE"
 echo "Frontend image : $FRONTEND_IMAGE"
 echo "Mongo image    : $MONGO_IMAGE"
 
+echo "=== Pulling mongo image if not present ==="
+docker pull $MONGO_IMAGE
+
 echo "=== Saving images to tar files ==="
 docker save -o $OUTPUT_DIR/backend.tar $BACKEND_IMAGE
 docker save -o $OUTPUT_DIR/frontend.tar $FRONTEND_IMAGE
