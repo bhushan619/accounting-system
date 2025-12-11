@@ -27,9 +27,6 @@ const defaultAppSettings = {
 };
 
 const defaultEmailSettings = {
-  emailjsServiceId: '',
-  emailjsTemplateId: '',
-  emailjsPublicKey: '',
   smtpHost: '',
   smtpPort: '',
   smtpUser: '',
