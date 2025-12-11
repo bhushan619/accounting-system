@@ -118,6 +118,8 @@ interface EditEntry {
   transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
+  deficitSalary: number;
+  includeDeficitInPayroll: boolean;
   grossSalary: number;
   epfEmployee: number;
   epfEmployer: number;
@@ -933,6 +935,8 @@ export default function Payroll() {
           transportAllowance: entry.transportAllowance || 0,
           deductionAmount: entry.deductionAmount || 0,
           deductionReason: entry.deductionReason || "",
+          deficitSalary: entry.deficitSalary || 0,
+          includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
           grossSalary: entry.grossSalary,
           epfEmployee: entry.epfEmployee,
           epfEmployer: entry.epfEmployer,
@@ -951,14 +955,19 @@ export default function Payroll() {
     }
   };
 
-  const recalculateEditEntry = (entry: EditEntry, newPerformanceSalary: number, newTransportAllowance: number, newDeductionAmount: number): EditEntry => {
+  const recalculateEditEntry = (entry: EditEntry, newPerformanceSalary: number, newTransportAllowance: number, newDeductionAmount: number, newIncludeDeficit?: boolean): EditEntry => {
     if (!taxRates) return entry;
 
     const basicSalary = entry.basicSalary;
     const performanceSalary = newPerformanceSalary;
     const transportAllowance = newTransportAllowance;
     const deductionAmount = newDeductionAmount;
-    const grossSalary = basicSalary + performanceSalary + transportAllowance;
+    const deficitSalary = entry.deficitSalary;
+    const includeDeficitInPayroll = newIncludeDeficit !== undefined ? newIncludeDeficit : entry.includeDeficitInPayroll;
+    
+    // Include deficit in gross if enabled
+    const deficitToInclude = includeDeficitInPayroll ? deficitSalary : 0;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitToInclude;
 
     const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
@@ -977,6 +986,8 @@ export default function Payroll() {
       performanceSalary,
       transportAllowance,
       deductionAmount,
+      deficitSalary,
+      includeDeficitInPayroll,
       grossSalary,
       epfEmployee,
       epfEmployer,
@@ -987,6 +998,18 @@ export default function Payroll() {
       netSalary,
       totalCTC: ctc,
     };
+  };
+
+  const handleEditDeficitToggle = (index: number, checked: boolean) => {
+    const updatedData = [...editData];
+    updatedData[index] = recalculateEditEntry(
+      updatedData[index],
+      updatedData[index].performanceSalary,
+      updatedData[index].transportAllowance,
+      updatedData[index].deductionAmount,
+      checked
+    );
+    setEditData(updatedData);
   };
 
   const handleEditPerformanceSalaryChange = (index: number, value: string) => {
@@ -1027,6 +1050,8 @@ export default function Payroll() {
         transportAllowance: entry.transportAllowance,
         deductionAmount: entry.deductionAmount,
         deductionReason: entry.deductionReason,
+        deficitSalary: entry.deficitSalary,
+        includeDeficitInPayroll: entry.includeDeficitInPayroll,
       }));
 
       await axios.put(`${import.meta.env.VITE_API_URL}/payrollruns/${selectedRun._id}/entries`, { entries });
@@ -1834,6 +1859,101 @@ export default function Payroll() {
               </table>
             </div>
 
+            {/* Calculation Summary */}
+            <div className="mt-4 bg-muted/50 border border-border rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Calculation Summary</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Income Components</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>Basic Salary:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Performance Salary:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Transport Allowance:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-green-700">
+                      <span>Deficit Salary (Included):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>Less: Attendance Deduction:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="font-semibold">Gross Salary:</span>
+                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Employee Deductions</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-destructive">
+                      <span>EPF (Employee {taxRates?.epfEmployee || 8}%):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>APIT:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>Stamp Fee:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-orange-600">
+                      <span>Other Deductions:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.deductionAmount, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1 text-destructive">
+                      <span className="font-semibold">Total Deductions:</span>
+                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Net Payable</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>Gross Salary:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>Less: Total Deductions:</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1 text-primary">
+                      <span className="font-semibold">Net Salary:</span>
+                      <span className="font-bold text-lg">Rs. {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Employer Contributions</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-orange-600">
+                      <span>EPF (Employer {taxRates?.epfEmployer || 12}%):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-orange-600">
+                      <span>ETF ({taxRates?.etf || 3}%):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="font-semibold">Total CTC:</span>
+                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-4 border-t border-border">
               <button
                 type="button"
@@ -2309,6 +2429,12 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Transport
                       </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-green-50">
+                        Deficit
+                      </th>
+                      <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase bg-green-50">
+                        Include
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Gross
                       </th>
@@ -2363,6 +2489,28 @@ export default function Payroll() {
                             step="0.01"
                           />
                         </td>
+                        <td className="px-3 py-3 text-right bg-green-50/50">
+                          {(entry.deficitSalary || 0) > 0 ? (
+                            <span className={`font-medium ${entry.includeDeficitInPayroll ? 'text-green-700' : 'text-muted-foreground'}`}>
+                              {(entry.deficitSalary || 0).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-center bg-green-50/50">
+                          {(entry.deficitSalary || 0) > 0 ? (
+                            <input
+                              type="checkbox"
+                              checked={entry.includeDeficitInPayroll}
+                              onChange={(e) => handleEditDeficitToggle(idx, e.target.checked)}
+                              className="w-4 h-4 accent-green-600 cursor-pointer border-2 border-green-400 rounded"
+                              style={{ accentColor: '#16a34a' }}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
                         <td className="px-3 py-3 text-right font-medium text-foreground">
                           {entry.grossSalary.toLocaleString()}
                         </td>
@@ -2409,6 +2557,10 @@ export default function Payroll() {
                       <td className="px-3 py-3 text-right text-foreground">
                         {editData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}
                       </td>
+                      <td className="px-3 py-3 text-right text-green-700 bg-green-50/50">
+                        {editData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 bg-green-50/50"></td>
                       <td className="px-3 py-3 text-right text-foreground">
                         {editData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
                       </td>
@@ -2434,6 +2586,97 @@ export default function Payroll() {
                     </tr>
                   </tfoot>
                 </table>
+              </div>
+            </div>
+
+            {/* Calculation Summary */}
+            <div className="mt-6 bg-muted/50 border border-border rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Calculation Summary</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Income Components</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>Basic Salary:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Performance Salary:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Transport Allowance:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-green-700">
+                      <span>Deficit Salary (Included):</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="font-semibold">Gross Salary:</span>
+                      <span className="font-bold">Rs. {editData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Employee Deductions</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-destructive">
+                      <span>EPF (Employee {taxRates?.epfEmployee || 8}%):</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>APIT:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>Stamp Fee:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-orange-600">
+                      <span>Other Deductions:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.deductionAmount, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1 text-destructive">
+                      <span className="font-semibold">Total Deductions:</span>
+                      <span className="font-bold">Rs. {editData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Net Payable</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>Gross Salary:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-destructive">
+                      <span>Less: Total Deductions:</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1 text-primary">
+                      <span className="font-semibold">Net Salary:</span>
+                      <span className="font-bold text-lg">Rs. {editData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">Employer Contributions</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-orange-600">
+                      <span>EPF (Employer {taxRates?.epfEmployer || 12}%):</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.epfEmployer || 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-orange-600">
+                      <span>ETF ({taxRates?.etf || 3}%):</span>
+                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.etf || 0), 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="font-semibold">Total CTC:</span>
+                      <span className="font-bold">Rs. {editData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
