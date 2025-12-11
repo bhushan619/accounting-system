@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Mail, Link } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface Employee {
@@ -14,6 +14,7 @@ interface Employee {
   basicSalary: number;
   status: string;
   userAccount?: string;
+  probationEndDate?: string;
 }
 
 interface User {
@@ -253,6 +254,43 @@ export default function Employees() {
     }
   };
 
+  const handleCloseEmployee = async (id: string) => {
+    if (!confirm('Are you sure you want to close this employee record? This will mark them as inactive.')) return;
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/employees/${id}`, { status: 'closed' });
+      loadEmployees();
+    } catch (error) {
+      console.error('Failed to close employee:', error);
+    }
+  };
+
+  const getDaysRemaining = (probationEndDate?: string): number | null => {
+    if (!probationEndDate) return null;
+    const endDate = new Date(probationEndDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getProbationIndicator = (employee: Employee) => {
+    if (employee.status !== 'under_probation') return null;
+    const daysRemaining = getDaysRemaining(employee.probationEndDate);
+    if (daysRemaining === null) return null;
+    
+    if (daysRemaining <= 0) {
+      return <span className="text-xs text-green-600 flex items-center gap-1"><Clock size={12} /> Probation ended</span>;
+    } else if (daysRemaining <= 7) {
+      return <span className="text-xs text-red-600 flex items-center gap-1"><Clock size={12} /> {daysRemaining} days left</span>;
+    } else if (daysRemaining <= 30) {
+      return <span className="text-xs text-orange-600 flex items-center gap-1"><Clock size={12} /> {daysRemaining} days left</span>;
+    } else {
+      return <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock size={12} /> {daysRemaining} days left</span>;
+    }
+  };
+
   const resetForm = () => {
     setEditingEmployee(null);
     setFormData({
@@ -349,9 +387,12 @@ export default function Employees() {
                   LKR {employee.basicSalary.toLocaleString()}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(employee.status)}`}>
-                    {getStatusLabel(employee.status)}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded text-xs font-medium w-fit ${getStatusColor(employee.status)}`}>
+                      {getStatusLabel(employee.status)}
+                    </span>
+                    {getProbationIndicator(employee)}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
@@ -361,6 +402,16 @@ export default function Employees() {
                     <Edit size={14} />
                     {t('employees.edit')}
                   </button>
+                  {employee.status !== 'closed' && (
+                    <button
+                      onClick={() => handleCloseEmployee(employee._id)}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded hover:bg-orange-200"
+                      title="Close employee record"
+                    >
+                      <XCircle size={14} />
+                      Close
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(employee._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
