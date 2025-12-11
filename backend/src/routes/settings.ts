@@ -53,7 +53,8 @@ router.get('/', requireAuth, requireRole('admin'), async (req: AuthRequest, res)
 });
 
 // Get specific settings type
-router.get('/:type', requireAuth, async (req: AuthRequest, res) => {
+router.get('/:type', requireAuth, async (req, res) => {
+  const authReq = req as AuthRequest;
   try {
     const { type } = req.params;
     
@@ -62,7 +63,7 @@ router.get('/:type', requireAuth, async (req: AuthRequest, res) => {
     }
     
     // Only admin can access email settings
-    if (type === 'email' && req.user?.role !== 'admin') {
+    if (type === 'email' && authReq.user?.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
     
@@ -90,7 +91,8 @@ router.get('/:type', requireAuth, async (req: AuthRequest, res) => {
 });
 
 // Update settings (admin only)
-router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Settings'), async (req: AuthRequest, res) => {
+router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Settings'), async (req, res) => {
+  const authReq = req as AuthRequest;
   try {
     const { type } = req.params;
     const data = req.body;
@@ -104,7 +106,7 @@ router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Sett
       { 
         type,
         data,
-        updatedBy: req.user?._id
+        updatedBy: authReq.user?._id
       },
       { upsert: true, new: true }
     );
