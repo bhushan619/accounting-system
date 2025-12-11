@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Settings, Plus, Pencil, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface TaxBracket {
   minIncome: number;
@@ -35,6 +36,8 @@ export default function TaxConfigurations() {
     applicableTo: '',
     isActive: true
   });
+
+  usePreventSwipe(showModal);
 
   useEffect(() => {
     fetchConfigs();

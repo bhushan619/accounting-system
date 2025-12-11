@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Building2, Phone, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface Vendor {
   _id: string;
@@ -26,6 +27,8 @@ export default function Vendors() {
     address: '',
     taxId: ''
   });
+
+  usePreventSwipe(showModal);
 
   useEffect(() => {
     loadVendors();
