@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface TaxConfig {
   _id: string;
@@ -27,6 +28,8 @@ export default function Settings() {
     applicableTo: '',
     isActive: true
   });
+
+  usePreventSwipe(showModal);
 
   useEffect(() => {
     if (activeTab === 'tax') {

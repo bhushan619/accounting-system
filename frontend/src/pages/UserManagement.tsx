@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pencil, Trash2, Plus, X, Shield, Users, UserCog, ChevronDown, ChevronUp, Save, RotateCcw, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface User {
   _id: string;
@@ -91,6 +92,8 @@ export default function UserManagement() {
     employee: 'bg-green-500/20 text-green-600 border-green-500/30',
     unmarked: 'bg-orange-500/20 text-orange-600 border-orange-500/30'
   };
+
+  usePreventSwipe(showModal || showRoleInfo || showPermissionModal);
 
   useEffect(() => {
     loadUsers();

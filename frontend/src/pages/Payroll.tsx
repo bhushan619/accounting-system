@@ -5,6 +5,7 @@ import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
+import { usePreventSwipe } from "../hooks/usePreventSwipe";
 
 interface PayrollRun {
   _id: string;
@@ -180,6 +181,9 @@ export default function Payroll() {
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
+
+  // Disable swipe gestures when any modal is open
+  usePreventSwipe(showModal || showPreview || showBankModal || showViewModal || showEmailModal || showEditModal || showEmailConfirm || showRejectModal);
 
   useEffect(() => {
     loadData();

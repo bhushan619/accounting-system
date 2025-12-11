@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Landmark, CreditCard } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface Bank {
   _id: string;
@@ -27,6 +28,8 @@ export default function Banks() {
     currency: 'LKR',
     balance: 0
   });
+
+  usePreventSwipe(showModal);
 
   useEffect(() => {
     loadBanks();

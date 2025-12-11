@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Receipt, Upload, FileDown } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface Expense {
   _id: string;
@@ -44,6 +45,8 @@ export default function Expenses() {
   const [uploadingBill, setUploadingBill] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'bill' | 'receipt'} | null>(null);
+
+  usePreventSwipe(showModal || showBankModal);
 
   useEffect(() => {
     loadData();

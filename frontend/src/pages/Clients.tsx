@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Mail, Users, Loader2, Search, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface Client {
   _id: string;
@@ -18,6 +19,8 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [searchTerm, setSearchTerm] = useState('');
+
+  usePreventSwipe(showModal);
 
   useEffect(() => {
     loadClients();
