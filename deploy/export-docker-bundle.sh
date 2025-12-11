@@ -36,7 +36,7 @@ docker save -o $OUTPUT_DIR/frontend.tar $FRONTEND_IMAGE
 docker save -o $OUTPUT_DIR/mongo.tar $MONGO_IMAGE
 
 echo "=== Copying compose files ==="
-cp docker-compose.yml $OUTPUT_DIR/
+cp ../docker-compose.yml $OUTPUT_DIR/
 [ -f .env ] && cp .env $OUTPUT_DIR/
 
 echo "=== Creating ZIP bundle ==="
