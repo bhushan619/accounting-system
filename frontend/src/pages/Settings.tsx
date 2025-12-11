@@ -150,7 +150,7 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/users/${user?._id}`, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/users/${user?.id}`, {
         fullName: profileData.fullName
       });
       showMessage('success', 'Profile updated successfully');
