@@ -142,7 +142,9 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
-      // Calculate deficit salary if applicable (using per-day calculation)
+      // Calculate deficit salary if applicable
+      // Deficit = difference owed for days between probation end and status update
+      // where employee should have received confirmed performance salary but got probation rate
       let deficitSalary = 0;
       if (employee.status === 'confirmed' && 
           employee.probationEndDate && 
@@ -152,15 +154,23 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         const probationEnd = new Date(employee.probationEndDate);
         const statusUpdate = new Date(employee.statusUpdateDate);
         
-        // Calculate days between probation end and status update
-        const diffTime = statusUpdate.getTime() - probationEnd.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays > 0) {
-          // Calculate daily rate difference based on working days in month
-          const dailyDifference = (confirmedPerformance - probationPerformance) / workingDays;
-          deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-          console.log(`  Deficit calculation: ${diffDays} days x ${dailyDifference.toFixed(2)} (per-day) = ${deficitSalary}`);
+        // Only calculate if status was updated AFTER probation ended
+        if (statusUpdate > probationEnd) {
+          // Calculate days between probation end and status update
+          const diffTime = statusUpdate.getTime() - probationEnd.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays > 0) {
+            // Use fixed 30 days for daily rate calculation (per company policy)
+            const STANDARD_WORKING_DAYS = 30;
+            // Daily rate for each performance salary type
+            const dailyProbationPerformance = probationPerformance / STANDARD_WORKING_DAYS;
+            const dailyConfirmedPerformance = confirmedPerformance / STANDARD_WORKING_DAYS;
+            // Deficit is the difference per day × number of deficit days
+            const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
+            deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+            console.log(`  Deficit calculation: ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) = ${deficitSalary}`);
+          }
         }
       }
       
