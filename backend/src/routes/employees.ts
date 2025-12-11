@@ -54,11 +54,8 @@ router.post('/', auditLog('create', 'employee'), async (req, res) => {
 });
 
 router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
-  // Determine status based on probation end date
+  // Use the status from the request body directly - don't auto-override
   const data = { ...req.body, updatedAt: new Date() };
-  if (data.probationEndDate && new Date(data.probationEndDate) <= new Date()) {
-    data.status = 'confirmed';
-  }
   // Always set workingDaysPerMonth to 30
   data.workingDaysPerMonth = 30;
   
