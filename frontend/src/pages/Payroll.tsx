@@ -1713,7 +1713,8 @@ export default function Payroll() {
                             type="checkbox"
                             checked={entry.includeDeficitInPayroll}
                             onChange={(e) => handleDeficitToggle(idx, e.target.checked)}
-                            className="w-4 h-4 text-green-600 border-green-300 rounded focus:ring-green-500"
+                            className="w-4 h-4 accent-green-600 cursor-pointer border-2 border-green-400 rounded"
+                            style={{ accentColor: '#16a34a' }}
                           />
                         ) : (
                           <span className="text-muted-foreground">-</span>
@@ -2084,6 +2085,9 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Transport
                       </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-green-50">
+                        Deficit
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Gross
                       </th>
@@ -2126,6 +2130,15 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-foreground">{(entry.performanceSalary || 0).toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-foreground">{(entry.transportAllowance || 0).toLocaleString()}</td>
+                          <td className="px-3 py-3 text-right bg-green-50/50">
+                            {(entry.deficitSalary || 0) > 0 ? (
+                              <span className={`font-medium ${entry.includeDeficitInPayroll ? 'text-green-700' : 'text-muted-foreground line-through'}`}>
+                                {(entry.deficitSalary || 0).toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
                           <td className="px-3 py-3 text-right font-medium text-foreground">
                             {entry.grossSalary.toLocaleString()}
                           </td>
@@ -2154,7 +2167,7 @@ export default function Payroll() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={15} className="px-3 py-8 text-center text-muted-foreground">
+                        <td colSpan={16} className="px-3 py-8 text-center text-muted-foreground">
                           No payroll entries found
                         </td>
                       </tr>
@@ -2179,6 +2192,11 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries
                             .reduce((sum: number, e: any) => sum + (e.transportAllowance || 0), 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-green-700 bg-green-50/50">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
