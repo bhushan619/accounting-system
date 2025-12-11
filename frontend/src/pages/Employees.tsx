@@ -165,9 +165,11 @@ export default function Employees() {
   useEffect(() => {
     const performanceSalary = getCurrentPerformanceSalary();
     const grossSalary = formData.basicSalary + formData.transportAllowance + performanceSalary;
-    const epfEmployee = (formData.basicSalary * formData.epfEmployeeRate) / 100;
-    const epfEmployer = (formData.basicSalary * formData.epfEmployerRate) / 100;
-    const etf = (formData.basicSalary * formData.etfRate) / 100;
+    // EPF and ETF calculated on (Basic + Performance Salary)
+    const epfEtfBase = formData.basicSalary + performanceSalary;
+    const epfEmployee = (epfEtfBase * formData.epfEmployeeRate) / 100;
+    const epfEmployer = (epfEtfBase * formData.epfEmployerRate) / 100;
+    const etf = (epfEtfBase * formData.etfRate) / 100;
     const apit = calculateAPIT(grossSalary);
     const stampFee = 25;
 

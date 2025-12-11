@@ -72,9 +72,11 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const etfRate = employee.etfRate || taxRates.etf;
     const stampFee = taxRates.stampFee;
     
-    const epfEmployee = Math.round((basicSalary * epfEmployeeRate / 100) * 100) / 100;
-    const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
-    const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
+    // EPF and ETF calculated on (Basic + Performance Salary)
+    const epfEtfBase = basicSalary + performanceSalary;
+    const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
+    const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
+    const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
     
     // Calculate APIT - Scenario A only (employee pays)
     const apit = calculateAPIT(grossSalary, 'employee');
