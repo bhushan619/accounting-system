@@ -38,11 +38,6 @@ const STATUS_OPTIONS = [
   { value: 'closed', label: 'Closed' }
 ];
 
-// Get total calendar days for a specific month
-const getWorkingDaysInMonth = (year: number, month: number): number => {
-  return new Date(year, month, 0).getDate();
-};
-
 export default function Employees() {
   const { t } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -67,7 +62,6 @@ export default function Employees() {
     performanceSalaryProbation: 0,
     performanceSalaryConfirmed: 0,
     probationEndDate: '',
-    workingDaysPerMonth: getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
     epfEmployeeRate: 8,
     epfEmployerRate: 12,
     etfRate: 3,
@@ -240,7 +234,6 @@ export default function Employees() {
       performanceSalaryProbation: emp.performanceSalaryProbation || 0,
       performanceSalaryConfirmed: emp.performanceSalaryConfirmed || 0,
       probationEndDate: emp.probationEndDate?.split('T')[0] || '',
-      workingDaysPerMonth: emp.workingDaysPerMonth || getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
       epfEmployeeRate: emp.epfEmployeeRate || 8,
       epfEmployerRate: emp.epfEmployerRate || 12,
       etfRate: emp.etfRate || 3,
@@ -278,7 +271,6 @@ export default function Employees() {
       performanceSalaryProbation: 0,
       performanceSalaryConfirmed: 0,
       probationEndDate: '',
-      workingDaysPerMonth: getWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth() + 1),
       epfEmployeeRate: 8,
       epfEmployerRate: 12,
       etfRate: 3,
@@ -491,32 +483,18 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.status')}</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    {STATUS_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="">-- Select Department --</option>
-                    {DEPARTMENTS.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
+                <select
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="">-- Select Department --</option>
+                  {DEPARTMENTS.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -561,27 +539,14 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Probation End Date</label>
-                  <input
-                    type="date"
-                    value={formData.probationEndDate}
-                    onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Working Days/Month</label>
-                  <input
-                    type="number"
-                    value={formData.workingDaysPerMonth}
-                    onChange={(e) => setFormData({ ...formData, workingDaysPerMonth: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    min={1}
-                    max={31}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">Probation End Date</label>
+                <input
+                  type="date"
+                  value={formData.probationEndDate}
+                  onChange={(e) => setFormData({ ...formData, probationEndDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

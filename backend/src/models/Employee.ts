@@ -20,7 +20,7 @@ const EmployeeSchema = new Schema({
   performanceSalaryProbation: { type: Number, default: 0 }, // Under probation
   performanceSalaryConfirmed: { type: Number, default: 0 }, // Post probation
   probationEndDate: { type: Date }, // Probation period end date
-  workingDaysPerMonth: { type: Number, default: 22 }, // Working days per calendar month
+  workingDaysPerMonth: { type: Number, default: 30 }, // Working days per calendar month
   epfEmployeeRate: { type: Number, default: 8 },
   epfEmployerRate: { type: Number, default: 12 },
   etfRate: { type: Number, default: 3 },
