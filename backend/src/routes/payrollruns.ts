@@ -547,22 +547,47 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
     
     // Calculate total statutory contributions
     let totalEPFEmployer = 0;
+    let totalEPFEmployee = 0;
     let totalETF = 0;
+    let totalAPIT = 0;
+    let totalStampFee = 0;
     
     // Accumulate statutory contributions from payroll entries
     for (const payrollEntry of run.payrollEntries as any[]) {
       totalEPFEmployer += payrollEntry.epfEmployer || 0;
+      totalEPFEmployee += payrollEntry.epfEmployee || 0;
       totalETF += payrollEntry.etf || 0;
+      totalAPIT += payrollEntry.apit || 0;
+      totalStampFee += payrollEntry.stampFee || 0;
     }
+    
+    const monthName = new Date(0, run.month - 1).toLocaleString('default', { month: 'long' });
     
     // Create expense entry for EPF employer contribution
     if (totalEPFEmployer > 0) {
-      const epfSerial = await getNextSequence('expense', 'EXP');
+      const epfEmployerSerial = await getNextSequence('expense', 'EXP');
       await Expense.create({
-        serialNumber: epfSerial,
+        serialNumber: epfEmployerSerial,
         category: 'Payroll',
-        description: `EPF Employer Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        description: `EPF Employer Contribution (${monthName} ${run.year})`,
         amount: totalEPFEmployer,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Create expense entry for EPF employee contribution
+    if (totalEPFEmployee > 0) {
+      const epfEmployeeSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: epfEmployeeSerial,
+        category: 'Payroll',
+        description: `EPF Employee Contribution (${monthName} ${run.year})`,
+        amount: totalEPFEmployee,
         currency: 'LKR',
         date: new Date(),
         paymentMethod: 'bank',
@@ -578,8 +603,42 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
       await Expense.create({
         serialNumber: etfSerial,
         category: 'Payroll',
-        description: `ETF Contribution (${new Date(0, run.month - 1).toLocaleString('default', { month: 'long' })} ${run.year})`,
+        description: `ETF Contribution (${monthName} ${run.year})`,
         amount: totalETF,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Create expense entry for APIT
+    if (totalAPIT > 0) {
+      const apitSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: apitSerial,
+        category: 'Payroll',
+        description: `APIT Tax Deduction (${monthName} ${run.year})`,
+        amount: totalAPIT,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
+    // Create expense entry for Stamp Fee
+    if (totalStampFee > 0) {
+      const stampSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: stampSerial,
+        category: 'Payroll',
+        description: `Stamp Fee Deduction (${monthName} ${run.year})`,
+        amount: totalStampFee,
         currency: 'LKR',
         date: new Date(),
         paymentMethod: 'bank',
