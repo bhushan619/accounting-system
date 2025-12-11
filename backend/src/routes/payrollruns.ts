@@ -70,36 +70,24 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
       
-      // Determine performance salary based on probationEndDate vs payroll period end
-      // IMPORTANT: Always check probation date, ignore the status field in DB
+      // Determine performance salary based on employee status field
       let performanceSalary = 0;
-      const probationEnd = employee.probationEndDate ? new Date(employee.probationEndDate) : null;
       
       console.log(`Employee ${employee.fullName}:`);
       console.log(`  status in DB:`, employee.status);
-      console.log(`  probationEndDate from DB:`, employee.probationEndDate);
       console.log(`  performanceSalaryProbation:`, employee.performanceSalaryProbation);
       console.log(`  performanceSalaryConfirmed:`, employee.performanceSalaryConfirmed);
       
-      if (probationEnd) {
-        // Normalize probation end date to end of that day for fair comparison
-        probationEnd.setHours(23, 59, 59, 999);
-        console.log(`  probationEnd normalized:`, probationEnd.toISOString());
-        console.log(`  payrollPeriodEnd:`, payrollPeriodEnd.toISOString());
-        console.log(`  payrollPeriodEnd > probationEnd:`, payrollPeriodEnd.getTime() > probationEnd.getTime());
-        
-        // Use confirmed salary only if payroll period end is AFTER probation end date
-        if (payrollPeriodEnd.getTime() > probationEnd.getTime()) {
-          performanceSalary = employee.performanceSalaryConfirmed || 0;
-          console.log(`  RESULT: Probation ended before payroll period, using CONFIRMED salary: ${performanceSalary}`);
-        } else {
-          performanceSalary = employee.performanceSalaryProbation || 0;
-          console.log(`  RESULT: Still in probation during payroll period, using PROBATION salary: ${performanceSalary}`);
-        }
-      } else {
-        // No probation end date set - use confirmed salary (assume no probation)
+      if (employee.status === 'confirmed') {
         performanceSalary = employee.performanceSalaryConfirmed || 0;
-        console.log(`  RESULT: No probation date set, using CONFIRMED salary: ${performanceSalary}`);
+        console.log(`  RESULT: Status is confirmed, using CONFIRMED salary: ${performanceSalary}`);
+      } else if (employee.status === 'under_probation') {
+        performanceSalary = employee.performanceSalaryProbation || 0;
+        console.log(`  RESULT: Status is under_probation, using PROBATION salary: ${performanceSalary}`);
+      } else {
+        // Closed or other status - use confirmed salary
+        performanceSalary = employee.performanceSalaryConfirmed || 0;
+        console.log(`  RESULT: Status is ${employee.status}, using CONFIRMED salary: ${performanceSalary}`);
       }
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
@@ -199,19 +187,14 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       // Get employee-specific data from the map
       const empData = employeeDataMap.get(employee._id.toString());
       
-      // Determine performance salary based on probationEndDate vs payroll period end
-      // IMPORTANT: Always check probation date, ignore the status field in DB
+      // Determine performance salary based on employee status field
       let defaultPerformanceSalary = 0;
-      const probationEnd = employee.probationEndDate ? new Date(employee.probationEndDate) : null;
-      
-      if (probationEnd) {
-        probationEnd.setHours(23, 59, 59, 999);
-        if (payrollPeriodEnd.getTime() > probationEnd.getTime()) {
-          defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
-        } else {
-          defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
-        }
+      if (employee.status === 'confirmed') {
+        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+      } else if (employee.status === 'under_probation') {
+        defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
       } else {
+        // Closed or other status
         defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
       }
       
