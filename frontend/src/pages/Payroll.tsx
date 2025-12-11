@@ -105,6 +105,8 @@ interface PayrollPreview {
   netSalary: number;
   totalCTC: number;
   workingDays: number;
+  deficitSalary: number;
+  includeDeficitInPayroll: boolean;
 }
 
 interface EditEntry {
@@ -505,6 +507,7 @@ export default function Payroll() {
     newDeductionReason: string = entry.deductionReason,
     newAttendedDays: number = entry.attendedDays,
     newAbsentDays: number = entry.absentDays,
+    newIncludeDeficit: boolean = entry.includeDeficitInPayroll,
   ): PayrollPreview => {
     if (!taxRates) return entry;
 
@@ -516,13 +519,17 @@ export default function Payroll() {
     const attendedDays = newAttendedDays;
     const absentDays = newAbsentDays;
     const workingDays = entry.workingDays || workingDaysInMonth;
+    const deficitSalary = entry.deficitSalary || 0;
+    const includeDeficitInPayroll = newIncludeDeficit;
 
     // Calculate attendance deduction based on unpaid leave only
     const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
     const unpaidLeave = entry.unpaidLeave || 0;
     const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
 
-    const grossSalary = basicSalary + performanceSalary + transportAllowance;
+    // Include deficit salary if checkbox is checked
+    const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount;
 
     const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
@@ -555,6 +562,7 @@ export default function Payroll() {
       totalDeductions: deductions,
       netSalary,
       totalCTC: ctc,
+      includeDeficitInPayroll,
     };
   };
 
@@ -609,6 +617,21 @@ export default function Payroll() {
       ...updatedPreview[index],
       deductionReason: value,
     };
+    setPreviewData(updatedPreview);
+  };
+
+  const handleDeficitToggle = (index: number, checked: boolean) => {
+    const updatedPreview = [...previewData];
+    updatedPreview[index] = recalculatePayroll(
+      updatedPreview[index],
+      updatedPreview[index].performanceSalary,
+      updatedPreview[index].transportAllowance,
+      updatedPreview[index].deductionAmount,
+      updatedPreview[index].deductionReason,
+      updatedPreview[index].attendedDays,
+      updatedPreview[index].absentDays,
+      checked,
+    );
     setPreviewData(updatedPreview);
   };
 
@@ -678,7 +701,7 @@ export default function Payroll() {
 
   const handleGenerate = async () => {
     try {
-      // Send preview data with performance salary, transport allowance, deductions and attendance
+      // Send preview data with performance salary, transport allowance, deductions, attendance, and deficit
       const employeeData = previewData.map((entry) => ({
         employeeId: entry.employee._id,
         performanceSalary: entry.performanceSalary,
@@ -689,6 +712,8 @@ export default function Payroll() {
           : entry.unpaidLeave > 0
             ? `Unpaid Leave ${entry.unpaidLeave} days`
             : "",
+        deficitSalary: entry.deficitSalary || 0,
+        includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
       }));
 
       const runResponse = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {
@@ -1616,6 +1641,12 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Basic</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Salary</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Transport</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
+                      Deficit Salary
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
+                      Include
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
                       Days Attended
@@ -1666,6 +1697,27 @@ export default function Payroll() {
                           min="0"
                           step="0.01"
                         />
+                      </td>
+                      <td className="px-3 py-2 text-right bg-green-50/50">
+                        {entry.deficitSalary > 0 ? (
+                          <span className={`font-medium ${entry.includeDeficitInPayroll ? 'text-green-700' : 'text-muted-foreground'}`}>
+                            {entry.deficitSalary.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-center bg-green-50/50">
+                        {entry.deficitSalary > 0 ? (
+                          <input
+                            type="checkbox"
+                            checked={entry.includeDeficitInPayroll}
+                            onChange={(e) => handleDeficitToggle(idx, e.target.checked)}
+                            className="w-4 h-4 text-green-600 border-green-300 rounded focus:ring-green-500"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">
                         {entry.grossSalary.toLocaleString()}
@@ -1728,6 +1780,12 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-green-700 bg-green-50/50">
+                      {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-center bg-green-50/50">
+                      {previewData.filter(e => e.deficitSalary > 0 && e.includeDeficitInPayroll).length}/{previewData.filter(e => e.deficitSalary > 0).length}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
