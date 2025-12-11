@@ -26,9 +26,6 @@ interface DefaultSettings {
 }
 
 interface EmailSettings {
-  emailjsServiceId: string;
-  emailjsTemplateId: string;
-  emailjsPublicKey: string;
   smtpHost: string;
   smtpPort: string;
   smtpUser: string;
@@ -86,9 +83,6 @@ export default function Settings() {
 
   // Email settings (admin only)
   const [emailSettings, setEmailSettings] = useState<EmailSettings>({
-    emailjsServiceId: '',
-    emailjsTemplateId: '',
-    emailjsPublicKey: '',
     smtpHost: '',
     smtpPort: '',
     smtpUser: '',
@@ -648,46 +642,8 @@ export default function Settings() {
               
               <form onSubmit={handleEmailSettingsSave} className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-foreground mb-4">EmailJS Configuration</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Configure EmailJS for sending payroll notifications and password reset emails.</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Service ID</label>
-                      <input
-                        type="text"
-                        value={emailSettings.emailjsServiceId}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsServiceId: e.target.value })}
-                        placeholder="service_xxxxx"
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Template ID</label>
-                      <input
-                        type="text"
-                        value={emailSettings.emailjsTemplateId}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsTemplateId: e.target.value })}
-                        placeholder="template_xxxxx"
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Public Key</label>
-                      <input
-                        type="text"
-                        value={emailSettings.emailjsPublicKey}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsPublicKey: e.target.value })}
-                        placeholder="public_key_xxxxx"
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-6">
-                  <h3 className="text-lg font-medium text-foreground mb-4">SMTP Configuration (Alternative)</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Configure SMTP server for direct email sending.</p>
+                  <h3 className="text-lg font-medium text-foreground mb-4">SMTP Configuration</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Configure SMTP server for sending emails.</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
