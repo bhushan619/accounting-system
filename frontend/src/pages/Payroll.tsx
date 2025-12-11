@@ -1686,6 +1686,9 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50">
                       Attend. Ded.
                     </th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-purple-50" title="EPF/ETF Base = Basic + Performance Salary">
+                      EPF/ETF Base
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
@@ -1762,6 +1765,9 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
                         {entry.attendanceDeduction.toLocaleString()}
                       </td>
+                      <td className="px-3 py-2 text-right text-purple-700 bg-purple-50/50 font-medium" title="Basic + Performance Salary">
+                        {(entry.basicSalary + entry.performanceSalary).toLocaleString()}
+                      </td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.stampFee.toLocaleString()}</td>
@@ -1829,6 +1835,9 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right bg-blue-50/50 text-destructive">
                       {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-purple-700 bg-purple-50/50 font-medium">
+                      {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
