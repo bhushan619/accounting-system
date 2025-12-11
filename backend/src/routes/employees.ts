@@ -39,14 +39,32 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', auditLog('create', 'employee'), async (req, res) => {
-  const employee = await Employee.create(req.body);
+  // Determine initial status based on probation end date
+  const data = { ...req.body };
+  if (data.probationEndDate && new Date(data.probationEndDate) <= new Date()) {
+    data.status = 'confirmed';
+  } else if (!data.status) {
+    data.status = 'under_probation';
+  }
+  // Always set workingDaysPerMonth to 30
+  data.workingDaysPerMonth = 30;
+  
+  const employee = await Employee.create(data);
   res.json(employee);
 });
 
 router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
+  // Determine status based on probation end date
+  const data = { ...req.body, updatedAt: new Date() };
+  if (data.probationEndDate && new Date(data.probationEndDate) <= new Date()) {
+    data.status = 'confirmed';
+  }
+  // Always set workingDaysPerMonth to 30
+  data.workingDaysPerMonth = 30;
+  
   const employee = await Employee.findByIdAndUpdate(
     req.params.id,
-    { ...req.body, updatedAt: new Date() },
+    data,
     { new: true }
   );
   if (!employee) return res.status(404).json({ error: 'Not found' });
