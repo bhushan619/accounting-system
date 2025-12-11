@@ -16,6 +16,8 @@ const PayrollSchema = new Schema({
   stampFee: { type: Number, default: 25 },
   deductionAmount: { type: Number, default: 0 }, // Additional salary deduction amount
   deductionReason: { type: String, default: '' }, // Reason for the deduction
+  deficitSalary: { type: Number, default: 0 }, // Deficit salary between probation end and status update
+  includeDeficitInPayroll: { type: Boolean, default: false }, // Flag to include deficit in payroll
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
   totalCTC: { type: Number, required: true },
