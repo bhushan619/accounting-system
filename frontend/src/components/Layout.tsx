@@ -191,6 +191,9 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink to="/translations" icon={Globe}>{t('nav.translations')}</NavLink>
               )}
 
+              {/* Settings */}
+              <NavLink to="/settings" icon={SettingsIcon}>{t('nav.settings')}</NavLink>
+
               {/* User Guide */}
               <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
             </>

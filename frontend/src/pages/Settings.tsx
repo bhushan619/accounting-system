@@ -1,315 +1,737 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { User, Lock, Building, Globe, Mail, Save, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
-interface TaxConfig {
-  _id: string;
-  name: string;
-  taxType: 'vat' | 'income' | 'withholding';
-  rate: number;
-  applicableFrom: string;
-  applicableTo?: string;
-  isActive: boolean;
+interface CompanySettings {
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  taxNumber: string;
+  currency: string;
+  dateFormat: string;
+  fiscalYearStart: string;
+}
+
+interface DefaultSettings {
+  defaultPaymentTerms: number;
+  defaultInvoiceDuedays: number;
+  defaultCurrency: string;
+  stampFee: number;
+  emailNotifications: boolean;
+  autoApproveAdminTransactions: boolean;
 }
 
 export default function Settings() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'tax'>('account');
-  const [taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
+  const { t } = useLanguage();
+  const isAdmin = user?.role === 'admin';
+  
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'company' | 'defaults' | 'email'>('profile');
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    taxType: 'vat' as 'vat' | 'income' | 'withholding',
-    rate: 0,
-    applicableFrom: new Date().toISOString().split('T')[0],
-    applicableTo: '',
-    isActive: true
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Password change
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  
+  // Profile data
+  const [profileData, setProfileData] = useState({
+    fullName: user?.fullName || '',
+    email: user?.email || '',
+    phone: ''
+  });
+  
+  // Company settings (admin only)
+  const [companySettings, setCompanySettings] = useState<CompanySettings>({
+    companyName: 'VeloSync Accounts',
+    companyAddress: '',
+    companyPhone: '',
+    companyEmail: '',
+    taxNumber: '',
+    currency: 'LKR',
+    dateFormat: 'DD/MM/YYYY',
+    fiscalYearStart: '01-01'
+  });
+  
+  // Default settings (admin only)
+  const [defaultSettings, setDefaultSettings] = useState<DefaultSettings>({
+    defaultPaymentTerms: 30,
+    defaultInvoiceDuedays: 14,
+    defaultCurrency: 'LKR',
+    stampFee: 25,
+    emailNotifications: true,
+    autoApproveAdminTransactions: true
+  });
+
+  // Email settings (admin only)
+  const [emailSettings, setEmailSettings] = useState({
+    emailjsServiceId: '',
+    emailjsTemplateId: '',
+    emailjsPublicKey: '',
+    smtpHost: '',
+    smtpPort: '',
+    smtpUser: '',
+    smtpPassword: ''
   });
 
   usePreventSwipe(showModal);
 
   useEffect(() => {
-    if (activeTab === 'tax') {
-      loadTaxConfigs();
+    if (isAdmin) {
+      loadSettings();
     }
-  }, [activeTab]);
+  }, [isAdmin]);
 
-  const loadTaxConfigs = async () => {
+  const loadSettings = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`);
-      setTaxConfigs(res.data);
-    } catch (error) {
-      console.error('Failed to load tax configs:', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingId) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/taxconfig/${editingId}`, formData);
-      } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/taxconfig`, formData);
+      // Load settings from backend or localStorage
+      const savedCompanySettings = localStorage.getItem('companySettings');
+      const savedDefaultSettings = localStorage.getItem('defaultSettings');
+      const savedEmailSettings = localStorage.getItem('emailSettings');
+      
+      if (savedCompanySettings) {
+        setCompanySettings(JSON.parse(savedCompanySettings));
       }
-      loadTaxConfigs();
-      resetForm();
-    } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to save tax config');
-    }
-  };
-
-  const handleEdit = (config: TaxConfig) => {
-    setEditingId(config._id);
-    setFormData({
-      name: config.name,
-      taxType: config.taxType,
-      rate: config.rate,
-      applicableFrom: config.applicableFrom.split('T')[0],
-      applicableTo: config.applicableTo ? config.applicableTo.split('T')[0] : '',
-      isActive: config.isActive
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this tax configuration?')) return;
-    try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/taxconfig/${id}`);
-      loadTaxConfigs();
+      if (savedDefaultSettings) {
+        setDefaultSettings(JSON.parse(savedDefaultSettings));
+      }
+      if (savedEmailSettings) {
+        setEmailSettings(JSON.parse(savedEmailSettings));
+      }
     } catch (error) {
-      console.error('Failed to delete:', error);
+      console.error('Failed to load settings:', error);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      taxType: 'vat',
-      rate: 0,
-      applicableFrom: new Date().toISOString().split('T')[0],
-      applicableTo: '',
-      isActive: true
-    });
-    setEditingId(null);
-    setShowModal(false);
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3000);
   };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showMessage('error', 'New passwords do not match');
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      showMessage('error', 'Password must be at least 6 characters');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      showMessage('success', 'Password changed successfully');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to change password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/users/${user?._id}`, {
+        fullName: profileData.fullName
+      });
+      showMessage('success', 'Profile updated successfully');
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCompanySettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      localStorage.setItem('companySettings', JSON.stringify(companySettings));
+      showMessage('success', 'Company settings saved successfully');
+    } catch (error) {
+      showMessage('error', 'Failed to save company settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDefaultSettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      localStorage.setItem('defaultSettings', JSON.stringify(defaultSettings));
+      showMessage('success', 'Default settings saved successfully');
+    } catch (error) {
+      showMessage('error', 'Failed to save default settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEmailSettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      localStorage.setItem('emailSettings', JSON.stringify(emailSettings));
+      showMessage('success', 'Email settings saved successfully');
+    } catch (error) {
+      showMessage('error', 'Failed to save email settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const tabs = [
+    { id: 'profile', label: t('settings.profile') || 'Profile', icon: User },
+    { id: 'password', label: t('settings.changePassword') || 'Change Password', icon: Lock },
+    ...(isAdmin ? [
+      { id: 'company', label: t('settings.company') || 'Company', icon: Building },
+      { id: 'defaults', label: t('settings.defaults') || 'Defaults', icon: Globe },
+      { id: 'email', label: t('settings.email') || 'Email', icon: Mail },
+    ] : [])
+  ];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-foreground mb-6">Settings</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-2">{t('settings.title') || 'Settings'}</h1>
+      <p className="text-muted-foreground mb-6">{t('settings.subtitle') || 'Manage your account and application settings'}</p>
 
-      <div className="border-b border-border mb-6">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('account')}
-            className={`px-4 py-2 border-b-2 transition-colors ${
-              activeTab === 'account'
-                ? 'border-primary text-primary font-medium'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Account Information
-          </button>
-          {user?.role === 'admin' && (
-            <button
-              onClick={() => setActiveTab('tax')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'tax'
-                  ? 'border-primary text-primary font-medium'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Tax Configuration
-            </button>
-          )}
-        </div>
-      </div>
-
-      {activeTab === 'account' && (
-        <div className="bg-card rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Account Information</h2>
-          <div className="space-y-2">
-            <p className="text-foreground">
-              <span className="font-medium">Email:</span> {user?.email}
-            </p>
-            <p className="text-foreground">
-              <span className="font-medium">Role:</span> {user?.role}
-            </p>
-          </div>
+      {/* Message Toast */}
+      {message && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg ${
+          message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          {message.text}
         </div>
       )}
 
-      {activeTab === 'tax' && (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Tax Configurations</h2>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-            >
-              <Plus size={20} />
-              Add Tax Config
-            </button>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar Tabs */}
+        <div className="lg:col-span-1">
+          <div className="bg-card rounded-lg shadow p-2 space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent'
+                }`}
+              >
+                <tab.icon size={18} />
+                <span className="font-medium">{tab.label}</span>
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="bg-card rounded-lg shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Rate</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">From</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">To</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {taxConfigs.map((config) => (
-                  <tr key={config._id} className="hover:bg-accent/50">
-                    <td className="px-6 py-4 text-sm text-foreground">{config.name}</td>
-                    <td className="px-6 py-4 text-sm text-foreground capitalize">{config.taxType}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{config.rate}%</td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {new Date(config.applicableFrom).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {config.applicableTo ? new Date(config.applicableTo).toLocaleDateString() : '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        config.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {config.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleEdit(config)}
-                        className="text-primary hover:text-primary/80 mr-3"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(config._id)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {showModal && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-foreground">
-                    {editingId ? 'Edit Tax Config' : 'Add Tax Config'}
-                  </h2>
-                  <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Content Area */}
+        <div className="lg:col-span-3">
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('settings.profileInfo') || 'Profile Information'}</h2>
+              
+              <form onSubmit={handleProfileUpdate} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Name</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.fullName') || 'Full Name'}
+                    </label>
                     <input
                       type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={profileData.fullName}
+                      onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Tax Type</label>
-                    <select
-                      value={formData.taxType}
-                      onChange={(e) => setFormData({ ...formData, taxType: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    >
-                      <option value="vat">VAT</option>
-                      <option value="income">Income Tax</option>
-                      <option value="withholding">Withholding Tax</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Rate (%)</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.email') || 'Email'}
+                    </label>
                     <input
-                      type="number"
-                      step="0.01"
+                      type="email"
+                      value={profileData.email}
+                      disabled
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('settings.role') || 'Role'}
+                  </label>
+                  <input
+                    type="text"
+                    value={user?.role || ''}
+                    disabled
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed capitalize"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Password Tab */}
+          {activeTab === 'password' && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('settings.changePassword') || 'Change Password'}</h2>
+              
+              <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('settings.currentPassword') || 'Current Password'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                       required
-                      value={formData.rate}
-                      onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      className="w-full px-3 py-2 pr-10 border border-border rounded-lg bg-background text-foreground"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">From Date</label>
-                      <input
-                        type="date"
-                        required
-                        value={formData.applicableFrom}
-                        onChange={(e) => setFormData({ ...formData, applicableFrom: e.target.value })}
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">To Date</label>
-                      <input
-                        type="date"
-                        value={formData.applicableTo}
-                        onChange={(e) => setFormData({ ...formData, applicableTo: e.target.value })}
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.isActive}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="rounded border-border"
-                    />
-                    <label className="text-sm text-foreground">Active</label>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
                     <button
                       type="button"
-                      onClick={resetForm}
-                      className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                    >
-                      {editingId ? 'Update' : 'Create'}
+                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                </form>
-              </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('settings.newPassword') || 'New Password'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      required
+                      minLength={6}
+                      className="w-full px-3 py-2 pr-10 border border-border rounded-lg bg-background text-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('settings.confirmPassword') || 'Confirm New Password'}
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Lock size={18} />
+                    {saving ? 'Changing...' : t('settings.updatePassword') || 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Company Tab (Admin Only) */}
+          {activeTab === 'company' && isAdmin && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('settings.companyInfo') || 'Company Information'}</h2>
+              
+              <form onSubmit={handleCompanySettingsSave} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.companyName') || 'Company Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={companySettings.companyName}
+                      onChange={(e) => setCompanySettings({ ...companySettings, companyName: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.taxNumber') || 'Tax Registration Number'}
+                    </label>
+                    <input
+                      type="text"
+                      value={companySettings.taxNumber}
+                      onChange={(e) => setCompanySettings({ ...companySettings, taxNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t('settings.companyAddress') || 'Company Address'}
+                  </label>
+                  <textarea
+                    value={companySettings.companyAddress}
+                    onChange={(e) => setCompanySettings({ ...companySettings, companyAddress: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.companyPhone') || 'Phone Number'}
+                    </label>
+                    <input
+                      type="tel"
+                      value={companySettings.companyPhone}
+                      onChange={(e) => setCompanySettings({ ...companySettings, companyPhone: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.companyEmail') || 'Email'}
+                    </label>
+                    <input
+                      type="email"
+                      value={companySettings.companyEmail}
+                      onChange={(e) => setCompanySettings({ ...companySettings, companyEmail: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.currency') || 'Default Currency'}
+                    </label>
+                    <select
+                      value={companySettings.currency}
+                      onChange={(e) => setCompanySettings({ ...companySettings, currency: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="LKR">LKR - Sri Lankan Rupee</option>
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="GBP">GBP - British Pound</option>
+                      <option value="CNY">CNY - Chinese Yuan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.dateFormat') || 'Date Format'}
+                    </label>
+                    <select
+                      value={companySettings.dateFormat}
+                      onChange={(e) => setCompanySettings({ ...companySettings, dateFormat: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.fiscalYearStart') || 'Fiscal Year Start'}
+                    </label>
+                    <select
+                      value={companySettings.fiscalYearStart}
+                      onChange={(e) => setCompanySettings({ ...companySettings, fiscalYearStart: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="01-01">January 1</option>
+                      <option value="04-01">April 1</option>
+                      <option value="07-01">July 1</option>
+                      <option value="10-01">October 1</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Defaults Tab (Admin Only) */}
+          {activeTab === 'defaults' && isAdmin && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('settings.defaultSettings') || 'Default Settings'}</h2>
+              
+              <form onSubmit={handleDefaultSettingsSave} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.paymentTerms') || 'Default Payment Terms (days)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={defaultSettings.defaultPaymentTerms}
+                      onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultPaymentTerms: parseInt(e.target.value) })}
+                      min={0}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.invoiceDueDays') || 'Invoice Due Days'}
+                    </label>
+                    <input
+                      type="number"
+                      value={defaultSettings.defaultInvoiceDuedays}
+                      onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultInvoiceDuedays: parseInt(e.target.value) })}
+                      min={0}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.defaultCurrency') || 'Default Currency'}
+                    </label>
+                    <select
+                      value={defaultSettings.defaultCurrency}
+                      onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultCurrency: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="LKR">LKR</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="CNY">CNY</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {t('settings.stampFee') || 'Stamp Fee (LKR)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={defaultSettings.stampFee}
+                      onChange={(e) => setDefaultSettings({ ...defaultSettings, stampFee: parseFloat(e.target.value) })}
+                      min={0}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-foreground">{t('settings.preferences') || 'Preferences'}</h3>
+                  
+                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground">{t('settings.emailNotifications') || 'Email Notifications'}</p>
+                      <p className="text-sm text-muted-foreground">{t('settings.emailNotificationsDesc') || 'Send email notifications for important events'}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={defaultSettings.emailNotifications}
+                        onChange={(e) => setDefaultSettings({ ...defaultSettings, emailNotifications: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground">{t('settings.autoApprove') || 'Auto-approve Admin Transactions'}</p>
+                      <p className="text-sm text-muted-foreground">{t('settings.autoApproveDesc') || 'Automatically approve transactions created by admin users'}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={defaultSettings.autoApproveAdminTransactions}
+                        onChange={(e) => setDefaultSettings({ ...defaultSettings, autoApproveAdminTransactions: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Email Tab (Admin Only) */}
+          {activeTab === 'email' && isAdmin && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('settings.emailConfiguration') || 'Email Configuration'}</h2>
+              
+              <form onSubmit={handleEmailSettingsSave} className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">EmailJS Configuration</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Configure EmailJS for sending payroll notifications and password reset emails.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Service ID</label>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsServiceId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsServiceId: e.target.value })}
+                        placeholder="service_xxxxx"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Template ID</label>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsTemplateId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsTemplateId: e.target.value })}
+                        placeholder="template_xxxxx"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Public Key</label>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsPublicKey}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsPublicKey: e.target.value })}
+                        placeholder="public_key_xxxxx"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-lg font-medium text-foreground mb-4">SMTP Configuration (Alternative)</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Configure SMTP server for direct email sending.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Host</label>
+                      <input
+                        type="text"
+                        value={emailSettings.smtpHost}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
+                        placeholder="smtp.example.com"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Port</label>
+                      <input
+                        type="text"
+                        value={emailSettings.smtpPort}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: e.target.value })}
+                        placeholder="587"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Username</label>
+                      <input
+                        type="text"
+                        value={emailSettings.smtpUser}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, smtpUser: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Password</label>
+                      <input
+                        type="password"
+                        value={emailSettings.smtpPassword}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
