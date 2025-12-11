@@ -59,7 +59,13 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     const previewData = [];
     
     // Create payroll period end date (last day of the payroll month) - set to end of day
-    const payrollPeriodEnd = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month at end of day
+    // JavaScript months are 0-indexed, so month parameter here is already 1-indexed from frontend
+    // new Date(2025, 9, 0) = September 30, 2025 (day 0 of October = last day of September)
+    const payrollPeriodEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    console.log('=== PAYROLL DEBUG ===');
+    console.log('Input month (1-indexed):', month, 'year:', year);
+    console.log('Payroll period end:', payrollPeriodEnd.toISOString());
     
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
@@ -68,23 +74,40 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       let performanceSalary = 0;
       if (employee.status === 'confirmed') {
         performanceSalary = employee.performanceSalaryConfirmed || 0;
+        console.log(`Employee ${employee.fullName}: status=confirmed, using confirmed salary: ${performanceSalary}`);
       } else if (employee.status === 'under_probation') {
         // Check if probation has ended BEFORE the payroll period end
-        // Employee is still under probation if probationEndDate >= payrollPeriodEnd
         const probationEnd = employee.probationEndDate ? new Date(employee.probationEndDate) : null;
+        
+        console.log(`Employee ${employee.fullName}: status=under_probation`);
+        console.log(`  probationEndDate from DB:`, employee.probationEndDate);
+        console.log(`  probationEnd parsed:`, probationEnd ? probationEnd.toISOString() : 'null');
+        console.log(`  performanceSalaryProbation:`, employee.performanceSalaryProbation);
+        console.log(`  performanceSalaryConfirmed:`, employee.performanceSalaryConfirmed);
+        
         if (probationEnd) {
           // Normalize probation end date to end of that day for fair comparison
           probationEnd.setHours(23, 59, 59, 999);
+          console.log(`  probationEnd normalized:`, probationEnd.toISOString());
+          console.log(`  payrollPeriodEnd time:`, payrollPeriodEnd.getTime());
+          console.log(`  probationEnd time:`, probationEnd.getTime());
+          console.log(`  payrollPeriodEnd > probationEnd:`, payrollPeriodEnd.getTime() > probationEnd.getTime());
+          
           // Use confirmed salary only if probation ended BEFORE the payroll month ends
           if (payrollPeriodEnd.getTime() > probationEnd.getTime()) {
             performanceSalary = employee.performanceSalaryConfirmed || 0;
+            console.log(`  RESULT: Using CONFIRMED salary: ${performanceSalary}`);
           } else {
             performanceSalary = employee.performanceSalaryProbation || 0;
+            console.log(`  RESULT: Using PROBATION salary: ${performanceSalary}`);
           }
         } else {
           performanceSalary = employee.performanceSalaryProbation || 0;
+          console.log(`  RESULT: No probation date, using PROBATION salary: ${performanceSalary}`);
         }
       }
+      
+      console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance;
