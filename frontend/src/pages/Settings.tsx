@@ -642,12 +642,12 @@ export default function Settings() {
               
               <form onSubmit={handleEmailSettingsSave} className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-foreground mb-4">SMTP Configuration</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Configure SMTP server for sending emails.</p>
+                  <h3 className="text-lg font-medium text-foreground mb-4">{t('settings.smtpConfiguration') || 'SMTP Configuration'}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{t('settings.smtpConfigurationDesc') || 'Configure SMTP server for sending emails.'}</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Host</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">{t('settings.smtpHost') || 'SMTP Host'}</label>
                       <input
                         type="text"
                         value={emailSettings.smtpHost}
@@ -657,7 +657,7 @@ export default function Settings() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Port</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">{t('settings.smtpPort') || 'SMTP Port'}</label>
                       <input
                         type="text"
                         value={emailSettings.smtpPort}
@@ -667,7 +667,7 @@ export default function Settings() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Username</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">{t('settings.smtpUsername') || 'SMTP Username'}</label>
                       <input
                         type="text"
                         value={emailSettings.smtpUser}
@@ -676,7 +676,7 @@ export default function Settings() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">SMTP Password</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">{t('settings.smtpPassword') || 'SMTP Password'}</label>
                       <input
                         type="password"
                         value={emailSettings.smtpPassword}

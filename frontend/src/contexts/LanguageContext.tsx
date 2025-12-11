@@ -77,6 +77,13 @@ const defaultTranslations: Record<Language, Translations> = {
     'settings.autoApprove': 'Auto-approve Admin Transactions',
     'settings.autoApproveDesc': 'Automatically approve transactions created by admin users',
     'settings.emailConfiguration': 'Email Configuration',
+    'settings.email': 'Email',
+    'settings.smtpConfiguration': 'SMTP Configuration',
+    'settings.smtpConfigurationDesc': 'Configure SMTP server for sending emails.',
+    'settings.smtpHost': 'SMTP Host',
+    'settings.smtpPort': 'SMTP Port',
+    'settings.smtpUsername': 'SMTP Username',
+    'settings.smtpPassword': 'SMTP Password',
     
     // Pending Approval Page
     'pending.title': 'Account Pending Approval',
@@ -737,6 +744,13 @@ const defaultTranslations: Record<Language, Translations> = {
     'settings.autoApprove': '自动批准管理员交易',
     'settings.autoApproveDesc': '自动批准管理员用户创建的交易',
     'settings.emailConfiguration': '邮箱配置',
+    'settings.email': '邮箱',
+    'settings.smtpConfiguration': 'SMTP配置',
+    'settings.smtpConfigurationDesc': '配置SMTP服务器以发送邮件。',
+    'settings.smtpHost': 'SMTP主机',
+    'settings.smtpPort': 'SMTP端口',
+    'settings.smtpUsername': 'SMTP用户名',
+    'settings.smtpPassword': 'SMTP密码',
     
     // Pending Approval Page
     'pending.title': '账户待审批',
