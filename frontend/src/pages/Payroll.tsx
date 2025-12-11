@@ -533,9 +533,11 @@ export default function Payroll() {
     const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
     const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount;
 
-    const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
-    const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
-    const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
+    // EPF and ETF calculated on (Basic + Performance Salary)
+    const epfEtfBase = basicSalary + performanceSalary;
+    const epfEmployee = Math.round(((epfEtfBase * taxRates.epfEmployee) / 100) * 100) / 100;
+    const epfEmployer = Math.round(((epfEtfBase * taxRates.epfEmployer) / 100) * 100) / 100;
+    const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
     // Scenario A only - employee pays APIT
@@ -969,9 +971,11 @@ export default function Payroll() {
     const deficitToInclude = includeDeficitInPayroll ? deficitSalary : 0;
     const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitToInclude;
 
-    const epfEmployee = Math.round(((basicSalary * taxRates.epfEmployee) / 100) * 100) / 100;
-    const epfEmployer = Math.round(((basicSalary * taxRates.epfEmployer) / 100) * 100) / 100;
-    const etf = Math.round(((basicSalary * taxRates.etf) / 100) * 100) / 100;
+    // EPF and ETF calculated on (Basic + Performance Salary)
+    const epfEtfBase = basicSalary + performanceSalary;
+    const epfEmployee = Math.round(((epfEtfBase * taxRates.epfEmployee) / 100) * 100) / 100;
+    const epfEmployer = Math.round(((epfEtfBase * taxRates.epfEmployer) / 100) * 100) / 100;
+    const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
     // Scenario A only - employee pays APIT
