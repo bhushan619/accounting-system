@@ -145,39 +145,50 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
       // Calculate deficit salary if applicable
-      // Deficit applies ONLY to the payroll month where status was updated to confirmed
-      // This represents the backdated difference owed for days between probation end and status update
+      // Deficit = difference in performance salary from probationEndDate to last day of payroll month
+      // Only applies when employee is confirmed and probation ended before/during the payroll month
       let deficitSalary = 0;
       
       if (employee.status === 'confirmed' && 
           employee.probationEndDate && 
-          employee.statusUpdateDate &&
           confirmedPerformance > probationPerformance) {
         
         const probationEnd = new Date(employee.probationEndDate);
-        const statusUpdate = new Date(employee.statusUpdateDate);
+        const probationEndMonth = probationEnd.getMonth() + 1; // 1-indexed
+        const probationEndYear = probationEnd.getFullYear();
         
-        // Deficit should be calculated and shown only in the payroll month when status was updated
-        // This ensures deficit is paid once, in the month the confirmation happened
-        const statusUpdateMonth = statusUpdate.getMonth() + 1; // 1-indexed
-        const statusUpdateYear = statusUpdate.getFullYear();
+        // Only calculate deficit if probation ended in a month before or equal to the payroll month
+        // and the payroll month is on or after the probation end month
+        const payrollMonthStart = new Date(year, month - 1, 1);
+        const payrollMonthEnd = new Date(year, month, 0); // Last day of payroll month
         
-        if (month === statusUpdateMonth && year === statusUpdateYear && statusUpdate > probationEnd) {
-          // This is the month status was updated - calculate deficit for past months
-          const diffTime = statusUpdate.getTime() - probationEnd.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Calculate deficit only if probation ended before or during the payroll month
+        if (probationEnd <= payrollMonthEnd) {
+          // Deficit start: max of (probationEndDate, first day of payroll month)
+          const deficitStart = probationEnd > payrollMonthStart ? probationEnd : payrollMonthStart;
           
-          if (diffDays > 0) {
-            // Use fixed 30 days for daily rate calculation (per company policy)
-            const STANDARD_WORKING_DAYS = 30;
-            const dailyProbationPerformance = probationPerformance / STANDARD_WORKING_DAYS;
-            const dailyConfirmedPerformance = confirmedPerformance / STANDARD_WORKING_DAYS;
-            const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
-            deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-            console.log(`  Deficit calculation: ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) = ${deficitSalary}`);
+          // Deficit end: last day of payroll month
+          const deficitEnd = payrollMonthEnd;
+          
+          // Only calculate if deficit start is within the payroll month
+          if (deficitStart <= deficitEnd && deficitStart >= payrollMonthStart) {
+            const diffTime = deficitEnd.getTime() - deficitStart.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+            
+            if (diffDays > 0) {
+              // Use fixed 30 days for daily rate calculation (per company policy)
+              const STANDARD_WORKING_DAYS = 30;
+              const dailyProbationPerformance = probationPerformance / STANDARD_WORKING_DAYS;
+              const dailyConfirmedPerformance = confirmedPerformance / STANDARD_WORKING_DAYS;
+              const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
+              deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+              console.log(`  Deficit calculation: from ${deficitStart.toISOString().split('T')[0]} to ${deficitEnd.toISOString().split('T')[0]} = ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) = ${deficitSalary}`);
+            }
+          } else {
+            console.log(`  No deficit for this month (probation end not in this payroll period)`);
           }
         } else {
-          console.log(`  No deficit for this month (status updated in ${statusUpdateMonth}/${statusUpdateYear}, processing ${month}/${year})`);
+          console.log(`  No deficit for this month (probation ends after payroll month)`);
         }
       }
       
