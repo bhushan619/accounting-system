@@ -1909,6 +1909,10 @@ export default function Payroll() {
                 <div className="space-y-2">
                   <p className="text-muted-foreground">Employee Deductions</p>
                   <div className="space-y-1">
+                    <div className="flex justify-between text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                      <span>EPF/ETF Base (Basic + Perf.):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                    </div>
                     <div className="flex justify-between text-destructive">
                       <span>EPF (Employee {taxRates?.epfEmployee || 8}%):</span>
                       <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}</span>
@@ -1951,6 +1955,10 @@ export default function Payroll() {
                 <div className="space-y-2">
                   <p className="text-muted-foreground">Employer Contributions</p>
                   <div className="space-y-1">
+                    <div className="flex justify-between text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                      <span>EPF/ETF Base (Basic + Perf.):</span>
+                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                    </div>
                     <div className="flex justify-between text-orange-600">
                       <span>EPF (Employer {taxRates?.epfEmployer || 12}%):</span>
                       <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}</span>

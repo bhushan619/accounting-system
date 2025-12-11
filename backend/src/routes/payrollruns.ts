@@ -142,7 +142,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
-      // Calculate deficit salary if applicable
+      // Calculate deficit salary if applicable (using per-day calculation)
       let deficitSalary = 0;
       if (employee.status === 'confirmed' && 
           employee.probationEndDate && 
@@ -157,10 +157,10 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays > 0) {
-          // Calculate daily rate difference
-          const dailyDifference = (confirmedPerformance - probationPerformance) / 30;
+          // Calculate daily rate difference based on working days in month
+          const dailyDifference = (confirmedPerformance - probationPerformance) / workingDays;
           deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-          console.log(`  Deficit calculation: ${diffDays} days x ${dailyDifference.toFixed(2)} = ${deficitSalary}`);
+          console.log(`  Deficit calculation: ${diffDays} days x ${dailyDifference.toFixed(2)} (per-day) = ${deficitSalary}`);
         }
       }
       
