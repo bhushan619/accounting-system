@@ -58,8 +58,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     const workingDays = getWorkingDaysInMonth(month, year);
     const previewData = [];
     
-    // Create payroll period end date (last day of the payroll month)
-    const payrollPeriodEnd = new Date(year, month, 0); // Last day of the month
+    // Create payroll period end date (last day of the payroll month) - set to end of day
+    const payrollPeriodEnd = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month at end of day
     
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
@@ -69,9 +69,18 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       if (employee.status === 'confirmed') {
         performanceSalary = employee.performanceSalaryConfirmed || 0;
       } else if (employee.status === 'under_probation') {
-        // Check if probation has ended by the payroll period
-        if (employee.probationEndDate && payrollPeriodEnd > employee.probationEndDate) {
-          performanceSalary = employee.performanceSalaryConfirmed || 0;
+        // Check if probation has ended BEFORE the payroll period end
+        // Employee is still under probation if probationEndDate >= payrollPeriodEnd
+        const probationEnd = employee.probationEndDate ? new Date(employee.probationEndDate) : null;
+        if (probationEnd) {
+          // Normalize probation end date to end of that day for fair comparison
+          probationEnd.setHours(23, 59, 59, 999);
+          // Use confirmed salary only if probation ended BEFORE the payroll month ends
+          if (payrollPeriodEnd.getTime() > probationEnd.getTime()) {
+            performanceSalary = employee.performanceSalaryConfirmed || 0;
+          } else {
+            performanceSalary = employee.performanceSalaryProbation || 0;
+          }
         } else {
           performanceSalary = employee.performanceSalaryProbation || 0;
         }
@@ -162,8 +171,8 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
     let totalDeductions = 0;
     let totalCTC = 0;
     
-    // Create payroll period end date (last day of the payroll month)
-    const payrollPeriodEnd = new Date(year, month, 0); // Last day of the month
+    // Create payroll period end date (last day of the payroll month) - set to end of day
+    const payrollPeriodEnd = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month at end of day
     
     for (const employee of employees) {
       const serialNumber = await getNextSequence('payroll', 'PAY');
@@ -177,9 +186,17 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       if (employee.status === 'confirmed') {
         defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
       } else if (employee.status === 'under_probation') {
-        // Check if probation has ended by the payroll period
-        if (employee.probationEndDate && payrollPeriodEnd > employee.probationEndDate) {
-          defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+        // Check if probation has ended BEFORE the payroll period end
+        const probationEnd = employee.probationEndDate ? new Date(employee.probationEndDate) : null;
+        if (probationEnd) {
+          // Normalize probation end date to end of that day for fair comparison
+          probationEnd.setHours(23, 59, 59, 999);
+          // Use confirmed salary only if probation ended BEFORE the payroll month ends
+          if (payrollPeriodEnd.getTime() > probationEnd.getTime()) {
+            defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+          } else {
+            defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
+          }
         } else {
           defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
         }
