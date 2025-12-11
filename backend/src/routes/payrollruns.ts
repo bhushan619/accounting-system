@@ -70,24 +70,74 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
       
-      // Determine performance salary based on employee status field
-      let performanceSalary = 0;
+      // Get base performance salary rates
+      const probationPerformance = employee.performanceSalaryProbation || 0;
+      const confirmedPerformance = employee.performanceSalaryConfirmed || 0;
       
       console.log(`Employee ${employee.fullName}:`);
       console.log(`  status in DB:`, employee.status);
-      console.log(`  performanceSalaryProbation:`, employee.performanceSalaryProbation);
-      console.log(`  performanceSalaryConfirmed:`, employee.performanceSalaryConfirmed);
+      console.log(`  performanceSalaryProbation:`, probationPerformance);
+      console.log(`  performanceSalaryConfirmed:`, confirmedPerformance);
+      console.log(`  probationEndDate:`, employee.probationEndDate);
+      
+      // Calculate performance salary based on probation end date and status
+      let performanceSalary = 0;
+      
+      // Calculate daily rates
+      const dailyProbationRate = probationPerformance / workingDays;
+      const dailyConfirmedRate = confirmedPerformance / workingDays;
       
       if (employee.status === 'confirmed') {
-        performanceSalary = employee.performanceSalaryConfirmed || 0;
-        console.log(`  RESULT: Status is confirmed, using CONFIRMED salary: ${performanceSalary}`);
+        // Already confirmed - check if probation ended during this month
+        if (employee.probationEndDate) {
+          const probationEnd = new Date(employee.probationEndDate);
+          const monthStart = new Date(year, month - 1, 1);
+          const monthEnd = new Date(year, month, 0);
+          
+          if (probationEnd >= monthStart && probationEnd <= monthEnd) {
+            // Probation ended during this payroll month - split calculation
+            const daysUnderProbation = probationEnd.getDate(); // Days from 1st to probation end
+            const daysConfirmed = workingDays - daysUnderProbation;
+            
+            performanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
+            console.log(`  Split calculation: ${daysUnderProbation} probation days + ${daysConfirmed} confirmed days`);
+          } else if (probationEnd < monthStart) {
+            // Probation ended before this month - full confirmed rate
+            performanceSalary = confirmedPerformance;
+          } else {
+            // Probation ends after this month - shouldn't happen if status is confirmed
+            performanceSalary = confirmedPerformance;
+          }
+        } else {
+          performanceSalary = confirmedPerformance;
+        }
+        console.log(`  RESULT: Status confirmed, performance salary: ${performanceSalary}`);
       } else if (employee.status === 'under_probation') {
-        performanceSalary = employee.performanceSalaryProbation || 0;
-        console.log(`  RESULT: Status is under_probation, using PROBATION salary: ${performanceSalary}`);
+        // Check if probation ends during this payroll period
+        if (employee.probationEndDate) {
+          const probationEnd = new Date(employee.probationEndDate);
+          const monthStart = new Date(year, month - 1, 1);
+          const monthEnd = new Date(year, month, 0);
+          
+          if (probationEnd >= monthStart && probationEnd <= monthEnd) {
+            // Probation ends during this payroll month - split calculation
+            const daysUnderProbation = probationEnd.getDate();
+            const daysConfirmed = workingDays - daysUnderProbation;
+            
+            performanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
+            console.log(`  Split calculation: ${daysUnderProbation} probation days + ${daysConfirmed} confirmed days`);
+          } else {
+            // Probation doesn't end this month - full probation rate
+            performanceSalary = probationPerformance;
+          }
+        } else {
+          performanceSalary = probationPerformance;
+        }
+        console.log(`  RESULT: Status under_probation, performance salary: ${performanceSalary}`);
       } else {
-        // Closed or other status - use confirmed salary
-        performanceSalary = employee.performanceSalaryConfirmed || 0;
-        console.log(`  RESULT: Status is ${employee.status}, using CONFIRMED salary: ${performanceSalary}`);
+        // Closed or other status
+        performanceSalary = confirmedPerformance;
+        console.log(`  RESULT: Status ${employee.status}, performance salary: ${performanceSalary}`);
       }
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
@@ -97,7 +147,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       if (employee.status === 'confirmed' && 
           employee.probationEndDate && 
           employee.statusUpdateDate &&
-          employee.performanceSalaryConfirmed > employee.performanceSalaryProbation) {
+          confirmedPerformance > probationPerformance) {
         
         const probationEnd = new Date(employee.probationEndDate);
         const statusUpdate = new Date(employee.statusUpdateDate);
@@ -108,7 +158,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         
         if (diffDays > 0) {
           // Calculate daily rate difference
-          const dailyDifference = (employee.performanceSalaryConfirmed - employee.performanceSalaryProbation) / 30;
+          const dailyDifference = (confirmedPerformance - probationPerformance) / 30;
           deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
           console.log(`  Deficit calculation: ${diffDays} days x ${dailyDifference.toFixed(2)} = ${deficitSalary}`);
         }
@@ -215,15 +265,51 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       // Get employee-specific data from the map
       const empData = employeeDataMap.get(employee._id.toString());
       
-      // Determine performance salary based on employee status field
+      // Get base performance salary rates
+      const probationPerformance = employee.performanceSalaryProbation || 0;
+      const confirmedPerformance = employee.performanceSalaryConfirmed || 0;
+      
+      // Calculate daily rates
+      const dailyProbationRate = probationPerformance / workingDays;
+      const dailyConfirmedRate = confirmedPerformance / workingDays;
+      
+      // Calculate default performance salary based on probation end date
       let defaultPerformanceSalary = 0;
+      
       if (employee.status === 'confirmed') {
-        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+        if (employee.probationEndDate) {
+          const probationEnd = new Date(employee.probationEndDate);
+          const monthStart = new Date(year, month - 1, 1);
+          const monthEnd = new Date(year, month, 0);
+          
+          if (probationEnd >= monthStart && probationEnd <= monthEnd) {
+            const daysUnderProbation = probationEnd.getDate();
+            const daysConfirmed = workingDays - daysUnderProbation;
+            defaultPerformanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
+          } else {
+            defaultPerformanceSalary = confirmedPerformance;
+          }
+        } else {
+          defaultPerformanceSalary = confirmedPerformance;
+        }
       } else if (employee.status === 'under_probation') {
-        defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
+        if (employee.probationEndDate) {
+          const probationEnd = new Date(employee.probationEndDate);
+          const monthStart = new Date(year, month - 1, 1);
+          const monthEnd = new Date(year, month, 0);
+          
+          if (probationEnd >= monthStart && probationEnd <= monthEnd) {
+            const daysUnderProbation = probationEnd.getDate();
+            const daysConfirmed = workingDays - daysUnderProbation;
+            defaultPerformanceSalary = Math.round((dailyProbationRate * daysUnderProbation + dailyConfirmedRate * daysConfirmed) * 100) / 100;
+          } else {
+            defaultPerformanceSalary = probationPerformance;
+          }
+        } else {
+          defaultPerformanceSalary = probationPerformance;
+        }
       } else {
-        // Closed or other status
-        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+        defaultPerformanceSalary = confirmedPerformance;
       }
       
       const performanceSalary = empData?.performanceSalary ?? defaultPerformanceSalary;
