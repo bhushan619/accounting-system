@@ -58,16 +58,19 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     const workingDays = getWorkingDaysInMonth(month, year);
     const previewData = [];
     
+    // Create payroll period end date (last day of the payroll month)
+    const payrollPeriodEnd = new Date(year, month, 0); // Last day of the month
+    
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
       
-      // Get current performance salary based on status/probation
+      // Get performance salary based on status and probation end date relative to payroll period
       let performanceSalary = 0;
       if (employee.status === 'confirmed') {
         performanceSalary = employee.performanceSalaryConfirmed || 0;
       } else if (employee.status === 'under_probation') {
-        // Check if probation has ended
-        if (employee.probationEndDate && new Date() > employee.probationEndDate) {
+        // Check if probation has ended by the payroll period
+        if (employee.probationEndDate && payrollPeriodEnd > employee.probationEndDate) {
           performanceSalary = employee.performanceSalaryConfirmed || 0;
         } else {
           performanceSalary = employee.performanceSalaryProbation || 0;
@@ -159,6 +162,9 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
     let totalDeductions = 0;
     let totalCTC = 0;
     
+    // Create payroll period end date (last day of the payroll month)
+    const payrollPeriodEnd = new Date(year, month, 0); // Last day of the month
+    
     for (const employee of employees) {
       const serialNumber = await getNextSequence('payroll', 'PAY');
       const basicSalary = employee.basicSalary;
@@ -166,12 +172,13 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       // Get employee-specific data from the map
       const empData = employeeDataMap.get(employee._id.toString());
       
-      // Get current performance salary based on status/probation
+      // Get performance salary based on status and probation end date relative to payroll period
       let defaultPerformanceSalary = 0;
       if (employee.status === 'confirmed') {
         defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
       } else if (employee.status === 'under_probation') {
-        if (employee.probationEndDate && new Date() > employee.probationEndDate) {
+        // Check if probation has ended by the payroll period
+        if (employee.probationEndDate && payrollPeriodEnd > employee.probationEndDate) {
           defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
         } else {
           defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
