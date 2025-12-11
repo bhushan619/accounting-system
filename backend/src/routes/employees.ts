@@ -42,6 +42,15 @@ router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
   // Always set workingDaysPerMonth to 30
   data.workingDaysPerMonth = 30;
   
+  // Get the current employee to check if status is changing
+  const currentEmployee = await Employee.findById(req.params.id);
+  if (!currentEmployee) return res.status(404).json({ error: 'Not found' });
+  
+  // Track status update date when changing from under_probation to confirmed
+  if (currentEmployee.status === 'under_probation' && data.status === 'confirmed') {
+    data.statusUpdateDate = new Date();
+  }
+  
   const employee = await Employee.findByIdAndUpdate(
     req.params.id,
     data,

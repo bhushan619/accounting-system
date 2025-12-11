@@ -92,6 +92,28 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       
       console.log(`  FINAL performanceSalary: ${performanceSalary}`);
       
+      // Calculate deficit salary if applicable
+      let deficitSalary = 0;
+      if (employee.status === 'confirmed' && 
+          employee.probationEndDate && 
+          employee.statusUpdateDate &&
+          employee.performanceSalaryConfirmed > employee.performanceSalaryProbation) {
+        
+        const probationEnd = new Date(employee.probationEndDate);
+        const statusUpdate = new Date(employee.statusUpdateDate);
+        
+        // Calculate days between probation end and status update
+        const diffTime = statusUpdate.getTime() - probationEnd.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 0) {
+          // Calculate daily rate difference
+          const dailyDifference = (employee.performanceSalaryConfirmed - employee.performanceSalaryProbation) / 30;
+          deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+          console.log(`  Deficit calculation: ${diffDays} days x ${dailyDifference.toFixed(2)} = ${deficitSalary}`);
+        }
+      }
+      
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
@@ -131,7 +153,9 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,
-        workingDays
+        workingDays,
+        deficitSalary,
+        includeDeficitInPayroll: false
       });
     }
     
@@ -155,7 +179,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       status: { $ne: 'closed' }
     });
     
-    // Create a map of employee data (performance salary, transport allowance, deductions)
+    // Create a map of employee data (performance salary, transport allowance, deductions, deficit)
     const employeeDataMap = new Map();
     if (employeeData && Array.isArray(employeeData)) {
       employeeData.forEach((data: any) => {
@@ -163,7 +187,9 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
           performanceSalary: data.performanceSalary,
           transportAllowance: data.transportAllowance,
           deductionAmount: data.deductionAmount || 0,
-          deductionReason: data.deductionReason || ''
+          deductionReason: data.deductionReason || '',
+          deficitSalary: data.deficitSalary || 0,
+          includeDeficitInPayroll: data.includeDeficitInPayroll || false
         });
       });
     }
@@ -202,8 +228,12 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const transportAllowance = empData?.transportAllowance ?? (employee.transportAllowance || 0);
       const deductionAmount = empData?.deductionAmount || 0;
       const deductionReason = empData?.deductionReason || '';
+      const deficitSalary = empData?.deficitSalary || 0;
+      const includeDeficitInPayroll = empData?.includeDeficitInPayroll || false;
       
-      const grossSalary = basicSalary + performanceSalary + transportAllowance;
+      // Calculate gross salary - include deficit if flag is set
+      const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount;
       
       // Use rates from TaxConfig, fall back to employee-specific rates if set
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
@@ -239,6 +269,8 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
         stampFee,
         deductionAmount,
         deductionReason,
+        deficitSalary,
+        includeDeficitInPayroll,
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,

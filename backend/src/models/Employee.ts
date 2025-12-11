@@ -30,6 +30,7 @@ const EmployeeSchema = new Schema({
     enum: ['under_probation', 'confirmed', 'closed'], 
     default: 'under_probation' 
   },
+  statusUpdateDate: { type: Date }, // Date when status was changed to 'confirmed'
   // Bank details for salary payment
   bankName: String,
   bankAccountNumber: String,
