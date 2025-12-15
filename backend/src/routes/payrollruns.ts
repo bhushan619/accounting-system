@@ -33,7 +33,7 @@ router.get('/:id', requirePayrollAccess, async (req, res) => {
     .populate('rejectedBy', 'email')
     .populate({
       path: 'payrollEntries',
-      populate: { path: 'employee', select: 'fullName employeeId email' }
+      populate: { path: 'employee', select: 'fullName employeeId epfNumber email nic designation department' }
     });
   if (!run) return res.status(404).json({ error: 'Not found' });
   res.json(run);
