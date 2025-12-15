@@ -885,6 +885,11 @@ export default function Payroll() {
           stamp_duty: `LKR ${entry.stampFee?.toLocaleString() || "0"}`,
           total_deductions: `LKR ${entry.totalDeductions?.toLocaleString() || "0"}`,
           net_pay: `LKR ${entry.netSalary?.toLocaleString() || "0"}`,
+          company_name: "Velosync (Pvt) Ltd",
+          company_reg_no: "PV - 00339955",
+          company_address: "3rd Floor, WSpace, 252A Galle Rd, Colombo 00400",
+          company_email: "velosynctech@gmail.com",
+          company_website: "velosynclk.com",
         };
 
         console.log(`Entry ${i + 1}: Sending email to ${entry.employee.email}`);
