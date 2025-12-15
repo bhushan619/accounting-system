@@ -790,6 +790,92 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
   }
 });
 
+// Rollback a paid payroll run (admin only)
+router.post('/:id/rollback', requireRole('admin'), auditLog('rollback', 'payrollrun'), async (req: any, res) => {
+  try {
+    const run = await PayrollRun.findById(req.params.id).populate({
+      path: 'payrollEntries',
+      populate: { path: 'employee bank' }
+    });
+    
+    if (!run) return res.status(404).json({ error: 'Not found' });
+    
+    if (run.status !== 'paid') {
+      return res.status(400).json({ error: 'Can only rollback paid payroll runs' });
+    }
+    
+    const Bank = require('../models/Bank').default;
+    const Expense = require('../models/Expense').default;
+    const Attendance = require('../models/Attendance').default;
+    
+    const monthName = new Date(0, run.month - 1).toLocaleString('default', { month: 'long' });
+    
+    // Calculate totals from payroll entries to restore bank balance
+    let totalEPFEmployer = 0;
+    let totalETF = 0;
+    
+    for (const payrollEntry of run.payrollEntries as any[]) {
+      totalEPFEmployer += payrollEntry.epfEmployer || 0;
+      totalETF += payrollEntry.etf || 0;
+    }
+    
+    // Find and restore bank balance
+    const firstEntry = run.payrollEntries[0] as any;
+    if (firstEntry?.bank) {
+      const bankId = firstEntry.bank._id || firstEntry.bank;
+      const bank = await Bank.findById(bankId);
+      if (bank) {
+        // Restore the deducted amount (net salary + EPF employer + ETF)
+        const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF;
+        bank.balance += totalDeduction;
+        bank.updatedAt = new Date();
+        await bank.save();
+      }
+    }
+    
+    // Delete expense entries created during processing
+    const expenseDescriptions = [
+      `EPF Employer Contribution (${monthName} ${run.year})`,
+      `EPF Employee Contribution (${monthName} ${run.year})`,
+      `ETF Contribution (${monthName} ${run.year})`,
+      `APIT Tax Deduction (${monthName} ${run.year})`,
+      `Stamp Fee Deduction (${monthName} ${run.year})`
+    ];
+    
+    await Expense.deleteMany({
+      description: { $in: expenseDescriptions },
+      category: 'Payroll'
+    });
+    
+    // Reset payroll run status to draft
+    run.status = 'draft';
+    run.paidDate = undefined;
+    run.approvedBy = undefined;
+    run.approvedAt = undefined;
+    run.submittedBy = undefined;
+    run.submittedAt = undefined;
+    run.updatedAt = new Date();
+    await run.save();
+    
+    // Reset all payroll entries to draft status
+    await Payroll.updateMany(
+      { _id: { $in: run.payrollEntries } },
+      { status: 'draft', paidDate: null, bank: null }
+    );
+    
+    // Delete attendance records associated with this payroll run
+    await Attendance.deleteMany({ payrollRun: run._id });
+    
+    res.json({ 
+      message: 'Payroll run rolled back successfully',
+      run
+    });
+  } catch (error) {
+    console.error('Rollback payroll error:', error);
+    res.status(500).json({ error: 'Failed to rollback payroll' });
+  }
+});
+
 router.delete('/:id', requirePayrollAccess, auditLog('delete', 'payrollrun'), async (req: any, res) => {
   const run = await PayrollRun.findById(req.params.id);
   if (!run) return res.status(404).json({ error: 'Not found' });

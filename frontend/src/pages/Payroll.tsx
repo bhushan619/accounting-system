@@ -1223,6 +1223,20 @@ export default function Payroll() {
     }
   };
 
+  const handleRollback = async (id: string) => {
+    if (!confirm("Are you sure you want to rollback this payroll run? This will:\n\n• Restore bank balance\n• Delete created expense entries\n• Reset payroll status to draft\n• Delete attendance records\n\nThis action cannot be undone.")) {
+      return;
+    }
+    
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${id}/rollback`);
+      loadData();
+      alert("Payroll run rolled back successfully");
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to rollback payroll");
+    }
+  };
+
   const filteredEmployees = employees.filter(
     (emp) =>
       emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1395,6 +1409,18 @@ export default function Payroll() {
                           >
                             <Mail size={14} />
                             Email
+                          </button>
+                        )}
+                        
+                        {/* Rollback - paid only, admin only */}
+                        {run.status === "paid" && isAdmin && (
+                          <button
+                            onClick={() => handleRollback(run._id)}
+                            className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 flex items-center gap-1"
+                            title="Rollback this payroll run to draft status"
+                          >
+                            <RotateCcw size={14} />
+                            Rollback
                           </button>
                         )}
                         
