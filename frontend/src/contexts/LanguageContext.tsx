@@ -218,6 +218,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.designation': 'Designation',
     'employees.basicSalary': 'Basic Salary',
     'employees.epfNo': 'EPF No',
+    'employees.epfNumber': 'EPF Number',
     'employees.employeeId': 'Employee ID',
     'employees.department': 'Department',
     
@@ -885,6 +886,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'employees.designation': '职位',
     'employees.basicSalary': '基本工资',
     'employees.epfNo': '公积金号',
+    'employees.epfNumber': '公积金号码',
     'employees.employeeId': '员工编号',
     'employees.department': '部门',
     
