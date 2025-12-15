@@ -156,6 +156,8 @@ export default function Payroll() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [showPayslipPreview, setShowPayslipPreview] = useState(false);
+  const [previewEmployee, setPreviewEmployee] = useState<any>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
@@ -187,7 +189,7 @@ export default function Payroll() {
   const [viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
 
   // Disable swipe gestures when any modal is open
-  usePreventSwipe(showModal || showPreview || showBankModal || showViewModal || showEmailModal || showEditModal || showEmailConfirm || showRejectModal);
+  usePreventSwipe(showModal || showPreview || showBankModal || showViewModal || showEmailModal || showEditModal || showEmailConfirm || showRejectModal || showPayslipPreview);
 
   useEffect(() => {
     loadData();
@@ -2084,15 +2086,52 @@ export default function Payroll() {
                     <strong>Run:</strong> {selectedRun.runNumber} • {getMonthName(selectedRun.month)} {selectedRun.year}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive email
-                    notifications
+                    <strong>Employees:</strong> {selectedRun.payrollEntries?.length || 0} will receive payslip
+                    emails
                   </p>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    Email notifications will be sent to all employees in this payroll run with their salary details.
+                    Payslip emails will be sent to all employees in this payroll run with their complete salary breakdown.
                   </p>
+                </div>
+
+                {/* Employee List with Preview */}
+                <div className="border border-border rounded-lg max-h-60 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Employee</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Email</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net Pay</th>
+                        <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">Preview</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(selectedRun.payrollEntries as any[])?.map((entry: any) => (
+                        <tr key={entry._id} className="hover:bg-accent/50">
+                          <td className="px-3 py-2 text-foreground">{entry.employee?.fullName || "N/A"}</td>
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{entry.employee?.email || "-"}</td>
+                          <td className="px-3 py-2 text-right text-foreground font-medium">
+                            LKR {entry.netSalary?.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => {
+                                setPreviewEmployee(entry);
+                                setShowPayslipPreview(true);
+                              }}
+                              className="px-2 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 flex items-center gap-1 mx-auto"
+                            >
+                              <Eye size={14} />
+                              Preview
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -2161,6 +2200,149 @@ export default function Payroll() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Payslip Preview Modal */}
+      {showPayslipPreview && previewEmployee && selectedRun && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xl p-0 max-h-[90vh] overflow-y-auto">
+            {/* Payslip Content */}
+            <div className="p-6">
+              {/* Header */}
+              <div className="text-center pb-4 border-b-2 border-gray-200">
+                <div className="text-xl font-bold text-gray-800">
+                  PAY SLIP – {getMonthName(selectedRun.month)} {selectedRun.year}
+                </div>
+                <div className="text-lg font-bold text-gray-800 mt-2">Velosync (Pvt) Ltd</div>
+                <div className="text-sm text-gray-600 mt-1">PV - 00339955</div>
+                <div className="text-sm text-gray-600">3rd Floor, WSpace, 252A Galle Rd, Colombo 00400</div>
+                <div className="text-sm text-gray-600">Email: velosynctech@gmail.com | velosynclk.com</div>
+              </div>
+
+              {/* Employee Info */}
+              <div className="mt-4">
+                <div className="font-bold text-gray-700 mb-2">Employee Details</div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr>
+                      <td className="text-gray-600 py-1">Employee Name:</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.fullName || "N/A"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">Designation:</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.department || "Employee"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">E.P.F No:</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.epfNumber || previewEmployee.employee?.employeeId || "-"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">NIC Number:</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.nicNumber || "-"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">Month:</td>
+                      <td className="text-right font-bold text-gray-800">{getMonthName(selectedRun.month)} {selectedRun.year}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Earnings */}
+              <div className="mt-4">
+                <div className="font-bold text-gray-700 mb-2">Earnings</div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr>
+                      <td className="text-gray-600 py-1">Basic Salary</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.basicSalary?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">Transportation Allowance</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.transportAllowance?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">Performance Allowance</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.performanceSalary?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr className="border-t border-gray-200">
+                      <td className="text-gray-600 py-1 font-semibold">Gross Salary</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.grossSalary?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">E.T.F (3%)</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.etf?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">E.P.F (12%)</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.epfEmployer?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr className="border-t border-gray-200">
+                      <td className="text-gray-600 py-1 font-semibold">Total Remuneration</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.totalCTC?.toLocaleString() || "0"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Deductions */}
+              <div className="mt-4">
+                <div className="font-bold text-gray-700 mb-2">Deductions</div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr>
+                      <td className="text-gray-600 py-1">E.P.F (8%)</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.epfEmployee?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">APIT</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.apit?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-gray-600 py-1">Stamp Duty</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.stampFee?.toLocaleString() || "0"}</td>
+                    </tr>
+                    <tr className="border-t border-gray-200">
+                      <td className="text-gray-600 py-1 font-semibold">Total Deductions</td>
+                      <td className="text-right font-bold text-gray-800">LKR {previewEmployee.totalDeductions?.toLocaleString() || "0"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Net Pay */}
+              <div className="mt-4">
+                <div className="font-bold text-gray-700 mb-2">Net Pay</div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="bg-green-50">
+                      <td className="text-gray-800 py-2 font-bold">Net Pay</td>
+                      <td className="text-right font-bold text-green-700 text-lg">LKR {previewEmployee.netSalary?.toLocaleString() || "0"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer */}
+              <div className="text-center text-xs text-gray-500 pt-4 mt-4 border-t border-gray-200">
+                This is a system-generated payslip. No signature is required.
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowPayslipPreview(false);
+                  setPreviewEmployee(null);
+                }}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
