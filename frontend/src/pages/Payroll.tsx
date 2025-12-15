@@ -872,7 +872,7 @@ export default function Payroll() {
           employee_name: entry.employee.fullName,
           designation: entry.employee.department || "Employee",
           epf_no: entry.employee.epfNumber || entry.employee.employeeId || "-",
-          nic_number: entry.employee.nicNumber || "-",
+          nic_number: entry.employee.nic || "-",
           basic_salary: `LKR ${entry.basicSalary?.toLocaleString() || "0"}`,
           transport_allowance: `LKR ${entry.transportAllowance?.toLocaleString() || "0"}`,
           performance_allowance: `LKR ${entry.performanceSalary?.toLocaleString() || "0"}`,
@@ -2240,7 +2240,7 @@ export default function Payroll() {
                     </tr>
                     <tr>
                       <td className="text-gray-600 py-1">NIC Number:</td>
-                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.nicNumber || "-"}</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.nic || "-"}</td>
                     </tr>
                     <tr>
                       <td className="text-gray-600 py-1">Month:</td>

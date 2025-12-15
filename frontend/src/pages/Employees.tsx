@@ -50,6 +50,7 @@ export default function Employees() {
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
+    epfNumber: '',
     fullName: '',
     email: '',
     phone: '',
@@ -227,6 +228,7 @@ export default function Employees() {
     const emp = employee as any;
     setFormData({
       employeeId: employee.employeeId,
+      epfNumber: emp.epfNumber || '',
       fullName: employee.fullName,
       email: employee.email,
       phone: employee.phone || '',
@@ -301,6 +303,7 @@ export default function Employees() {
     setEditingEmployee(null);
     setFormData({
       employeeId: '',
+      epfNumber: '',
       fullName: '',
       email: '',
       phone: '',
@@ -453,6 +456,19 @@ export default function Employees() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.epfNumber') || 'EPF Number'}</label>
+                  <input
+                    type="text"
+                    value={formData.epfNumber}
+                    onChange={(e) => setFormData({ ...formData, epfNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    placeholder="EPF registration number"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">
                     <span className="flex items-center gap-1">
