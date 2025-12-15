@@ -870,7 +870,7 @@ export default function Payroll() {
           to_email: entry.employee.email,
           month: monthYear,
           employee_name: entry.employee.fullName,
-          designation: entry.employee.department || "Employee",
+          designation: entry.employee.designation || "Employee",
           epf_no: entry.employee.epfNumber || entry.employee.employeeId || "-",
           nic_number: entry.employee.nic || "-",
           basic_salary: `LKR ${entry.basicSalary?.toLocaleString() || "0"}`,
@@ -2232,7 +2232,7 @@ export default function Payroll() {
                     </tr>
                     <tr>
                       <td className="text-gray-600 py-1">Designation:</td>
-                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.department || "Employee"}</td>
+                      <td className="text-right font-bold text-gray-800">{previewEmployee.employee?.designation || "Employee"}</td>
                     </tr>
                     <tr>
                       <td className="text-gray-600 py-1">E.P.F No:</td>
