@@ -133,7 +133,7 @@ interface EditEntry {
 
 // EmailJS Configuration - loads from environment variables with fallbacks
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PAYSLIP_TEMPLATE_ID = "template_velosyncpayslip";
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 // Get total calendar days in a month
@@ -171,7 +171,7 @@ export default function Payroll() {
   const [sendingEmails, setSendingEmails] = useState(false);
   const [emailConfig, setEmailConfig] = useState({
     serviceId: EMAILJS_SERVICE_ID,
-    templateId: EMAILJS_TEMPLATE_ID,
+    templateId: EMAILJS_PAYSLIP_TEMPLATE_ID,
     publicKey: EMAILJS_PUBLIC_KEY,
   });
   const [formData, setFormData] = useState({
@@ -863,12 +863,26 @@ export default function Payroll() {
           continue;
         }
 
+        const monthYear = `${getMonthName(selectedRun.month)} ${selectedRun.year}`;
         const templateParams = {
           to_email: entry.employee.email,
-          EMPLOYEE_NAME: entry.employee.fullName,
-          AMOUNT: entry.netSalary.toLocaleString(),
-          PROCESSING_DATE: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
-          PERIOD_TEXT: `${getMonthName(selectedRun.month)} ${selectedRun.year}`,
+          month: monthYear,
+          employee_name: entry.employee.fullName,
+          designation: entry.employee.department || "Employee",
+          epf_no: entry.employee.epfNumber || entry.employee.employeeId || "-",
+          nic_number: entry.employee.nicNumber || "-",
+          basic_salary: `LKR ${entry.basicSalary?.toLocaleString() || "0"}`,
+          transport_allowance: `LKR ${entry.transportAllowance?.toLocaleString() || "0"}`,
+          performance_allowance: `LKR ${entry.performanceSalary?.toLocaleString() || "0"}`,
+          gross_salary: `LKR ${entry.grossSalary?.toLocaleString() || "0"}`,
+          etf_amount: `LKR ${entry.etf?.toLocaleString() || "0"}`,
+          epf_12_amount: `LKR ${entry.epfEmployer?.toLocaleString() || "0"}`,
+          total_remuneration: `LKR ${entry.totalCTC?.toLocaleString() || "0"}`,
+          epf_8_amount: `LKR ${entry.epfEmployee?.toLocaleString() || "0"}`,
+          apit: `LKR ${entry.apit?.toLocaleString() || "0"}`,
+          stamp_duty: `LKR ${entry.stampFee?.toLocaleString() || "0"}`,
+          total_deductions: `LKR ${entry.totalDeductions?.toLocaleString() || "0"}`,
+          net_pay: `LKR ${entry.netSalary?.toLocaleString() || "0"}`,
         };
 
         console.log(`Entry ${i + 1}: Sending email to ${entry.employee.email}`);
