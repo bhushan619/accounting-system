@@ -749,6 +749,23 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
       });
     }
     
+    // Create expense entry for Stamp Fee
+    if (totalStampFee > 0) {
+      const stampSerial = await getNextSequence('expense', 'EXP');
+      await Expense.create({
+        serialNumber: stampSerial,
+        category: 'Payroll',
+        description: `Stamp Fee Deduction (${monthName} ${run.year})`,
+        amount: totalStampFee,
+        currency: 'LKR',
+        date: new Date(),
+        paymentMethod: 'bank',
+        bank: bankId,
+        status: 'approved',
+        createdBy: req.user._id
+      });
+    }
+    
     // Update bank balance - decrease only for statutory contributions (not employee net salary)
     const totalStatutoryDeduction = totalEPFEmployer + totalETF;
     bank.balance -= totalStatutoryDeduction;
@@ -821,7 +838,8 @@ router.post('/:id/rollback', requireRole('admin'), auditLog('rollback', 'payroll
       `EPF Employer Contribution (${monthName} ${run.year})`,
       `EPF Employee Contribution (${monthName} ${run.year})`,
       `ETF Contribution (${monthName} ${run.year})`,
-      `APIT Tax Deduction (${monthName} ${run.year})`
+      `APIT Tax Deduction (${monthName} ${run.year})`,
+      `Stamp Fee Deduction (${monthName} ${run.year})`
     ];
     
     await Expense.deleteMany({
