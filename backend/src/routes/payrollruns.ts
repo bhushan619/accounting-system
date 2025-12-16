@@ -766,9 +766,9 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
       });
     }
     
-    // Update bank balance - decrease for payroll payment and statutory contributions
-    const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF;
-    bank.balance -= totalDeduction;
+    // Update bank balance - decrease only for statutory contributions (not employee net salary)
+    const totalStatutoryDeduction = totalEPFEmployer + totalETF;
+    bank.balance -= totalStatutoryDeduction;
     bank.updatedAt = new Date();
     await bank.save();
     
@@ -825,9 +825,9 @@ router.post('/:id/rollback', requireRole('admin'), auditLog('rollback', 'payroll
       const bankId = firstEntry.bank._id || firstEntry.bank;
       const bank = await Bank.findById(bankId);
       if (bank) {
-        // Restore the deducted amount (net salary + EPF employer + ETF)
-        const totalDeduction = run.totalNetSalary + totalEPFEmployer + totalETF;
-        bank.balance += totalDeduction;
+        // Restore only the statutory deductions (not employee net salary)
+        const totalStatutoryDeduction = totalEPFEmployer + totalETF;
+        bank.balance += totalStatutoryDeduction;
         bank.updatedAt = new Date();
         await bank.save();
       }
