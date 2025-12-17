@@ -3,7 +3,7 @@
 This is a regenerated copy of the final VeloSync scaffold (backend + frontend) with local uploads.
 Follow the README in the backend and frontend folders to run the project locally.
 
-Quickstart:
+Quickstart::
 1. backend: cp backend/.env.example backend/.env && cd backend && npm ci && npm run dev
 2. frontend: cp frontend/.env.example frontend/.env && cd frontend && npm ci && npm run dev
 3. or docker-compose up --build
