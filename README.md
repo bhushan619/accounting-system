@@ -1,4 +1,4 @@
-# VeloSync (Regenerated Final Repo)
+# Accounting System
 
 This is a regenerated copy of the final VeloSync scaffold (backend + frontend) with local uploads.
 Follow the README in the backend and frontend folders to run the project locally.
