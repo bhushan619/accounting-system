@@ -1,41 +1,26 @@
-version: '3.8'
 services:
-  # mongo:
-  #   image: mongo:6.0
-  #   command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-  #   volumes:
-  #     - mongo-data:/data/db
-  #     - ./backend/docker/mongo-init-replica.js:/docker-entrypoint-initdb.d/init.js:ro
-  #   ports:
-  #     - 27017:27017
   mongo:
-    image: mongo:6.0
+    image: mongo:8.0
+    container_name: mongo
+    command: ["mongod", "--port", "27019", "--bind_ip_all"]
+    ports:
+      - "27019:27019"
     volumes:
       - mongo-data:/data/db
-    ports:
-      - 27017:27017
-    
+
   backend:
     build: ./backend
-    volumes:
-      - ./backend/uploads:/usr/src/app/uploads
     environment:
-      - MONGODB_URI=mongodb://mongo:27017/velosync
-      - JWT_SECRET=hrVwJGQgD4d2T5WeMhjatlEFisfyJgWow3m+jlwlLLEpAT6kt+h3Da4IlIsCVsjL1PuWGFnoFxi0bEQxwKGZjQ==
-      - JWT_EXP=15m
-      - REFRESH_EXP=7d
-      - UPLOADS_DIR=./uploads
-      - NODE_ENV=production
-      - PORT=4000
-    ports:
-      - 4000:4000
+      - MONGODB_URI=mongodb://mongo:27019/velosync
     depends_on:
       - mongo
-    
+    ports:
+      - "4000:4000"
+
   frontend:
     build: ./frontend
     ports:
-      - 80:80
+      - "80:80"
     depends_on:
       - backend
 

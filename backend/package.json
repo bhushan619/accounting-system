@@ -1,5 +1,5 @@
 {
-  "name": "velosync-backend",
+  "name": "accounting-app-backend",
   "version": "0.1.0",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

@@ -2,14 +2,14 @@
 
 set -e
 
-BUNDLE_NAME="velosync-docker-bundle"
-OUTPUT_DIR="./docker-bundle"
+BUNDLE_NAME="accounting-app-bundle"
+OUTPUT_DIR="./accounting-app"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 mkdir -p $OUTPUT_DIR
 
 echo "=== Building Docker images ==="
-docker-compose build
+docker compose build --no-cache backend frontend
 
 echo "=== Detecting built image names ==="
 
@@ -18,10 +18,10 @@ BACKEND_IMAGE=$(docker images --format "{{.Repository}}" | grep backend | head -
 FRONTEND_IMAGE=$(docker images --format "{{.Repository}}" | grep frontend | head -n 1)
 
 # Fallback if grep didn't find correct names
-[ -z "$BACKEND_IMAGE" ] && BACKEND_IMAGE="velosync-code-backend"
-[ -z "$FRONTEND_IMAGE" ] && FRONTEND_IMAGE="velosync-code-frontend"
+[ -z "$BACKEND_IMAGE" ] && BACKEND_IMAGE="accounting-app-backend"
+[ -z "$FRONTEND_IMAGE" ] && FRONTEND_IMAGE="accounting-app-frontend"
 
-MONGO_IMAGE="mongo:6.0"
+MONGO_IMAGE="mongo:8.0"
 
 echo "Backend image  : $BACKEND_IMAGE"
 echo "Frontend image : $FRONTEND_IMAGE"
