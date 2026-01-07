@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
-import { FileSpreadsheet, Download, Calculator } from 'lucide-react';
+import { FileSpreadsheet, Calculator } from 'lucide-react';
 
 export default function VATReports() {
   const { t } = useLanguage();

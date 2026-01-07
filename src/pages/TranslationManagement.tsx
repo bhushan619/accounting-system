@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Save, RotateCcw, Globe, Check } from 'lucide-react';
 import { useLanguage, defaultTranslations, Language } from '../contexts/LanguageContext';
 

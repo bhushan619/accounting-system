@@ -38,7 +38,7 @@ export default function Settings() {
   const isAdmin = user?.role === 'admin';
   
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'company' | 'defaults' | 'email'>('profile');
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, _setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);

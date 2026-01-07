@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Download, FileText, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
@@ -100,7 +100,8 @@ export default function TaxReports() {
       const totalVATPaid = approvedExpenses.reduce((sum: number, exp: any) => sum + (exp.tax || 0), 0);
 
       // Calculate payroll statutory contributions from expense records
-      const payrollExpenseSummary = payrollExpenses.reduce((acc: any, exp: any) => {
+      // Kept for potential future use
+      /* const payrollExpenseSummary = payrollExpenses.reduce((acc: any, exp: any) => {
         const desc = exp.description.toLowerCase();
         if (desc.includes('epf employer')) {
           return { ...acc, epfEmployer: acc.epfEmployer + exp.amount };
@@ -110,7 +111,8 @@ export default function TaxReports() {
           return { ...acc, apitEmployer: acc.apitEmployer + exp.amount };
         }
         return acc;
-      }, { epfEmployer: 0, etf: 0, apitEmployer: 0 });
+      }, { epfEmployer: 0, etf: 0, apitEmployer: 0 }); */
+      void payrollExpenses; // Suppress unused warning
 
       const payrollSummary = paidPayroll.reduce((acc: any, pay: any) => ({
         totalGross: acc.totalGross + pay.grossSalary,

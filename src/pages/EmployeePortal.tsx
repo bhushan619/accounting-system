@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { 
   User, FileText, Download, Edit, Check, X, Clock, 
-  Building2, Phone, Mail, MapPin, CreditCard 
+  Phone, Mail, MapPin, CreditCard 
 } from 'lucide-react';
 
 interface Employee {
@@ -51,7 +51,7 @@ interface UpdateRequest {
 }
 
 export default function EmployeePortal() {
-  const { user } = useAuth();
+  useAuth(); // Keep auth context for token
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'profile' | 'payslips' | 'requests'>('profile');
   const [profile, setProfile] = useState<Employee | null>(null);

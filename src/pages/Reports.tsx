@@ -1,4 +1,4 @@
-import React from 'react';
+// Reports component
 import { Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 

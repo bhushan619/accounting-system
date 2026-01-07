@@ -1,4 +1,4 @@
-import React from 'react';
+// LanguageSwitcher component
 import { Globe } from 'lucide-react';
 import { useLanguage, Language } from '../contexts/LanguageContext';
 

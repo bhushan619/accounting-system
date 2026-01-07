@@ -46,7 +46,7 @@ export default function Employees() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
+  const [_taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
