@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "build:dev": "cd frontend && npm run build:dev"
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
