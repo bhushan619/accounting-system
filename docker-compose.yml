@@ -10,6 +10,7 @@ services:
 
   backend:
     build: ./backend
+    image: accounting-system-backend:latest
     environment:
       - MONGODB_URI=mongodb://mongo:27019/velosync
     depends_on:
@@ -19,6 +20,7 @@ services:
 
   frontend:
     build: .
+    image: accounting-system-frontend:latest
     ports:
       - "80:80"
     depends_on:
