@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev:frontend": "vite",
-    "dev:backend": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev:backend": "npx ts-node-dev --respawn backend/src/index.ts",
     "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"blue,green\" -p \"[{name}]\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "build:dev": "vite build --mode development"
