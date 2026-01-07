@@ -171,7 +171,7 @@ export default function Payroll() {
   const [searchQuery, setSearchQuery] = useState("");
   const [taxRates, setTaxRates] = useState<any>(null);
   const [sendingEmails, setSendingEmails] = useState(false);
-  const [emailConfig, setEmailConfig] = useState({
+  const [emailConfig] = useState({
     serviceId: EMAILJS_SERVICE_ID,
     templateId: EMAILJS_PAYSLIP_TEMPLATE_ID,
     publicKey: EMAILJS_PUBLIC_KEY,
@@ -186,7 +186,7 @@ export default function Payroll() {
   const [attendanceWarnings, setAttendanceWarnings] = useState<AttendanceWarning[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
+  const [_viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
 
   // Disable swipe gestures when any modal is open
   usePreventSwipe(showModal || showPreview || showBankModal || showViewModal || showEmailModal || showEditModal || showEmailConfirm || showRejectModal || showPayslipPreview);

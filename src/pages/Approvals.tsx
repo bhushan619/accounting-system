@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -38,7 +38,7 @@ interface ProfileUpdateRequest {
 }
 
 export default function Approvals() {
-  const { user } = useAuth();
+  useAuth(); // Keep auth context for token
   const { t } = useLanguage();
   const [invoices, setInvoices] = useState<PendingInvoice[]>([]);
   const [expenses, setExpenses] = useState<PendingExpense[]>([]);

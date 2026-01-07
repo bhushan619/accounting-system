@@ -1,4 +1,4 @@
-import React from 'react';
+// PendingApproval component
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -244,7 +244,7 @@ export default function Dashboard() {
             </div>
             <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
             <p className={`text-2xl font-bold ${stat.valueColor}`}>
-              {stat.isCount ? stat.value.toLocaleString() : `LKR ${stat.value.toLocaleString()}`}
+              {`LKR ${stat.value.toLocaleString()}`}
             </p>
           </div>
         ))}
