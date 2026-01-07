@@ -1,10 +1,43 @@
 # Accounting System
 
-Follow the README in the backend and frontend folders to run the project locally.
+A full-stack accountancy management system with a Node.js/Express backend and React/Vite frontend.
 
-Quickstart::
-1. backend: cp backend/.env.example backend/.env && cd backend && npm ci && npm run dev
-2. frontend: cp frontend/.env.example frontend/.env && cd frontend && npm ci && npm run dev
-3. or docker-compose up --build
+## Quick Start
 
-Swagger: http://localhost:4000/docs
+### Development
+```bash
+# Backend
+cd backend && npm ci && npm run dev
+
+# Frontend (from root)
+npm ci && npm run dev
+```
+
+### Docker
+```bash
+docker-compose up --build
+```
+
+## Project Structure
+
+```
+/
+├── src/                  # Frontend source code
+│   ├── components/       # React components
+│   ├── contexts/         # React contexts
+│   ├── hooks/            # Custom hooks
+│   └── pages/            # Page components
+├── backend/              # Backend source code
+│   ├── src/
+│   │   ├── models/       # MongoDB models
+│   │   ├── routes/       # API routes
+│   │   └── middleware/   # Express middleware
+│   └── uploads/          # File uploads
+├── index.html            # Entry HTML
+├── vite.config.ts        # Vite configuration
+└── docker-compose.yml    # Docker orchestration
+```
+
+## API Documentation
+
+Swagger docs available at: http://localhost:4000/docs

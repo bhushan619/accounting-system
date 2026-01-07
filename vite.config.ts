@@ -3,16 +3,14 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  // Frontend code lives in ./frontend
-  root: 'frontend',
+  plugins: [react()],
   build: {
-    // Put built files in ../dist (project root /dist)
-    outDir: '../dist',
+    outDir: 'dist',
     emptyOutDir: true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'frontend/src'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
   server: {
