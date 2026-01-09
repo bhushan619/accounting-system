@@ -8,6 +8,7 @@ interface Transaction {
   _id: string;
   type: 'income' | 'expense' | 'payroll';
   amount: number;
+  currency: string;
   category: string;
   description: string;
   date: string;
@@ -18,12 +19,17 @@ interface BankTransaction {
   _id: string;
   type: 'credit' | 'debit';
   amount: number;
+  currency: string;
   bankName: string;
   bankAccountNumber: string;
   description: string;
   date: string;
   reference?: string;
   category: string;
+}
+
+interface CurrencySettings {
+  exchangeRates: { LKR_AED: number; AED_LKR: number };
 }
 
 const getMonthName = (month: number) => {
@@ -40,6 +46,7 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'transactions' | 'bank'>('transactions');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'payroll'>('all');
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -49,13 +56,16 @@ export default function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      // Fetch invoices, expenses, payroll, and banks to create unified views
-      const [invoicesRes, expensesRes, payrollRes, banksRes] = await Promise.all([
+      // Fetch invoices, expenses, payroll, banks, and currency settings
+      const [invoicesRes, expensesRes, payrollRes, banksRes, currencyRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/invoices`),
         axios.get(`${import.meta.env.VITE_API_URL}/expenses`),
         axios.get(`${import.meta.env.VITE_API_URL}/payroll`),
-        axios.get(`${import.meta.env.VITE_API_URL}/banks`)
+        axios.get(`${import.meta.env.VITE_API_URL}/banks`),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`).catch(() => ({ data: null }))
       ]);
+
+      if (currencyRes.data) setCurrencySettings(currencyRes.data);
 
       const incomeTransactions = invoicesRes.data
         .filter((inv: any) => inv.status === 'paid')
@@ -63,6 +73,7 @@ export default function Transactions() {
           _id: inv._id,
           type: 'income',
           amount: inv.total,
+          currency: inv.currency || 'LKR',
           category: 'Invoice',
           description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Initial Payment'}`,
           date: inv.issueDate,
@@ -75,6 +86,7 @@ export default function Transactions() {
           _id: exp._id,
           type: exp.category === 'Payroll' ? 'payroll' : 'expense',
           amount: exp.amount,
+          currency: exp.currency || 'LKR',
           category: exp.category,
           description: exp.description || 'Expense',
           date: exp.date,
@@ -87,6 +99,7 @@ export default function Transactions() {
           _id: pay._id,
           type: 'payroll',
           amount: pay.netSalary,
+          currency: 'LKR', // Payroll is always in LKR
           category: 'Payroll',
           description: `Payroll - ${pay.employee?.fullName || 'Employee'} (${pay.month}/${pay.year})`,
           date: pay.createdAt,
@@ -110,6 +123,7 @@ export default function Transactions() {
             _id: inv._id,
             type: 'credit' as const,
             amount: inv.total,
+            currency: inv.currency || 'LKR',
             bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
             description: `Invoice ${inv.serialNumber || inv.invoiceNumber} - ${inv.client?.name || 'Initial Payment'}`,
@@ -127,6 +141,7 @@ export default function Transactions() {
             _id: exp._id,
             type: 'debit' as const,
             amount: exp.amount,
+            currency: exp.currency || 'LKR',
             bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
             description: exp.description || 'Expense',
@@ -144,6 +159,7 @@ export default function Transactions() {
             _id: pay._id,
             type: 'debit' as const,
             amount: pay.netSalary,
+            currency: 'LKR',
             bankName: bank?.bankName || bank?.name || 'Unknown Bank',
             bankAccountNumber: bank?.accountNumber || '-',
             description: `Salary payment - ${pay.employee?.fullName || 'Employee'} (${getMonthName(pay.month)} ${pay.year})`,
@@ -181,6 +197,14 @@ export default function Transactions() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - (totalExpense + totalPayroll);
+
+  const getConvertedAmount = (amount: number, currency: string) => {
+    if (!currencySettings) return null;
+    if (currency === 'LKR') {
+      return { amount: amount * currencySettings.exchangeRates.LKR_AED, currency: 'AED' };
+    }
+    return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
+  };
 
   if (loading) return <div className="text-foreground">Loading...</div>;
 
@@ -337,10 +361,17 @@ export default function Transactions() {
                     <td className="px-6 py-4 text-sm text-foreground">{transaction.category}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{transaction.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{transaction.reference || '-'}</td>
-                    <td className={`px-6 py-4 text-sm text-right font-medium ${
+                    <td className={`px-6 py-4 text-sm text-right ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'} Rs. {transaction.amount.toLocaleString()}
+                      <div className="font-medium">
+                        {transaction.type === 'income' ? '+' : '-'} {transaction.currency} {transaction.amount.toLocaleString()}
+                      </div>
+                      {currencySettings && (
+                        <div className="text-xs text-muted-foreground">
+                          ≈ {getConvertedAmount(transaction.amount, transaction.currency)?.currency} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -388,10 +419,17 @@ export default function Transactions() {
                     <td className="px-6 py-4 text-sm text-foreground">{transaction.category}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{transaction.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{transaction.reference || '-'}</td>
-                    <td className={`px-6 py-4 text-sm text-right font-medium ${
+                    <td className={`px-6 py-4 text-sm text-right ${
                       transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'credit' ? '+' : '-'} Rs. {transaction.amount.toLocaleString()}
+                      <div className="font-medium">
+                        {transaction.type === 'credit' ? '+' : '-'} {transaction.currency} {transaction.amount.toLocaleString()}
+                      </div>
+                      {currencySettings && (
+                        <div className="text-xs text-muted-foreground">
+                          ≈ {getConvertedAmount(transaction.amount, transaction.currency)?.currency} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

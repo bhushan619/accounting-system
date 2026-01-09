@@ -453,8 +453,16 @@ export default function Invoices() {
                 <td className="px-6 py-4 text-sm text-muted-foreground">
                   {new Date(invoice.issueDate).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 text-sm text-foreground font-medium">
-                  {invoice.currency} {invoice.total.toLocaleString()}
+                <td className="px-6 py-4 text-sm text-foreground">
+                  <div className="font-medium">{invoice.currency} {invoice.total.toLocaleString()}</div>
+                  {currencySettings && (
+                    <div className="text-xs text-muted-foreground">
+                      ≈ {invoice.currency === 'LKR' ? 'AED' : 'LKR'} {(invoice.currency === 'LKR' 
+                        ? invoice.total * currencySettings.exchangeRates.LKR_AED 
+                        : invoice.total * currencySettings.exchangeRates.AED_LKR
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <select
