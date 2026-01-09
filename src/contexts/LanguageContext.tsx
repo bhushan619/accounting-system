@@ -478,6 +478,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'credit': 'Credit',
     'debit': 'Debit',
     'expense': 'Expense',
+    'transactions.displayCurrency': 'Display Currency',
     
     // Reports Page
     'reports': 'Reports',
@@ -1146,6 +1147,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'credit': '贷方',
     'debit': '借方',
     'expense': '费用',
+    'transactions.displayCurrency': '显示货币',
     
     // Reports Page
     'reports': '报告',
