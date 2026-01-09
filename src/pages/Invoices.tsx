@@ -40,8 +40,11 @@ export default function Invoices() {
     notes: '',
     status: 'draft',
     attachmentUrl: '',
-    receiptUrl: ''
+    receiptUrl: '',
+    isVatApplicable: false,
+    vatCategory: 'standard' as 'standard' | 'zero_rated'
   });
+  const [currencySettings, setCurrencySettings] = useState<any>(null);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'invoice' | 'receipt'} | null>(null);
@@ -55,7 +58,7 @@ export default function Invoices() {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [invoicesRes, clientsRes, banksRes, companyRes] = await Promise.all([
+      const [invoicesRes, clientsRes, banksRes, companyRes, currencyRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -67,12 +70,16 @@ export default function Invoices() {
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/settings/company`, {
           headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: {} }))
+        }).catch(() => ({ data: {} })),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: null }))
       ]);
       setInvoices(invoicesRes.data);
       setClients(clientsRes.data);
       setBanks(banksRes.data);
       setCompanySettings(companyRes.data);
+      if (currencyRes.data) setCurrencySettings(currencyRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -84,7 +91,15 @@ export default function Invoices() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${import.meta.env.VITE_API_URL}/invoices`, formData, {
+      const region = companySettings.region || 'LK';
+      const vatRate = formData.vatCategory === 'zero_rated' ? 0 : 
+        (currencySettings?.vatRates?.[region]?.standard || (region === 'AE' ? 5 : 18));
+      
+      await axios.post(`${import.meta.env.VITE_API_URL}/invoices`, {
+        ...formData,
+        vatRate,
+        isVatApplicable: formData.isVatApplicable
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setShowModal(false);
@@ -217,8 +232,16 @@ export default function Invoices() {
       notes: '',
       status: 'draft',
       attachmentUrl: '',
-      receiptUrl: ''
+      receiptUrl: '',
+      isVatApplicable: false,
+      vatCategory: 'standard'
     });
+  };
+
+  const getVatRate = () => {
+    const region = companySettings.region || 'LK';
+    if (formData.vatCategory === 'zero_rated') return 0;
+    return currencySettings?.vatRates?.[region]?.standard || (region === 'AE' ? 5 : 18);
   };
 
   const addLine = () => {
@@ -620,6 +643,37 @@ export default function Invoices() {
                 >
                   + Add Line Item
                 </button>
+              </div>
+
+              {/* VAT Configuration */}
+              <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isVatApplicable"
+                    checked={formData.isVatApplicable}
+                    onChange={(e) => setFormData({ ...formData, isVatApplicable: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="isVatApplicable" className="text-sm font-medium">
+                    VAT Applicable ({companySettings.region === 'AE' ? '🇦🇪 UAE' : '🇱🇰 LK'}: {getVatRate()}%)
+                  </label>
+                </div>
+                {formData.isVatApplicable && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">VAT Category</label>
+                      <select
+                        value={formData.vatCategory}
+                        onChange={(e) => setFormData({ ...formData, vatCategory: e.target.value as 'standard' | 'zero_rated' })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                      >
+                        <option value="standard">Standard Rate ({getVatRate()}%)</option>
+                        <option value="zero_rated">Zero Rated (0%)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
