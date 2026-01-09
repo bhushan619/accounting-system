@@ -2,9 +2,9 @@ services:
   mongo:
     image: mongo:8.0
     container_name: mongo
-    command: ["mongod", "--port", "27019", "--bind_ip_all"]
+    command: ["mongod", "--port", "27005", "--bind_ip_all"]
     ports:
-      - "27019:27019"
+      - "27005:27005"
     volumes:
       - mongo-data:/data/db
 
@@ -12,17 +12,17 @@ services:
     build: ./backend
     image: accounting-system-backend:latest
     environment:
-      - MONGODB_URI=mongodb://mongo:27019/velosync
+      - MONGODB_URI=mongodb://mongo:27005/velosync
     depends_on:
       - mongo
     ports:
-      - "4000:4000"
+      - "4005:4005"
 
   frontend:
     build: .
     image: accounting-system-frontend:latest
     ports:
-      - "80:80"
+      - "8005:80"
     depends_on:
       - backend
 

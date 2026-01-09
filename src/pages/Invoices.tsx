@@ -865,6 +865,16 @@ export default function Invoices() {
                     {viewInvoice.currency} {((viewInvoice.subtotal * viewInvoice.tax) / 100).toLocaleString()}
                   </span>
                 </div>
+                {viewInvoice.isVatApplicable && (
+                  <div className="flex justify-between mb-2 bg-muted/50 p-2 rounded">
+                    <span className="text-sm text-muted-foreground">
+                      VAT ({viewInvoice.vatRate || 0}% - {viewInvoice.vatCategory === 'zero_rated' ? 'Zero Rated' : 'Standard'})
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {viewInvoice.currency} {((viewInvoice.subtotal * (viewInvoice.vatRate || 0)) / 100).toLocaleString()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Discount</span>
                   <span className="font-medium text-foreground">{viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}</span>
@@ -873,6 +883,17 @@ export default function Invoices() {
                   <span className="text-foreground">Total</span>
                   <span className="text-foreground">{viewInvoice.currency} {viewInvoice.total?.toLocaleString()}</span>
                 </div>
+                {currencySettings && (
+                  <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                    <span>Converted</span>
+                    <span>
+                      ≈ {viewInvoice.currency === 'LKR' ? 'AED' : 'LKR'} {(viewInvoice.currency === 'LKR' 
+                        ? viewInvoice.total * currencySettings.exchangeRates.LKR_AED 
+                        : viewInvoice.total * currencySettings.exchangeRates.AED_LKR
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {viewInvoice.notes && (
