@@ -24,6 +24,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [currencySettings, setCurrencySettings] = useState<any>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
 
   // Date filter state
   const [startDate, setStartDate] = useState(() => {
@@ -39,8 +41,18 @@ export default function Dashboard() {
   useEffect(() => {
     if (!authLoading && token) {
       loadStats();
+      loadCurrencySettings();
     }
   }, [authLoading, token]);
+
+  const loadCurrencySettings = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`);
+      setCurrencySettings(response.data?.data || null);
+    } catch (error) {
+      console.error("Failed to load currency settings:", error);
+    }
+  };
 
   const loadStats = async (applyFilter = false) => {
     try {
@@ -61,6 +73,20 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const convertAmount = (amount: number): number => {
+    if (!amount) return 0;
+    const rate = currencySettings?.exchangeRate || 0.012;
+    if (displayCurrency === 'AED') {
+      return amount * rate;
+    }
+    return amount;
+  };
+
+  const formatAmount = (amount: number): string => {
+    const converted = convertAmount(amount);
+    return `${displayCurrency} ${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; 
   };
 
   const handleApplyFilter = () => {
@@ -165,7 +191,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Date Filters */}
+      {/* Filters */}
       <div className="card mb-6">
         <div className="card-body">
           <div className="flex flex-wrap items-end gap-4">
@@ -215,6 +241,17 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+            <div className="ml-auto">
+              <label className="block text-xs text-muted-foreground mb-1">{t('transactions.displayCurrency') || 'Display Currency'}</label>
+              <select
+                value={displayCurrency}
+                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+                className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+              >
+                <option value="LKR">LKR</option>
+                <option value="AED">AED</option>
+              </select>
+            </div>
           </div>
           {filterApplied && (
             <div className="mt-3 text-sm text-primary">
@@ -244,7 +281,7 @@ export default function Dashboard() {
             </div>
             <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
             <p className={`text-2xl font-bold ${stat.valueColor}`}>
-              {`LKR ${stat.value.toLocaleString()}`}
+              {formatAmount(stat.value)}
             </p>
           </div>
         ))}
@@ -336,7 +373,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.revenue')}</span>
                   </div>
-                  <span className="font-semibold text-green-600">LKR {stats.totalRevenue?.toLocaleString() || 0}</span>
+                  <span className="font-semibold text-green-600">{formatAmount(stats.totalRevenue || 0)}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
@@ -346,7 +383,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.expenses')}</span>
                   </div>
-                  <span className="font-semibold text-red-600">LKR {stats.totalExpenses?.toLocaleString() || 0}</span>
+                  <span className="font-semibold text-red-600">{formatAmount(stats.totalExpenses || 0)}</span>
                 </div>
 
                 {isAdmin && (
@@ -358,7 +395,7 @@ export default function Dashboard() {
                       <span className="text-sm text-foreground">{t('dashboard.payroll')}</span>
                     </div>
                     <span className="font-semibold text-orange-600">
-                      LKR {stats.totalPayroll?.toLocaleString() || 0}
+                      {formatAmount(stats.totalPayroll || 0)}
                     </span>
                   </div>
                 )}
@@ -372,7 +409,7 @@ export default function Dashboard() {
                       <span className="text-sm font-medium text-foreground">{t('dashboard.netProfit')}</span>
                     </div>
                     <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
-                      LKR {stats.profit?.toLocaleString() || 0}
+                      {formatAmount(stats.profit || 0)}
                     </span>
                   </div>
                 </div>
