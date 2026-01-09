@@ -47,6 +47,7 @@ export default function Transactions() {
   const [activeTab, setActiveTab] = useState<'transactions' | 'bank'>('transactions');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'payroll'>('all');
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -184,17 +185,25 @@ export default function Transactions() {
     filter === 'all' || t.type === filter
   );
 
+  const convertToDisplayCurrency = (amount: number, currency: string): number => {
+    if (!currencySettings || currency === displayCurrency) return amount;
+    if (displayCurrency === 'AED') {
+      return amount * currencySettings.exchangeRates.LKR_AED;
+    }
+    return amount * currencySettings.exchangeRates.AED_LKR;
+  };
+
   const totalIncome = transactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + convertToDisplayCurrency(t.amount, t.currency), 0);
 
   const totalExpense = transactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + convertToDisplayCurrency(t.amount, t.currency), 0);
 
   const totalPayroll = transactions
     .filter(t => t.type === 'payroll')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + convertToDisplayCurrency(t.amount, t.currency), 0);
 
   const balance = totalIncome - (totalExpense + totalPayroll);
 
@@ -206,6 +215,8 @@ export default function Transactions() {
     return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
   };
 
+  const getCurrencySymbol = (currency: string) => currency === 'LKR' ? 'Rs.' : 'AED';
+
   if (loading) return <div className="text-foreground">Loading...</div>;
 
   return (
@@ -215,13 +226,26 @@ export default function Transactions() {
         {t('transactions')}
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Currency Filter */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Display in:</span>
+        <select
+          value={displayCurrency}
+          onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+          className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+        >
+          <option value="LKR">LKR (Rs.)</option>
+          <option value="AED">AED</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{t('totalIncome')}</p>
               <p className="text-2xl font-bold text-green-600">
-                Rs. {totalIncome.toLocaleString()}
+                {getCurrencySymbol(displayCurrency)} {totalIncome.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowUpRight className="text-green-600" size={32} />
@@ -233,7 +257,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('totalExpenses')}</p>
               <p className="text-2xl font-bold text-red-600">
-                Rs. {totalExpense.toLocaleString()}
+                {getCurrencySymbol(displayCurrency)} {totalExpense.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowDownRight className="text-red-600" size={32} />
@@ -245,7 +269,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('totalPayroll')}</p>
               <p className="text-2xl font-bold text-red-600">
-                Rs. {totalPayroll.toLocaleString()}
+                {getCurrencySymbol(displayCurrency)} {totalPayroll.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowDownRight className="text-red-600" size={32} />
@@ -257,7 +281,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('netBalance')}</p>
               <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                Rs. {balance.toLocaleString()}
+                {getCurrencySymbol(displayCurrency)} {balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <Wallet className={balance >= 0 ? 'text-green-600' : 'text-red-600'} size={32} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Receipt, Upload, FileDown } from 'lucide-react';
+import { Plus, Trash2, Receipt, Upload, FileDown, Eye } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
@@ -19,6 +19,7 @@ interface Expense {
   receiptUrl?: string;
   isVatApplicable?: boolean;
   vatRate?: number;
+  vatCategory?: 'standard' | 'zero_rated';
 }
 
 interface CurrencySettings {
@@ -56,8 +57,9 @@ export default function Expenses() {
   const [uploadingBill, setUploadingBill] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'bill' | 'receipt'} | null>(null);
+  const [viewExpense, setViewExpense] = useState<Expense | null>(null);
 
-  usePreventSwipe(showModal || showBankModal);
+  usePreventSwipe(showModal || showBankModal || !!viewExpense);
 
   useEffect(() => {
     loadData();
@@ -374,6 +376,13 @@ export default function Expenses() {
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
+                    onClick={() => setViewExpense(expense)}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
+                  >
+                    <Eye size={14} />
+                    {t('expenses.view') || 'View'}
+                  </button>
+                  <button
                     onClick={() => handleDelete(expense._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
                   >
@@ -600,6 +609,117 @@ export default function Expenses() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Expense Detail Modal */}
+      {viewExpense && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-lg p-6 m-4 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Expense Details</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Expense #</p>
+                  <p className="font-medium text-foreground">{viewExpense.serialNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vendor</p>
+                  <p className="font-medium text-foreground">{viewExpense.vendor?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Category</p>
+                  <p className="font-medium text-foreground">{viewExpense.category}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium text-foreground">{new Date(viewExpense.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Method</p>
+                  <p className="font-medium text-foreground capitalize">{viewExpense.paymentMethod}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(viewExpense.status)}`}>
+                    {viewExpense.status}
+                  </span>
+                </div>
+              </div>
+
+              {viewExpense.description && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Description</p>
+                  <p className="text-foreground">{viewExpense.description}</p>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Base Amount</span>
+                  <span className="font-medium text-foreground">{viewExpense.currency} {viewExpense.amount.toLocaleString()}</span>
+                </div>
+                {viewExpense.isVatApplicable && (
+                  <div className="flex justify-between bg-muted/50 p-2 rounded">
+                    <span className="text-sm text-muted-foreground">
+                      VAT ({viewExpense.vatRate || 0}% - {viewExpense.vatCategory === 'zero_rated' ? 'Zero Rated' : 'Standard'})
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {viewExpense.currency} {((viewExpense.amount * (viewExpense.vatRate || 0)) / 100).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-semibold border-t border-border pt-2">
+                  <span className="text-foreground">Total (inc. VAT)</span>
+                  <span className="text-foreground">
+                    {viewExpense.currency} {(viewExpense.amount + (viewExpense.isVatApplicable ? (viewExpense.amount * (viewExpense.vatRate || 0)) / 100 : 0)).toLocaleString()}
+                  </span>
+                </div>
+                {currencySettings && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Converted</span>
+                    <span>
+                      ≈ {getConvertedAmount(viewExpense.amount, viewExpense.currency)?.currency} {getConvertedAmount(viewExpense.amount, viewExpense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                {viewExpense.billUrl && (
+                  <a
+                    href={`${import.meta.env.VITE_API_URL}${viewExpense.billUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <FileDown size={14} />
+                    View Bill
+                  </a>
+                )}
+                {viewExpense.receiptUrl && (
+                  <a
+                    href={`${import.meta.env.VITE_API_URL}${viewExpense.receiptUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <Receipt size={14} />
+                    View Receipt
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setViewExpense(null)}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
