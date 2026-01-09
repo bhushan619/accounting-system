@@ -377,6 +377,20 @@ export default function Invoices() {
       doc.text(`${invoice.currency} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
       yPos += 8;
     }
+
+    // VAT breakdown
+    if (invoice.isVatApplicable && invoice.vatRate > 0) {
+      const vatAmount = (invoice.subtotal * invoice.vatRate) / 100;
+      doc.setFillColor(245, 245, 245);
+      doc.rect(pageWidth - 82, yPos - 4, 62, 10, 'F');
+      doc.text(`VAT (${invoice.vatRate}% - ${invoice.vatCategory === 'zero_rated' ? 'Zero' : 'Std'}):`, pageWidth - 80, yPos);
+      doc.text(`${invoice.currency} ${vatAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      yPos += 10;
+    } else if (invoice.isVatApplicable && invoice.vatRate === 0) {
+      doc.text('VAT (Zero Rated):', pageWidth - 80, yPos);
+      doc.text(`${invoice.currency} 0`, pageWidth - 22, yPos, { align: 'right' });
+      yPos += 8;
+    }
     
     if (invoice.discount > 0) {
       doc.text('Discount:', pageWidth - 80, yPos);
@@ -389,6 +403,19 @@ export default function Invoices() {
     doc.setFontSize(12);
     doc.text('Total:', pageWidth - 80, yPos);
     doc.text(`${invoice.currency} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+
+    // Show converted amount if currency settings available
+    if (currencySettings) {
+      yPos += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(128, 128, 128);
+      const convertedCurrency = invoice.currency === 'LKR' ? 'AED' : 'LKR';
+      const rate = invoice.currency === 'LKR' ? currencySettings.exchangeRates.LKR_AED : currencySettings.exchangeRates.AED_LKR;
+      const convertedAmount = invoice.total * rate;
+      doc.text(`≈ ${convertedCurrency} ${convertedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+    }
     
     // Status badge
     yPos += 15;

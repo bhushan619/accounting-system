@@ -4,6 +4,10 @@ import { Download, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
+interface CurrencySettings {
+  exchangeRates: { LKR_AED: number; AED_LKR: number };
+}
+
 export default function EnhancedReports() {
   const { t } = useLanguage();
   const { loading: authLoading, token } = useAuth();
@@ -16,12 +20,37 @@ export default function EnhancedReports() {
   const [profitLossData, setProfitLossData] = useState<any>(null);
   const [expensesData, setExpensesData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
+
+  useEffect(() => {
+    loadCurrencySettings();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && token) {
       loadReports();
     }
   }, [dateRange, activeTab, authLoading, token]);
+
+  const loadCurrencySettings = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`);
+      if (res.data) setCurrencySettings(res.data);
+    } catch (error) {
+      console.error('Failed to load currency settings:', error);
+    }
+  };
+
+  const convertAmount = (amount: number, fromCurrency: string = 'LKR'): number => {
+    if (!currencySettings || fromCurrency === displayCurrency) return amount;
+    if (displayCurrency === 'AED') {
+      return amount * currencySettings.exchangeRates.LKR_AED;
+    }
+    return amount * currencySettings.exchangeRates.AED_LKR;
+  };
+
+  const getCurrencySymbol = () => displayCurrency === 'LKR' ? 'Rs.' : 'AED';
 
   const loadReports = async () => {
     setLoading(true);
@@ -63,11 +92,11 @@ export default function EnhancedReports() {
         </button>
       </div>
 
-      {/* Date Range Selector */}
+      {/* Date Range and Currency Selector */}
       <div className="bg-card rounded-lg shadow p-4 mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <Calendar size={20} className="text-muted-foreground" />
-          <div className="flex gap-4 items-center flex-1">
+          <div className="flex gap-4 items-center flex-1 flex-wrap">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">{t('common.startDate')}</label>
               <input
@@ -85,6 +114,17 @@ export default function EnhancedReports() {
                 onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
                 className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Display Currency</label>
+              <select
+                value={displayCurrency}
+                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+                className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              >
+                <option value="LKR">LKR (Rs.)</option>
+                <option value="AED">AED</option>
+              </select>
             </div>
             <button
               onClick={loadReports}
@@ -139,32 +179,32 @@ export default function EnhancedReports() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-card rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalRevenue')}</h3>
-            <p className="text-3xl font-bold text-foreground">Rs. {overviewData.totalRevenue?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-foreground">{getCurrencySymbol()} {convertAmount(overviewData.totalRevenue || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
             <p className="text-sm text-muted-foreground mt-2">{overviewData.invoiceCount} {t('enhancedReports.invoices')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalExpenses')}</h3>
-            <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalExpenses?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-destructive">{getCurrencySymbol()} {convertAmount(overviewData.totalExpenses || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
             <p className="text-sm text-muted-foreground mt-2">{overviewData.expenseCount} {t('enhancedReports.expensesLabel')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.payrollCosts')}</h3>
-            <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalPayroll?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-destructive">{getCurrencySymbol()} {convertAmount(overviewData.totalPayroll || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
             <p className="text-sm text-muted-foreground mt-2">{overviewData.payrollCount} {t('enhancedReports.payrollEntries')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.totalCosts')}</h3>
-            <p className="text-3xl font-bold text-destructive">Rs. {overviewData.totalCosts?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-destructive">{getCurrencySymbol()} {convertAmount(overviewData.totalCosts || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
             <p className="text-sm text-muted-foreground mt-2">{t('enhancedReports.expensesPlusPayroll')}</p>
           </div>
           
           <div className="bg-card rounded-lg shadow p-6 md:col-span-2">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('enhancedReports.netProfit')}</h3>
             <p className={`text-3xl font-bold ${overviewData.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-              Rs. {overviewData.profit?.toLocaleString()}
+              {getCurrencySymbol()} {convertAmount(overviewData.profit || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               {overviewData.profit >= 0 ? t('enhancedReports.profit') : t('enhancedReports.loss')}
@@ -193,13 +233,13 @@ export default function EnhancedReports() {
                   <tr key={item.id}>
                     <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-foreground text-right">Rs. {item.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-foreground text-right">{getCurrencySymbol()} {convertAmount(item.amount, item.currency || 'LKR').toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
                   <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>{t('enhancedReports.totalRevenue')}</td>
                   <td className="px-6 py-4 text-sm text-foreground text-right">
-                    Rs. {profitLossData.revenue?.total?.toLocaleString()}
+                    {getCurrencySymbol()} {convertAmount(profitLossData.revenue?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </td>
                 </tr>
               </tbody>
@@ -225,13 +265,13 @@ export default function EnhancedReports() {
                     <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{item.category}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-destructive text-right">{getCurrencySymbol()} {convertAmount(item.amount, item.currency || 'LKR').toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
                   <td className="px-6 py-4 text-sm text-foreground" colSpan={3}>{t('enhancedReports.totalExpenses')}</td>
                   <td className="px-6 py-4 text-sm text-destructive text-right">
-                    Rs. {profitLossData.costs?.totalExpenses?.toLocaleString()}
+                    {getCurrencySymbol()} {convertAmount(profitLossData.costs?.totalExpenses || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </td>
                 </tr>
               </tbody>
@@ -255,20 +295,20 @@ export default function EnhancedReports() {
                   <tr key={item.id}>
                     <td className="px-6 py-4 text-sm text-foreground">{item.employee?.fullName || t('enhancedReports.unknown')}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{item.month}/{item.year}</td>
-                    <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-destructive text-right">{getCurrencySymbol()} {convertAmount(item.amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
                 {profitLossData.costs?.payrollExpenses?.map((item: any) => (
                   <tr key={item.id}>
                     <td className="px-6 py-4 text-sm text-foreground">{item.description}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-destructive text-right">Rs. {item.amount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-destructive text-right">{getCurrencySymbol()} {convertAmount(item.amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
                 <tr className="bg-muted/30 font-semibold">
                   <td className="px-6 py-4 text-sm text-foreground" colSpan={2}>{t('enhancedReports.totalPayroll')}</td>
                   <td className="px-6 py-4 text-sm text-destructive text-right">
-                    Rs. {((profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0)).toLocaleString()}
+                    {getCurrencySymbol()} {convertAmount((profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </td>
                 </tr>
               </tbody>
@@ -279,7 +319,7 @@ export default function EnhancedReports() {
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-semibold text-foreground">{t('enhancedReports.netProfitLoss')}</h3>
               <p className={`text-3xl font-bold ${(profitLossData.revenue?.total - (profitLossData.costs?.totalExpenses + profitLossData.costs?.totalPayroll + profitLossData.costs?.totalPayrollExpenses)) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                Rs. {((profitLossData.revenue?.total || 0) - ((profitLossData.costs?.totalExpenses || 0) + (profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0))).toLocaleString()}
+                {getCurrencySymbol()} {convertAmount((profitLossData.revenue?.total || 0) - ((profitLossData.costs?.totalExpenses || 0) + (profitLossData.costs?.totalPayroll || 0) + (profitLossData.costs?.totalPayrollExpenses || 0))).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -306,7 +346,7 @@ export default function EnhancedReports() {
                   <tr key={category}>
                     <td className="px-6 py-4 text-sm text-foreground capitalize">{category}</td>
                     <td className="px-6 py-4 text-sm text-foreground text-right">{data.count}</td>
-                    <td className="px-6 py-4 text-sm text-foreground text-right">Rs. {data.total.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-foreground text-right">{getCurrencySymbol()} {convertAmount(data.total).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                     <td className="px-6 py-4 text-sm text-foreground text-right">{percentage.toFixed(1)}%</td>
                   </tr>
                 );
@@ -317,7 +357,7 @@ export default function EnhancedReports() {
                   {expensesData.byCategory && Object.values(expensesData.byCategory).reduce((sum: number, cat: any) => sum + cat.count, 0)}
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground text-right">
-                  Rs. {expensesData.byCategory && Object.values(expensesData.byCategory).reduce((sum: number, cat: any) => sum + cat.total, 0).toLocaleString()}
+                  {getCurrencySymbol()} {expensesData.byCategory && convertAmount(Object.values(expensesData.byCategory).reduce((sum: number, cat: any) => sum + cat.total, 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground text-right">100%</td>
               </tr>
