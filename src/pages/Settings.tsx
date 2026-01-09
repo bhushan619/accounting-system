@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
-import { User, Lock, Building, Globe, Mail, Save, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { User, Lock, Building, Globe, Mail, Save, Eye, EyeOff, AlertCircle, CheckCircle, Loader2, DollarSign } from 'lucide-react';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
 interface CompanySettings {
@@ -14,6 +14,7 @@ interface CompanySettings {
   currency: string;
   dateFormat: string;
   fiscalYearStart: string;
+  region: string;
 }
 
 interface DefaultSettings {
@@ -32,12 +33,25 @@ interface EmailSettings {
   smtpPassword: string;
 }
 
+interface CurrencySettings {
+  baseCurrency: string;
+  supportedCurrencies: string[];
+  exchangeRates: {
+    LKR_AED: number;
+    AED_LKR: number;
+  };
+  vatRates: {
+    LK: { standard: number; zeroRated: number };
+    AE: { standard: number; zeroRated: number };
+  };
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const isAdmin = user?.role === 'admin';
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'company' | 'defaults' | 'email'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'company' | 'defaults' | 'email' | 'currency'>('profile');
   const [showModal, _setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,7 +82,8 @@ export default function Settings() {
     taxNumber: '',
     currency: 'LKR',
     dateFormat: 'DD/MM/YYYY',
-    fiscalYearStart: '01-01'
+    fiscalYearStart: '01-01',
+    region: 'LK'
   });
   
   // Default settings (admin only)
@@ -89,6 +104,20 @@ export default function Settings() {
     smtpPassword: ''
   });
 
+  // Currency settings (admin only)
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings>({
+    baseCurrency: 'LKR',
+    supportedCurrencies: ['LKR', 'AED'],
+    exchangeRates: {
+      LKR_AED: 0.010,
+      AED_LKR: 100.0
+    },
+    vatRates: {
+      LK: { standard: 18, zeroRated: 0 },
+      AE: { standard: 5, zeroRated: 0 }
+    }
+  });
+
   usePreventSwipe(showModal);
 
   useEffect(() => {
@@ -101,11 +130,12 @@ export default function Settings() {
     setLoading(true);
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/settings`);
-      const { company, defaults, email } = response.data;
+      const { company, defaults, email, currency } = response.data;
       
       if (company) setCompanySettings(company);
       if (defaults) setDefaultSettings(defaults);
       if (email) setEmailSettings(email);
+      if (currency) setCurrencySettings(currency);
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
@@ -200,12 +230,26 @@ export default function Settings() {
     }
   };
 
+  const handleCurrencySettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/settings/currency`, currencySettings);
+      showMessage('success', 'Currency settings saved successfully');
+    } catch (error: any) {
+      showMessage('error', error.response?.data?.error || 'Failed to save currency settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const tabs = [
     { id: 'profile', label: t('settings.profile') || 'Profile', icon: User },
     { id: 'password', label: t('settings.changePassword') || 'Change Password', icon: Lock },
     ...(isAdmin ? [
       { id: 'company', label: t('settings.company') || 'Company', icon: Building },
       { id: 'defaults', label: t('settings.defaults') || 'Defaults', icon: Globe },
+      { id: 'currency', label: 'Currency & VAT', icon: DollarSign },
       { id: 'email', label: t('settings.email') || 'Email', icon: Mail },
     ] : [])
   ];
@@ -459,7 +503,20 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Region
+                    </label>
+                    <select
+                      value={companySettings.region || 'LK'}
+                      onChange={(e) => setCompanySettings({ ...companySettings, region: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="LK">🇱🇰 Sri Lanka</option>
+                      <option value="AE">🇦🇪 UAE</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
                       {t('settings.currency') || 'Default Currency'}
@@ -470,10 +527,7 @@ export default function Settings() {
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
                       <option value="LKR">LKR - Sri Lankan Rupee</option>
-                      <option value="USD">USD - US Dollar</option>
-                      <option value="EUR">EUR - Euro</option>
-                      <option value="GBP">GBP - British Pound</option>
-                      <option value="CNY">CNY - Chinese Yuan</option>
+                      <option value="AED">AED - UAE Dirham</option>
                     </select>
                   </div>
                   <div>
@@ -564,11 +618,8 @@ export default function Settings() {
                       onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultCurrency: e.target.value })}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
-                      <option value="LKR">LKR</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="CNY">CNY</option>
+                      <option value="LKR">LKR - Sri Lankan Rupee</option>
+                      <option value="AED">AED - UAE Dirham</option>
                     </select>
                   </div>
                   <div>
@@ -629,6 +680,150 @@ export default function Settings() {
                   >
                     <Save size={18} />
                     {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Currency & VAT Tab (Admin Only) */}
+          {activeTab === 'currency' && isAdmin && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">Currency & VAT Configuration</h2>
+              
+              <form onSubmit={handleCurrencySettingsSave} className="space-y-6">
+                {/* Base Currency */}
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Base Currency</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Default Base Currency</label>
+                      <select
+                        value={currencySettings.baseCurrency}
+                        onChange={(e) => setCurrencySettings({ ...currencySettings, baseCurrency: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      >
+                        <option value="LKR">LKR - Sri Lankan Rupee</option>
+                        <option value="AED">AED - UAE Dirham</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Exchange Rates */}
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Fixed Exchange Rates</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Set the fixed exchange rates between supported currencies.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">1 LKR = AED</label>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={currencySettings.exchangeRates.LKR_AED}
+                        onChange={(e) => setCurrencySettings({
+                          ...currencySettings,
+                          exchangeRates: { ...currencySettings.exchangeRates, LKR_AED: parseFloat(e.target.value) }
+                        })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">1 AED = LKR</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={currencySettings.exchangeRates.AED_LKR}
+                        onChange={(e) => setCurrencySettings({
+                          ...currencySettings,
+                          exchangeRates: { ...currencySettings.exchangeRates, AED_LKR: parseFloat(e.target.value) }
+                        })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* VAT Rates by Region */}
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">VAT Rates by Region</h3>
+                  
+                  {/* Sri Lanka VAT */}
+                  <div className="mb-6 p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium text-foreground mb-3">🇱🇰 Sri Lanka (IRD)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Standard VAT Rate (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currencySettings.vatRates.LK.standard}
+                          onChange={(e) => setCurrencySettings({
+                            ...currencySettings,
+                            vatRates: {
+                              ...currencySettings.vatRates,
+                              LK: { ...currencySettings.vatRates.LK, standard: parseFloat(e.target.value) }
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Zero-Rated VAT (%)</label>
+                        <input
+                          type="number"
+                          value={currencySettings.vatRates.LK.zeroRated}
+                          disabled
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Zero-rated for exports</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* UAE VAT */}
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium text-foreground mb-3">🇦🇪 UAE (FTA Regulations)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Standard VAT Rate (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currencySettings.vatRates.AE.standard}
+                          onChange={(e) => setCurrencySettings({
+                            ...currencySettings,
+                            vatRates: {
+                              ...currencySettings.vatRates,
+                              AE: { ...currencySettings.vatRates.AE, standard: parseFloat(e.target.value) }
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">UAE standard rate: 5%</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Zero-Rated VAT (%)</label>
+                        <input
+                          type="number"
+                          value={currencySettings.vatRates.AE.zeroRated}
+                          disabled
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">For exports, international transport, precious metals</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
