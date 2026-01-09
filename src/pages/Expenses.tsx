@@ -17,6 +17,13 @@ interface Expense {
   status: string;
   billUrl?: string;
   receiptUrl?: string;
+  isVatApplicable?: boolean;
+  vatRate?: number;
+}
+
+interface CurrencySettings {
+  exchangeRates: { LKR_AED: number; AED_LKR: number };
+  vatRates: { LK: { standard: number }; AE: { standard: number }; [key: string]: { standard: number } };
 }
 
 export default function Expenses() {
@@ -29,6 +36,8 @@ export default function Expenses() {
   const [showBankModal, setShowBankModal] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{id: string, status: string, expense: Expense} | null>(null);
   const [selectedBank, setSelectedBank] = useState('');
+  const [companySettings, setCompanySettings] = useState<any>({});
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
   const [formData, setFormData] = useState({
     vendor: '',
     category: '',
@@ -40,7 +49,9 @@ export default function Expenses() {
     bank: '',
     status: 'pending',
     billUrl: '',
-    receiptUrl: ''
+    receiptUrl: '',
+    isVatApplicable: false,
+    vatCategory: 'standard' as 'standard' | 'zero_rated'
   });
   const [uploadingBill, setUploadingBill] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
@@ -55,7 +66,7 @@ export default function Expenses() {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [expensesRes, vendorsRes, banksRes] = await Promise.all([
+      const [expensesRes, vendorsRes, banksRes, companyRes, currencyRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/expenses`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -64,11 +75,19 @@ export default function Expenses() {
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/banks`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings/company`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: {} })),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: null }))
       ]);
       setExpenses(expensesRes.data);
       setVendors(vendorsRes.data);
       setBanks(banksRes.data);
+      setCompanySettings(companyRes.data);
+      if (currencyRes.data) setCurrencySettings(currencyRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -80,7 +99,15 @@ export default function Expenses() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${import.meta.env.VITE_API_URL}/expenses`, formData, {
+      const region = companySettings.region || 'LK';
+      const vatRate = formData.vatCategory === 'zero_rated' ? 0 : 
+        (currencySettings?.vatRates?.[region]?.standard || (region === 'AE' ? 5 : 18));
+      
+      await axios.post(`${import.meta.env.VITE_API_URL}/expenses`, {
+        ...formData,
+        vatRate,
+        isVatApplicable: formData.isVatApplicable
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setShowModal(false);
@@ -207,8 +234,24 @@ export default function Expenses() {
       bank: '',
       status: 'pending',
       billUrl: '',
-      receiptUrl: ''
+      receiptUrl: '',
+      isVatApplicable: false,
+      vatCategory: 'standard'
     });
+  };
+
+  const getVatRate = (): number => {
+    const region = (companySettings.region || 'LK') as string;
+    if (formData.vatCategory === 'zero_rated') return 0;
+    return currencySettings?.vatRates?.[region]?.standard ?? (region === 'AE' ? 5 : 18);
+  };
+
+  const getConvertedAmount = (amount: number, fromCurrency: string) => {
+    if (!currencySettings) return null;
+    if (fromCurrency === 'LKR') {
+      return { amount: amount * currencySettings.exchangeRates.LKR_AED, currency: 'AED' };
+    }
+    return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
   };
 
   const getStatusColor = (status: string) => {
@@ -258,8 +301,13 @@ export default function Expenses() {
                 <td className="px-6 py-4 text-sm text-muted-foreground">
                   {new Date(expense.date).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 text-sm text-foreground font-medium">
-                  {expense.currency} {expense.amount.toLocaleString()}
+                <td className="px-6 py-4 text-sm text-foreground">
+                  <div className="font-medium">{expense.currency} {expense.amount.toLocaleString()}</div>
+                  {currencySettings && (
+                    <div className="text-xs text-muted-foreground">
+                      ≈ {getConvertedAmount(expense.amount, expense.currency)?.currency} {getConvertedAmount(expense.amount, expense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <select
@@ -444,6 +492,37 @@ export default function Expenses() {
                         <option key={bank._id} value={bank._id}>{bank.accountName}</option>
                       ))}
                     </select>
+                  </div>
+                )}
+              </div>
+
+              {/* VAT Configuration */}
+              <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isVatApplicable"
+                    checked={formData.isVatApplicable}
+                    onChange={(e) => setFormData({ ...formData, isVatApplicable: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="isVatApplicable" className="text-sm font-medium">
+                    VAT Applicable ({companySettings.region === 'AE' ? '🇦🇪 UAE' : '🇱🇰 LK'}: {getVatRate()}%)
+                  </label>
+                </div>
+                {formData.isVatApplicable && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">VAT Category</label>
+                      <select
+                        value={formData.vatCategory}
+                        onChange={(e) => setFormData({ ...formData, vatCategory: e.target.value as 'standard' | 'zero_rated' })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                      >
+                        <option value="standard">Standard Rate ({getVatRate()}%)</option>
+                        <option value="zero_rated">Zero Rated (0%)</option>
+                      </select>
+                    </div>
                   </div>
                 )}
               </div>
