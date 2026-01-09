@@ -14,7 +14,8 @@ const defaultCompanySettings = {
   taxNumber: '',
   currency: 'LKR',
   dateFormat: 'DD/MM/YYYY',
-  fiscalYearStart: '01-01'
+  fiscalYearStart: '01-01',
+  region: 'LK' // LK = Sri Lanka, AE = UAE
 };
 
 const defaultAppSettings = {
@@ -33,6 +34,20 @@ const defaultEmailSettings = {
   smtpPassword: ''
 };
 
+// Currency and exchange rate settings
+const defaultCurrencySettings = {
+  baseCurrency: 'LKR',
+  supportedCurrencies: ['LKR', 'AED'],
+  exchangeRates: {
+    LKR_AED: 0.010, // 1 LKR = 0.010 AED (approx)
+    AED_LKR: 100.0  // 1 AED = 100 LKR (approx)
+  },
+  vatRates: {
+    LK: { standard: 18, zeroRated: 0 },
+    AE: { standard: 5, zeroRated: 0 }
+  }
+};
+
 // Get all settings (admin only)
 router.get('/', requireAuth, requireRole('admin'), async (req: AuthRequest, res) => {
   try {
@@ -42,7 +57,8 @@ router.get('/', requireAuth, requireRole('admin'), async (req: AuthRequest, res)
     const result = {
       company: settings.find(s => s.type === 'company')?.data || defaultCompanySettings,
       defaults: settings.find(s => s.type === 'defaults')?.data || defaultAppSettings,
-      email: settings.find(s => s.type === 'email')?.data || defaultEmailSettings
+      email: settings.find(s => s.type === 'email')?.data || defaultEmailSettings,
+      currency: settings.find(s => s.type === 'currency')?.data || defaultCurrencySettings
     };
     
     res.json(result);
@@ -58,12 +74,12 @@ router.get('/:type', requireAuth, async (req, res) => {
   try {
     const { type } = req.params;
     
-    if (!['company', 'defaults', 'email'].includes(type)) {
+    if (!['company', 'defaults', 'email', 'currency'].includes(type)) {
       return res.status(400).json({ error: 'Invalid settings type' });
     }
     
-    // Only admin can access email settings
-    if (type === 'email' && authReq.user?.role !== 'admin') {
+    // Only admin can access email and currency settings
+    if ((type === 'email' || type === 'currency') && authReq.user?.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
     
@@ -81,6 +97,9 @@ router.get('/:type', requireAuth, async (req, res) => {
       case 'email':
         defaultData = defaultEmailSettings;
         break;
+      case 'currency':
+        defaultData = defaultCurrencySettings;
+        break;
     }
     
     res.json(settings?.data || defaultData);
@@ -97,7 +116,7 @@ router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Sett
     const { type } = req.params;
     const data = req.body;
     
-    if (!['company', 'defaults', 'email'].includes(type)) {
+    if (!['company', 'defaults', 'email', 'currency'].includes(type)) {
       return res.status(400).json({ error: 'Invalid settings type' });
     }
     
