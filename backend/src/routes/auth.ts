@@ -5,10 +5,11 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import config from '../config';
 import { signupSchema, loginSchema, resetPasswordSchema, changePasswordSchema, passwordSchema } from '../validation/auth';
+import { authLimiter, passwordResetLimiter, registrationLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', registrationLimiter, async (req, res) => {
   // Validate input
   const validation = signupSchema.safeParse(req.body);
   if (!validation.success) {
@@ -31,7 +32,7 @@ router.post('/signup', async (req, res) => {
   res.json({ access: token, user: userData });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   // Validate input
   const validation = loginSchema.safeParse(req.body);
   if (!validation.success) {
@@ -75,7 +76,7 @@ router.post('/logout', async (req, res) => {
 
 // Forgot password - generate reset token
 // SECURITY: Token is stored in DB and sent via email only - never exposed in API response
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     
@@ -117,7 +118,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Reset password with token
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', authLimiter, async (req, res) => {
   try {
     // Validate input
     const validation = resetPasswordSchema.safeParse(req.body);
