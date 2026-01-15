@@ -4,11 +4,18 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import config from '../config';
+import { signupSchema, loginSchema, resetPasswordSchema, changePasswordSchema, passwordSchema } from '../validation/auth';
 
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-  const { email, password, fullName } = req.body;
+  // Validate input
+  const validation = signupSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: validation.error.errors[0].message });
+  }
+  
+  const { email, password, fullName } = validation.data;
   const existing = await User.findOne({ email });
   if (existing) return res.status(400).json({ error: 'User already exists' });
   
@@ -25,7 +32,13 @@ router.post('/signup', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  // Validate input
+  const validation = loginSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid email or password format' });
+  }
+  
+  const { email, password } = validation.data;
   const user = await User.findOne({ email });
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
   
@@ -61,14 +74,23 @@ router.post('/logout', async (req, res) => {
 });
 
 // Forgot password - generate reset token
+// SECURITY: Token is stored in DB and sent via email only - never exposed in API response
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    
+    // Always return the same message to prevent email enumeration
+    const genericMessage = 'If an account exists with this email, a reset link will be sent';
+    
+    if (!email || typeof email !== 'string') {
+      return res.json({ message: genericMessage });
+    }
+    
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     
     if (!user) {
-      // Return success even if user not found (security)
-      return res.json({ message: 'If an account exists, a reset email will be sent' });
+      // Return success even if user not found (security - prevent email enumeration)
+      return res.json({ message: genericMessage });
     }
     
     // Generate reset token
@@ -79,22 +101,31 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = resetTokenExpiry;
     await user.save();
     
+    // SECURITY FIX: Never return the token in the response
+    // The token should only be sent via email
+    // For now, we return success - email sending should be handled by a separate backend service
     res.json({ 
-      message: 'Reset token generated',
-      resetToken,
-      email: user.email,
-      fullName: user.fullName || 'User'
+      message: genericMessage,
+      // Note: In production, implement server-side email sending
+      // The token should NEVER be returned in the API response
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ error: 'Failed to process request' });
+    // Return generic message even on error to prevent information leakage
+    res.json({ message: 'If an account exists with this email, a reset link will be sent' });
   }
 });
 
 // Reset password with token
 router.post('/reset-password', async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    // Validate input
+    const validation = resetPasswordSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors[0].message });
+    }
+    
+    const { token, newPassword } = validation.data;
     
     const user = await User.findOne({
       resetToken: token,
@@ -130,15 +161,13 @@ router.post('/change-password', async (req, res) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, config.JWT_SECRET) as { sub: string };
     
-    const { currentPassword, newPassword } = req.body;
-    
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Current password and new password are required' });
+    // Validate input
+    const validation = changePasswordSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors[0].message });
     }
     
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'New password must be at least 6 characters' });
-    }
+    const { currentPassword, newPassword } = validation.data;
     
     const user = await User.findById(decoded.sub);
     if (!user) {

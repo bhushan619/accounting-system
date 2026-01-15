@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import { auditLog } from '../middleware/auditLog';
+import { passwordSchema } from '../validation/auth';
 
 const router = express.Router();
 
@@ -15,6 +16,12 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   try {
     const { email, password, employeeId } = req.body;
+    
+    // Validate password
+    const passwordValidation = passwordSchema.safeParse(password);
+    if (!passwordValidation.success) {
+      return res.status(400).json({ error: passwordValidation.error.errors[0].message });
+    }
     
     // Check if employee exists
     const employee = await Employee.findOne({ employeeId, email });
@@ -244,6 +251,12 @@ router.post('/admin/link-employee', requireRole(['admin']), async (req: any, res
 router.post('/admin/create-employee-account', requireRole(['admin']), async (req: any, res) => {
   try {
     const { employeeId, password } = req.body;
+    
+    // Validate password
+    const passwordValidation = passwordSchema.safeParse(password);
+    if (!passwordValidation.success) {
+      return res.status(400).json({ error: passwordValidation.error.errors[0].message });
+    }
     
     const employee = await Employee.findById(employeeId);
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
