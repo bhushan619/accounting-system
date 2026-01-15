@@ -9,11 +9,12 @@ import jwt from 'jsonwebtoken';
 import config from '../config';
 import { auditLog } from '../middleware/auditLog';
 import { passwordSchema } from '../validation/auth';
+import { registrationLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
-// Employee self-registration
-router.post('/register', async (req, res) => {
+// Employee self-registration with rate limiting
+router.post('/register', registrationLimiter, async (req, res) => {
   try {
     const { email, password, employeeId } = req.body;
     
