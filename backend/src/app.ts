@@ -30,7 +30,24 @@ import config from './config';
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+// Configure CORS with allowed origins whitelist
+app.use(cors({ 
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (config.ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  maxAge: 86400 // Cache preflight for 24 hours
+}));
 app.use(express.json());
 app.use(cookieParser());
 

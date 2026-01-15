@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import axios from 'axios';
-import emailjs from '@emailjs/browser';
-import { Zap, Mail, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
+import { Zap, Mail, ArrowLeft, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function ForgotPassword() {
   const { t } = useLanguage();
@@ -19,30 +18,19 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      // Request reset token from backend
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, { email });
+      // Request password reset from backend
+      // SECURITY: The backend no longer returns the reset token in the response
+      // Email sending should be configured on the server side
+      await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, { 
+        email: email.trim().toLowerCase() 
+      });
       
-      if (response.data.resetToken) {
-        // Send email via EmailJS
-        const resetLink = `${window.location.origin}/reset-password?token=${response.data.resetToken}`;
-        
-        await emailjs.send(
-          import.meta.env.VITE_EMAILJS_SERVICE_ID,
-          import.meta.env.VITE_EMAILJS_RESET_TEMPLATE_ID,
-          {
-            to_email: email,
-            to_name: response.data.fullName,
-            reset_link: resetLink,
-            app_name: 'VeloSync Accounts',
-          },
-          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-        );
-      }
-      
+      // Always show success message (backend returns generic message for security)
       setSent(true);
     } catch (err: any) {
       console.error('Forgot password error:', err);
-      setError(t('forgotPassword.error') || 'Failed to send reset email. Please try again.');
+      // Show generic error - don't reveal specific details
+      setError(t('forgotPassword.error') || 'Failed to process request. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -108,11 +96,19 @@ export default function ForgotPassword() {
                     <CheckCircle className="text-green-600" size={32} />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground mb-2">
-                    {t('forgotPassword.emailSent') || 'Email Sent!'}
+                    {t('forgotPassword.emailSent') || 'Request Submitted!'}
                   </h2>
-                  <p className="text-muted-foreground mb-6">
-                    {t('forgotPassword.checkInbox') || 'Check your inbox for the password reset link. The link will expire in 1 hour.'}
+                  <p className="text-muted-foreground mb-4">
+                    {t('forgotPassword.checkInbox') || 'If an account exists with this email, you will receive a password reset link. The link will expire in 1 hour.'}
                   </p>
+                  <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                      <p className="text-sm text-amber-800 text-left">
+                        {t('forgotPassword.serverEmailNote') || 'Note: Password reset emails require server-side email configuration. Please contact your administrator if you do not receive an email.'}
+                      </p>
+                    </div>
+                  </div>
                   <Link
                     to="/login"
                     className="btn btn-primary w-full inline-flex items-center justify-center gap-2"
