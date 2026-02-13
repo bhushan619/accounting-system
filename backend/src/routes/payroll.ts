@@ -50,21 +50,51 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     
     const basicSalary = employee.basicSalary;
     
-    // Get current performance salary based on status/probation
-    let defaultPerformanceSalary = 0;
+    // Determine performance salary based on status/probation
+    let performanceSalary = 0;
+    let deficitSalary = 0;
+    
+    const probationPerformance = employee.performanceSalaryProbation || 0;
+    const confirmedPerformance = employee.performanceSalaryConfirmed || 0;
+    
     if (employee.status === 'confirmed') {
-      defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+      performanceSalary = confirmedPerformance;
     } else if (employee.status === 'under_probation') {
       if (employee.probationEndDate && new Date() > employee.probationEndDate) {
-        defaultPerformanceSalary = employee.performanceSalaryConfirmed || 0;
+        performanceSalary = confirmedPerformance;
       } else {
-        defaultPerformanceSalary = employee.performanceSalaryProbation || 0;
+        performanceSalary = probationPerformance;
       }
     }
     
-    const performanceSalary = customPerformance ?? defaultPerformanceSalary;
+    // Calculate deficit salary if probation ends mid-month in this payroll period
+    if (employee.probationEndDate && employee.status === 'under_probation') {
+      const probationEnd = new Date(employee.probationEndDate);
+      const payrollStart = new Date(year, month - 1, 1); // Month is 1-indexed
+      const payrollEnd = new Date(year, month, 0); // Last day of month
+      
+      if (probationEnd >= payrollStart && probationEnd <= payrollEnd) {
+        // Probation ends in this payroll period - calculate deficit from probation end date to end of month
+        const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000)); // Day after probation ends
+        const deficitEnd = payrollEnd;
+        const diffTime = deficitEnd.getTime() - deficitStart.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+        
+        if (diffDays > 0) {
+          // Use actual calendar days in the month (30/31/28/29) for daily rate calculation
+          const daysInMonth = workingDays; // Already computed as actual calendar days
+          const dailyProbationPerformance = probationPerformance / daysInMonth;
+          const dailyConfirmedPerformance = confirmedPerformance / daysInMonth;
+          const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
+          deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+          performanceSalary = probationPerformance + deficitSalary;
+        }
+      }
+    }
+    
+    const finalPerformanceSalary = customPerformance ?? performanceSalary;
     const transportAllowance = customTransport ?? (employee.transportAllowance || 0);
-    const grossSalary = basicSalary + performanceSalary + transportAllowance;
+    const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance;
     
     // Use rates from TaxConfig, fall back to employee-specific rates if set
     const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
@@ -73,7 +103,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const stampFee = taxRates.stampFee;
     
     // EPF and ETF calculated on (Basic + Performance Salary)
-    const epfEtfBase = basicSalary + performanceSalary;
+    const epfEtfBase = basicSalary + finalPerformanceSalary;
     const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
     const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
     const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
@@ -88,7 +118,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     
     res.json({
       basicSalary,
-      performanceSalary,
+      performanceSalary: finalPerformanceSalary,
+      deficitSalary,
       transportAllowance,
       grossSalary,
       epfEmployee,
