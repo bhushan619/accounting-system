@@ -117,10 +117,10 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         const payrollMonthStart = new Date(year, month - 1, 1);
         const payrollMonthEnd = new Date(year, month, 0); // Last day of payroll month
         
-        // Calculate deficit only if probation ended before or during the payroll month
-        if (probationEnd <= payrollMonthEnd) {
-          // Deficit start: max of (probationEndDate, first day of payroll month)
-          const deficitStart = probationEnd > payrollMonthStart ? probationEnd : payrollMonthStart;
+        // Calculate deficit only if probation ended WITHIN the payroll month (not before)
+        if (probationEnd >= payrollMonthStart && probationEnd <= payrollMonthEnd) {
+          // Deficit starts the day after probation ends
+          const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000));
           
           // Deficit end: last day of payroll month
           const deficitEnd = payrollMonthEnd;
@@ -185,7 +185,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       }
       
       const transportAllowance = employee.transportAllowance || 0;
-      const grossSalary = basicSalary + performanceSalary + transportAllowance;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
       
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
       const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
