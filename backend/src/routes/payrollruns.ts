@@ -131,13 +131,13 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
             
             if (diffDays > 0) {
-              // Use fixed 30 days for daily rate calculation (per company policy)
-              const STANDARD_WORKING_DAYS = 30;
-              const dailyProbationPerformance = probationPerformance / STANDARD_WORKING_DAYS;
-              const dailyConfirmedPerformance = confirmedPerformance / STANDARD_WORKING_DAYS;
+              // Use actual calendar days in the month (30/31/28/29) for daily rate calculation
+              const daysInMonth = workingDays; // Already computed as actual calendar days
+              const dailyProbationPerformance = probationPerformance / daysInMonth;
+              const dailyConfirmedPerformance = confirmedPerformance / daysInMonth;
               const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
               deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-              console.log(`  Deficit calculation: from ${deficitStart.toISOString().split('T')[0]} to ${deficitEnd.toISOString().split('T')[0]} = ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) = ${deficitSalary}`);
+              console.log(`  Deficit calculation: from ${deficitStart.toISOString().split('T')[0]} to ${deficitEnd.toISOString().split('T')[0]} = ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) / ${daysInMonth} days in month = ${deficitSalary}`);
             }
           } else {
             console.log(`  No deficit for this month (probation end not in this payroll period)`);
