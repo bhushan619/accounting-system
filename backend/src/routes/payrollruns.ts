@@ -147,6 +147,43 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         }
       }
       
+      // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
+      if (employee.probationEndDate && deficitSalary === 0 && confirmedPerformance > probationPerformance) {
+        const probationEnd = new Date(employee.probationEndDate);
+        const payrollMonthStart = new Date(year, month - 1, 1);
+        
+        // Only apply if probation ended before this payroll month
+        if (probationEnd < payrollMonthStart) {
+          // Check if deficit was already included in any previous payroll entry
+          const existingDeficitPayroll = await Payroll.findOne({
+            employee: employee._id,
+            $or: [
+              { deficitSalary: { $gt: 0 } },
+              { includeDeficitInPayroll: true }
+            ]
+          });
+          
+          if (!existingDeficitPayroll) {
+            const probEndMonth = probationEnd.getMonth() + 1;
+            const probEndYear = probationEnd.getFullYear();
+            const daysInProbEndMonth = new Date(probEndYear, probEndMonth, 0).getDate();
+            
+            const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000));
+            const deficitEndOfMonth = new Date(probEndYear, probEndMonth, 0);
+            const diffTime = deficitEndOfMonth.getTime() - deficitStart.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            if (diffDays > 0) {
+              const dailyDifference = (confirmedPerformance - probationPerformance) / daysInProbEndMonth;
+              deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+              console.log(`  Carry-forward deficit from ${probEndYear}-${probEndMonth}: ${deficitSalary} (${diffDays} days)`);
+            }
+          } else {
+            console.log(`  Deficit already paid in previous payroll entry`);
+          }
+        }
+      }
+      
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
@@ -190,7 +227,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         totalCTC: ctc,
         workingDays,
         deficitSalary,
-        includeDeficitInPayroll: false
+        includeDeficitInPayroll: deficitSalary > 0 // Auto-flag when carry-forward deficit exists
       });
     }
     
