@@ -10,6 +10,14 @@ import { getActiveTaxRates, calculateAPIT } from '../services/taxService';
 
 const router = express.Router();
 
+// Helper function to check if deficit is a carry-forward (from a previous month)
+function isCarryForwardDeficit(probationEndDate: Date | undefined, month: number, year: number): boolean {
+  if (!probationEndDate) return false;
+  const probationEnd = new Date(probationEndDate);
+  const payrollStart = new Date(year, month - 1, 1);
+  return probationEnd < payrollStart;
+}
+
 router.use(requireAuth);
 router.use(requireRole('admin'));
 
@@ -92,9 +100,52 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
       }
     }
     
+    // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
+    if (employee.probationEndDate && deficitSalary === 0 && confirmedPerformance > probationPerformance) {
+      const probationEnd = new Date(employee.probationEndDate);
+      const payrollStart = new Date(year, month - 1, 1);
+      
+      // Only apply if probation ended before this payroll month
+      if (probationEnd < payrollStart) {
+        // Check if deficit was already included in any previous payroll entry
+        const existingDeficitPayroll = await Payroll.findOne({
+          employee: employee._id,
+          $or: [
+            { deficitSalary: { $gt: 0 } },
+            { includeDeficitInPayroll: true }
+          ]
+        });
+        
+        if (!existingDeficitPayroll) {
+          // Calculate the deficit for the month probation ended
+          const probEndMonth = probationEnd.getMonth() + 1; // 1-indexed
+          const probEndYear = probationEnd.getFullYear();
+          const daysInProbEndMonth = new Date(probEndYear, probEndMonth, 0).getDate();
+          
+          const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000)); // Day after probation ends
+          const deficitEndOfMonth = new Date(probEndYear, probEndMonth, 0); // Last day of probation end month
+          const diffTime = deficitEndOfMonth.getTime() - deficitStart.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          
+          if (diffDays > 0) {
+            const dailyDifference = (confirmedPerformance - probationPerformance) / daysInProbEndMonth;
+            deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+            // Don't modify performanceSalary - deficit is carried forward separately
+          }
+        }
+      }
+    }
+    
     const finalPerformanceSalary = customPerformance ?? performanceSalary;
     const transportAllowance = customTransport ?? (employee.transportAllowance || 0);
-    const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance;
+    
+    // Determine if deficit is carry-forward (from a previous month)
+    const carryForward = isCarryForwardDeficit(employee.probationEndDate, month, year);
+    const includeDeficitInPayroll = deficitSalary > 0;
+    
+    // Include carry-forward deficit in gross salary
+    const deficitAmount = (carryForward && deficitSalary > 0) ? deficitSalary : 0;
+    const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance + deficitAmount;
     
     // Use rates from TaxConfig, fall back to employee-specific rates if set
     const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
@@ -102,7 +153,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const etfRate = employee.etfRate || taxRates.etf;
     const stampFee = taxRates.stampFee;
     
-    // EPF and ETF calculated on (Basic + Performance Salary)
+    // EPF and ETF calculated on (Basic + Performance Salary) - deficit excluded from EPF/ETF base
     const epfEtfBase = basicSalary + finalPerformanceSalary;
     const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
     const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
@@ -120,6 +171,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
       basicSalary,
       performanceSalary: finalPerformanceSalary,
       deficitSalary,
+      includeDeficitInPayroll,
+      isCarryForwardDeficit: carryForward,
       transportAllowance,
       grossSalary,
       epfEmployee,
