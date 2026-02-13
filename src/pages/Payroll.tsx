@@ -1724,6 +1724,9 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
                       Include
                     </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-green-50">
+                      Deficit Calc.
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
                       Days Attended
@@ -1796,6 +1799,19 @@ export default function Payroll() {
                             className="w-4 h-4 accent-green-600 cursor-pointer border-2 border-green-400 rounded"
                             style={{ accentColor: '#16a34a' }}
                           />
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-left text-xs bg-green-50/50">
+                        {entry.deficitSalary > 0 ? (
+                          <div className="text-muted-foreground whitespace-nowrap">
+                            {entry.deficitSalary > 0 && entry.workingDays ? (
+                              <span>
+                                {((entry.deficitSalary / entry.workingDays) * (entry.workingDays)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {entry.workingDays} days
+                              </span>
+                            ) : '-'}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
