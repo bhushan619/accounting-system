@@ -247,20 +247,25 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
       
-      // Calculate APIT - Scenario A only (employee pays)
-      const apit = calculateAPIT(grossSalary, 'employee');
+      // Calculate APIT based on employee's scenario
+      const apitScenario = employee.apitScenario || 'employee';
+      const apit = calculateAPIT(grossSalary, apitScenario);
       
       // Scenario A: Employee pays APIT - deducted from salary
-      const deductions = epfEmployee + apit + stampFee;
+      // Scenario B: Employer pays APIT - added to employer costs
+      const apitDeduction = apitScenario === 'employee' ? apit : 0;
+      const deductions = epfEmployee + apitDeduction + stampFee;
       const netSalary = grossSalary - deductions;
-      const ctc = grossSalary + epfEmployer + etf;
+      const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
       
       previewData.push({
         employee: {
           _id: employee._id,
           employeeId: employee.employeeId,
           fullName: employee.fullName,
-          status: employee.status
+          status: employee.status,
+          apitScenario: employee.apitScenario || 'employee'
         },
         basicSalary,
         performanceSalary,
@@ -405,13 +410,17 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
       
-      // Calculate APIT - Scenario A only (employee pays)
-      const apit = calculateAPIT(grossSalary, 'employee');
+      // Calculate APIT based on employee's scenario
+      const apitScenario = employee.apitScenario || 'employee';
+      const apit = calculateAPIT(grossSalary, apitScenario);
       
       // Scenario A: Employee pays APIT - deducted from salary
-      const deductions = epfEmployee + apit + stampFee + deductionAmount;
+      // Scenario B: Employer pays APIT - added to employer costs
+      const apitDeduction = apitScenario === 'employee' ? apit : 0;
+      const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
       const netSalary = grossSalary - deductions;
-      const ctc = grossSalary + epfEmployer + etf;
+      const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
       
       const payroll = await Payroll.create({
         serialNumber,
@@ -426,6 +435,8 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
         epfEmployer,
         etf,
         apit,
+        apitScenario,
+        apitEmployer: apitEmployerCost,
         stampFee,
         deductionAmount,
         deductionReason,
@@ -516,13 +527,16 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       const epfEmployer = Math.round((basicSalary * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((basicSalary * etfRate / 100) * 100) / 100;
       
-      // APIT - Scenario A only (employee pays)
-      const apit = calculateAPIT(grossSalary, 'employee');
+      // APIT based on employee's scenario
+      const apitScenario = employee?.apitScenario || 'employee';
+      const apit = calculateAPIT(grossSalary, apitScenario);
       
-      // Scenario A: Employee pays APIT
-      const deductions = epfEmployee + apit + stampFee + deductionAmount;
+      // Scenario A: Employee pays APIT, Scenario B: Employer pays
+      const apitDeduction = apitScenario === 'employee' ? apit : 0;
+      const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
       const netSalary = grossSalary - deductions;
-      const ctc = grossSalary + epfEmployer + etf;
+      const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
       
       await Payroll.findByIdAndUpdate(entryData._id, {
         performanceSalary,

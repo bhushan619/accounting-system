@@ -182,13 +182,17 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
     const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
     
-    // Calculate APIT - Scenario A only (employee pays)
-    const apit = calculateAPIT(grossSalary, 'employee');
+    // Calculate APIT based on employee's scenario
+    const apitScenario = employee.apitScenario || 'employee';
+    const apit = calculateAPIT(grossSalary, apitScenario);
     
     // Scenario A: Employee pays APIT - deducted from salary
-    const totalDeductions = epfEmployee + apit + stampFee;
+    // Scenario B: Employer pays APIT - added to employer costs
+    const apitDeduction = apitScenario === 'employee' ? apit : 0;
+    const totalDeductions = epfEmployee + apitDeduction + stampFee;
     const netSalary = grossSalary - totalDeductions;
-    const totalCTC = grossSalary + epfEmployer + etf;
+    const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+    const totalCTC = grossSalary + epfEmployer + etf + apitEmployerCost;
     
     res.json({
       basicSalary,

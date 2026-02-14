@@ -67,9 +67,10 @@ export default function Employees() {
     probationEndDate: '',
     epfEmployeeRate: 8,
     epfEmployerRate: 12,
-    etfRate: 3,
-    status: 'under_probation',
-    userAccount: ''
+      etfRate: 3,
+      apitScenario: 'employee',
+      status: 'under_probation',
+      userAccount: ''
   });
 
   const [calculations, setCalculations] = useState({
@@ -123,9 +124,9 @@ export default function Employees() {
     }
   };
 
-  // Calculate APIT based on slab system - Scenario A only (Employee pays)
-  const calculateAPIT = (grossSalary: number): number => {
-    const slabs = [
+  // Calculate APIT based on slab system with scenario support
+  const calculateAPIT = (grossSalary: number, scenario: string = 'employee'): number => {
+    const employeeSlabs = [
       { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
       { minIncome: 150001, maxIncome: 233333, rate: 6, standardDeduction: 9000 },
       { minIncome: 233334, maxIncome: 275000, rate: 18, standardDeduction: 37000 },
@@ -134,6 +135,16 @@ export default function Employees() {
       { minIncome: 358334, maxIncome: null, rate: 36, standardDeduction: 94000 }
     ];
 
+    const employerSlabs = [
+      { minIncome: 0, maxIncome: 150000, rate: 0, standardDeduction: 0 },
+      { minIncome: 150001, maxIncome: 228333, rate: 6.38, standardDeduction: 9570 },
+      { minIncome: 228334, maxIncome: 262500, rate: 21.95, standardDeduction: 45119 },
+      { minIncome: 262501, maxIncome: 294167, rate: 32.56, standardDeduction: 73000 },
+      { minIncome: 294168, maxIncome: 323333, rate: 42.86, standardDeduction: 103580 },
+      { minIncome: 323334, maxIncome: null, rate: 56.25, standardDeduction: 146875 }
+    ];
+
+    const slabs = scenario === 'employer' ? employerSlabs : employeeSlabs;
     let applicableSlab = slabs[0];
     for (const slab of slabs) {
       if (grossSalary >= slab.minIncome) {
@@ -171,12 +182,15 @@ export default function Employees() {
     const epfEmployee = (epfEtfBase * formData.epfEmployeeRate) / 100;
     const epfEmployer = (epfEtfBase * formData.epfEmployerRate) / 100;
     const etf = (epfEtfBase * formData.etfRate) / 100;
-    const apit = calculateAPIT(grossSalary);
+    const apit = calculateAPIT(grossSalary, formData.apitScenario);
     const stampFee = 25;
 
-    // Scenario A: Employee pays APIT
-    const netSalary = grossSalary - epfEmployee - apit - stampFee;
-    const totalCTC = grossSalary + epfEmployer + etf;
+    // Scenario A: Employee pays APIT - deducted from salary
+    // Scenario B: Employer pays APIT - added to employer costs, not deducted from salary
+    const apitDeduction = formData.apitScenario === 'employee' ? apit : 0;
+    const netSalary = grossSalary - epfEmployee - apitDeduction - stampFee;
+    const apitEmployerCost = formData.apitScenario === 'employer' ? apit : 0;
+    const totalCTC = grossSalary + epfEmployer + etf + apitEmployerCost;
 
     setCalculations({
       grossSalary: Math.round(grossSalary * 100) / 100,
@@ -188,7 +202,7 @@ export default function Employees() {
       netSalary: Math.round(netSalary * 100) / 100,
       totalCTC: Math.round(totalCTC * 100) / 100
     });
-  }, [formData.basicSalary, formData.transportAllowance, formData.performanceSalaryProbation, formData.performanceSalaryConfirmed, formData.status, formData.probationEndDate, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate]);
+  }, [formData.basicSalary, formData.transportAllowance, formData.performanceSalaryProbation, formData.performanceSalaryConfirmed, formData.status, formData.probationEndDate, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate, formData.apitScenario]);
 
   const loadEmployees = async () => {
     try {
@@ -246,6 +260,7 @@ export default function Employees() {
       epfEmployeeRate: emp.epfEmployeeRate || 8,
       epfEmployerRate: emp.epfEmployerRate || 12,
       etfRate: emp.etfRate || 3,
+      apitScenario: emp.apitScenario || 'employee',
       status: employee.status || 'under_probation',
       userAccount: employee.userAccount || ''
     });
@@ -321,6 +336,7 @@ export default function Employees() {
       epfEmployeeRate: 8,
       epfEmployerRate: 12,
       etfRate: 3,
+      apitScenario: 'employee',
       status: 'under_probation',
       userAccount: ''
     });
@@ -637,6 +653,17 @@ export default function Employees() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.apitScenario') || 'APIT Scenario'}</label>
+                  <select
+                    value={formData.apitScenario}
+                    onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="employee">{t('employees.scenarioEmployee') || 'Scenario A (Employee Pays APIT)'}</option>
+                    <option value="employer">{t('employees.scenarioEmployer') || 'Scenario B (Employer Pays APIT)'}</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -719,8 +746,13 @@ export default function Employees() {
                     <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('employees.apit')}:</span>
-                    <span className="font-medium text-foreground">LKR {calculations.apit.toLocaleString()}</span>
+                    <span className="text-muted-foreground">
+                      {t('employees.apit')} ({formData.apitScenario === 'employee' ? 'Scenario A' : 'Scenario B'}):
+                    </span>
+                    <span className="font-medium text-foreground">
+                      LKR {calculations.apit.toLocaleString()}
+                      {formData.apitScenario === 'employer' && <span className="text-xs text-muted-foreground ml-1">(employer pays)</span>}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('employees.stampFee')}:</span>

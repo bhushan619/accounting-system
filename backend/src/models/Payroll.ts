@@ -12,7 +12,9 @@ const PayrollSchema = new Schema({
   epfEmployee: { type: Number, required: true },
   epfEmployer: { type: Number, required: true },
   etf: { type: Number, required: true },
-  apit: { type: Number, default: 0 }, // APIT tax - Scenario A only (employee pays)
+  apit: { type: Number, default: 0 }, // APIT tax amount
+  apitScenario: { type: String, enum: ['employee', 'employer'], default: 'employee' }, // Who pays APIT
+  apitEmployer: { type: Number, default: 0 }, // APIT amount when employer pays (Scenario B)
   stampFee: { type: Number, default: 25 },
   deductionAmount: { type: Number, default: 0 }, // Additional salary deduction amount
   deductionReason: { type: String, default: '' }, // Reason for the deduction

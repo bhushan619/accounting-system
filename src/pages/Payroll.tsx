@@ -39,6 +39,7 @@ interface Employee {
   performanceSalaryProbation?: number;
   performanceSalaryConfirmed?: number;
   status: string;
+  apitScenario?: string;
 }
 
 interface AttendanceData {
@@ -544,13 +545,16 @@ export default function Payroll() {
     const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
-    // Scenario A only - employee pays APIT
-    const apit = calculateAPIT(grossSalary, "employee");
+    // Use employee's APIT scenario
+    const apitScenario = entry.employee.apitScenario || "employee";
+    const apit = calculateAPIT(grossSalary, apitScenario);
 
-    // Total deductions include EPF, APIT, stamp, other deductions, and attendance deduction
-    const deductions = epfEmployee + apit + stampFee + deductionAmount + attendanceDeduction;
+    // Scenario A: deduct from salary; Scenario B: employer cost
+    const apitDeduction = apitScenario === "employee" ? apit : 0;
+    const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount + attendanceDeduction;
     const netSalary = grossSalary - deductions;
-    const ctc = grossSalary + epfEmployer + etf;
+    const apitEmployerCost = apitScenario === "employer" ? apit : 0;
+    const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
 
     return {
       ...entry,
@@ -1001,12 +1005,15 @@ export default function Payroll() {
     const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
     const stampFee = taxRates.stampFee;
 
-    // Scenario A only - employee pays APIT
-    const apit = calculateAPIT(grossSalary, "employee");
+    // Use employee's APIT scenario
+    const apitScenario = entry.employee?.apitScenario || "employee";
+    const apit = calculateAPIT(grossSalary, apitScenario);
 
-    const deductions = epfEmployee + apit + stampFee + deductionAmount;
+    const apitDeduction = apitScenario === "employee" ? apit : 0;
+    const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
     const netSalary = grossSalary - deductions;
-    const ctc = grossSalary + epfEmployer + etf;
+    const apitEmployerCost = apitScenario === "employer" ? apit : 0;
+    const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
 
     return {
       ...entry,
