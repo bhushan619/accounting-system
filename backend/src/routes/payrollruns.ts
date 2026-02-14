@@ -148,6 +148,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       }
       
       // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
+      // Calculate for ALL unpaid months from probation end to current payroll month
+      let deficitDetails = '';
       if (employee.probationEndDate && deficitSalary === 0 && confirmedPerformance > probationPerformance) {
         const probationEnd = new Date(employee.probationEndDate);
         const payrollMonthStart = new Date(year, month - 1, 1);
@@ -164,24 +166,71 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
           });
           
           if (!existingDeficitPayroll) {
-            const probEndMonth = probationEnd.getMonth() + 1;
-            const probEndYear = probationEnd.getFullYear();
-            const daysInProbEndMonth = new Date(probEndYear, probEndMonth, 0).getDate();
+            // Calculate deficit for ALL months from probation end to current payroll month
+            let totalDeficit = 0;
+            const detailParts: string[] = [];
             
-            const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000));
-            const deficitEndOfMonth = new Date(probEndYear, probEndMonth, 0);
-            const diffTime = deficitEndOfMonth.getTime() - deficitStart.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            // Start from probation end month, go up to (but not including) the current payroll month
+            let curMonth = probationEnd.getMonth(); // 0-indexed
+            let curYear = probationEnd.getFullYear();
             
-            if (diffDays > 0) {
-              const dailyDifference = (confirmedPerformance - probationPerformance) / daysInProbEndMonth;
-              deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-              console.log(`  Carry-forward deficit from ${probEndYear}-${probEndMonth}: ${deficitSalary} (${diffDays} days)`);
+            while (curYear < year || (curYear === year && curMonth < month - 1)) {
+              const daysInThisMonth = new Date(curYear, curMonth + 1, 0).getDate();
+              const dailyDifference = (confirmedPerformance - probationPerformance) / daysInThisMonth;
+              
+              let deficitDays = 0;
+              let startDay = '';
+              const endDay = daysInThisMonth;
+              const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              
+              if (curYear === probationEnd.getFullYear() && curMonth === probationEnd.getMonth()) {
+                // Partial month - from day after probation end to end of month
+                const dayAfterProbation = probationEnd.getDate() + 1;
+                if (dayAfterProbation <= daysInThisMonth) {
+                  deficitDays = daysInThisMonth - dayAfterProbation + 1;
+                  startDay = `${dayAfterProbation}`;
+                }
+              } else {
+                // Full month
+                deficitDays = daysInThisMonth;
+                startDay = '1';
+              }
+              
+              if (deficitDays > 0) {
+                const monthDeficit = Math.round(dailyDifference * deficitDays * 100) / 100;
+                totalDeficit += monthDeficit;
+                detailParts.push(`${monthNames[curMonth]} ${curYear}: ${deficitDays}d × ${dailyDifference.toFixed(2)} = ${monthDeficit.toFixed(2)}`);
+              }
+              
+              // Move to next month
+              curMonth++;
+              if (curMonth > 11) {
+                curMonth = 0;
+                curYear++;
+              }
+            }
+            
+            if (totalDeficit > 0) {
+              deficitSalary = Math.round(totalDeficit * 100) / 100;
+              deficitDetails = detailParts.join(' | ');
+              console.log(`  Carry-forward deficit (all unpaid months): ${deficitSalary}`);
+              console.log(`  Details: ${deficitDetails}`);
             }
           } else {
             console.log(`  Deficit already paid in previous payroll entry`);
           }
         }
+      }
+      
+      // Generate deficit details for in-month deficit too
+      if (deficitSalary > 0 && !deficitDetails) {
+        const probationEnd = new Date(employee.probationEndDate!);
+        const dayAfterProbation = probationEnd.getDate() + 1;
+        const daysInMonth = workingDays;
+        const dailyDiff = (confirmedPerformance - probationPerformance) / daysInMonth;
+        const deficitDays = daysInMonth - dayAfterProbation + 1;
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        deficitDetails = `${monthNames[month-1]} ${year}: ${deficitDays}d × ${dailyDiff.toFixed(2)} = ${deficitSalary.toFixed(2)}`;
       }
       
       const transportAllowance = employee.transportAllowance || 0;
@@ -227,6 +276,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         totalCTC: ctc,
         workingDays,
         deficitSalary,
+        deficitDetails,
         includeDeficitInPayroll: deficitSalary > 0 // Auto-flag when carry-forward deficit exists
       });
     }

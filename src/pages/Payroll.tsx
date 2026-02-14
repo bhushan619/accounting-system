@@ -106,6 +106,7 @@ interface PayrollPreview {
   totalCTC: number;
   workingDays: number;
   deficitSalary: number;
+  deficitDetails: string;
   includeDeficitInPayroll: boolean;
 }
 
@@ -1803,15 +1804,15 @@ export default function Payroll() {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-left text-xs bg-green-50/50">
-                        {entry.deficitSalary > 0 ? (
-                          <div className="text-muted-foreground whitespace-nowrap">
-                            {entry.deficitSalary > 0 && entry.workingDays ? (
-                              <span>
-                                {((entry.deficitSalary / entry.workingDays) * (entry.workingDays)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {entry.workingDays} days
-                              </span>
-                            ) : '-'}
+                      <td className="px-3 py-2 text-left text-xs bg-green-50/50 max-w-[280px]">
+                        {entry.deficitSalary > 0 && entry.deficitDetails ? (
+                          <div className="text-muted-foreground space-y-0.5">
+                            {entry.deficitDetails.split(' | ').map((part: string, i: number) => (
+                              <div key={i} className="whitespace-nowrap">{part}</div>
+                            ))}
                           </div>
+                        ) : entry.deficitSalary > 0 ? (
+                          <span className="text-muted-foreground">{entry.deficitSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
