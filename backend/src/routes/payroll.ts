@@ -101,6 +101,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     }
     
     // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
+    // Calculate for ALL unpaid months from probation end to current payroll month
     if (employee.probationEndDate && deficitSalary === 0 && confirmedPerformance > probationPerformance) {
       const probationEnd = new Date(employee.probationEndDate);
       const payrollStart = new Date(year, month - 1, 1);
@@ -117,20 +118,42 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
         });
         
         if (!existingDeficitPayroll) {
-          // Calculate the deficit for the month probation ended
-          const probEndMonth = probationEnd.getMonth() + 1; // 1-indexed
-          const probEndYear = probationEnd.getFullYear();
-          const daysInProbEndMonth = new Date(probEndYear, probEndMonth, 0).getDate();
+          // Calculate deficit for ALL months from probation end to current payroll month
+          let totalDeficit = 0;
           
-          const deficitStart = new Date(probationEnd.getTime() + (24 * 60 * 60 * 1000)); // Day after probation ends
-          const deficitEndOfMonth = new Date(probEndYear, probEndMonth, 0); // Last day of probation end month
-          const diffTime = deficitEndOfMonth.getTime() - deficitStart.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          let curMonth = probationEnd.getMonth(); // 0-indexed
+          let curYear = probationEnd.getFullYear();
           
-          if (diffDays > 0) {
-            const dailyDifference = (confirmedPerformance - probationPerformance) / daysInProbEndMonth;
-            deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-            // Don't modify performanceSalary - deficit is carried forward separately
+          while (curYear < year || (curYear === year && curMonth < month - 1)) {
+            const daysInThisMonth = new Date(curYear, curMonth + 1, 0).getDate();
+            const dailyDifference = (confirmedPerformance - probationPerformance) / daysInThisMonth;
+            
+            let deficitDays = 0;
+            
+            if (curYear === probationEnd.getFullYear() && curMonth === probationEnd.getMonth()) {
+              // Partial month - from day after probation end to end of month
+              const dayAfterProbation = probationEnd.getDate() + 1;
+              if (dayAfterProbation <= daysInThisMonth) {
+                deficitDays = daysInThisMonth - dayAfterProbation + 1;
+              }
+            } else {
+              // Full month
+              deficitDays = daysInThisMonth;
+            }
+            
+            if (deficitDays > 0) {
+              totalDeficit += Math.round(dailyDifference * deficitDays * 100) / 100;
+            }
+            
+            curMonth++;
+            if (curMonth > 11) {
+              curMonth = 0;
+              curYear++;
+            }
+          }
+          
+          if (totalDeficit > 0) {
+            deficitSalary = Math.round(totalDeficit * 100) / 100;
           }
         }
       }
