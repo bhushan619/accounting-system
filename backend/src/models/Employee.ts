@@ -25,7 +25,11 @@ const EmployeeSchema = new Schema({
   epfEmployeeRate: { type: Number, default: 8 },
   epfEmployerRate: { type: Number, default: 12 },
   etfRate: { type: Number, default: 3 },
-  // APIT scenario removed - always use Scenario A (employee pays)
+  apitScenario: { 
+    type: String, 
+    enum: ['employee', 'employer'], 
+    default: 'employee' 
+  }, // Scenario A: employee pays APIT, Scenario B: employer pays APIT
   status: { 
     type: String, 
     enum: ['under_probation', 'confirmed', 'closed'], 
