@@ -26,6 +26,7 @@ import employeePortalRoutes from './routes/employee-portal';
 import vatReportsRoutes from './routes/vat-reports';
 import rolePermissionsRoutes from './routes/role-permissions';
 import settingsRoutes from './routes/settings';
+import employeeImportRoutes from './routes/employee-import';
 import config from './config';
 
 const app = express();
@@ -74,6 +75,7 @@ app.use('/employee-portal', employeePortalRoutes);
 app.use('/vat-reports', vatReportsRoutes);
 app.use('/role-permissions', rolePermissionsRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/employees', employeeImportRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), config.UPLOADS_DIR)));
 
 app.use((err:any, req:any, res:any, next:any)=> { 
