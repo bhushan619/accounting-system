@@ -1888,6 +1888,7 @@ export default function Payroll() {
                     <td className="px-3 py-2 text-center bg-green-50/50">
                       {previewData.filter(e => e.deficitSalary > 0 && e.includeDeficitInPayroll).length}/{previewData.filter(e => e.deficitSalary > 0).length}
                     </td>
+                    <td className="px-3 py-2 bg-green-50/50"></td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
                     </td>
@@ -2043,10 +2044,10 @@ export default function Payroll() {
             <div className="flex gap-3 pt-4 border-t border-border">
               <button
                 type="button"
-                onClick={resetForm}
+                onClick={() => setShowPreview(false)}
                 className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
               >
-                Cancel
+                ← Back
               </button>
               <button
                 type="button"
