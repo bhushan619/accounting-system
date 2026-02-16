@@ -361,6 +361,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
           transportAllowance: data.transportAllowance,
           deductionAmount: data.deductionAmount || 0,
           deductionReason: data.deductionReason || '',
+          cashPayment: data.cashPayment || 0,
           deficitSalary: data.deficitSalary || 0,
           includeDeficitInPayroll: data.includeDeficitInPayroll || false
         });
@@ -437,6 +438,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const transportAllowance = empData?.transportAllowance ?? (employee.transportAllowance || 0);
       const deductionAmount = empData?.deductionAmount || 0;
       const deductionReason = empData?.deductionReason || '';
+      const cashPayment = empData?.cashPayment || 0;
       const deficitSalary = empData?.deficitSalary || 0;
       const includeDeficitInPayroll = empData?.includeDeficitInPayroll || false;
       
@@ -486,6 +488,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
         stampFee,
         deductionAmount,
         deductionReason,
+        cashPayment,
         deficitSalary,
         includeDeficitInPayroll,
         totalDeductions: deductions,
@@ -562,6 +565,7 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       const transportAllowance = entryData.transportAllowance ?? (payroll as any).transportAllowance ?? 0;
       const deductionAmount = entryData.deductionAmount ?? payroll.deductionAmount;
       const deductionReason = entryData.deductionReason ?? payroll.deductionReason;
+      const cashPayment = entryData.cashPayment ?? payroll.cashPayment ?? 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       const epfEmployeeRate = employee?.epfEmployeeRate || taxRates.epfEmployee;
@@ -595,6 +599,7 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
         stampFee,
         deductionAmount,
         deductionReason,
+        cashPayment,
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,

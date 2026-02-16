@@ -23,6 +23,7 @@ export const payrollCreateSchema = z.object({
   apitScenario: z.enum(['employee', 'employer']).default('employee'),
   apitEmployer: z.number().min(0).default(0),
   stampFee: z.number().min(0),
+  cashPayment: z.number().min(0).default(0),
   deficitSalary: z.number().min(0).default(0),
   includeDeficitInPayroll: z.boolean().default(false),
   totalDeductions: z.number().min(0),
