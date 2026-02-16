@@ -306,6 +306,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         },
         basicSalary,
         performanceSalary,
+        currentMonthPerformance,
         transportAllowance,
         grossSalary,
         epfEmployee,
