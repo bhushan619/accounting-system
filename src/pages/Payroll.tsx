@@ -1722,46 +1722,46 @@ export default function Payroll() {
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Employee</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Basic</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Transport</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-green-50">
-                      Deficit Calc.
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground whitespace-normal">Employee</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Basic</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Transport</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-green-50 whitespace-normal">
+                      Previous Performance Calculation
                     </th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
-                      Include Deficit
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50 whitespace-normal">
+                      Unpaid Performance Salary
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Salary</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-emerald-50">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Perf. Salary</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-emerald-50 whitespace-normal">
                       Cash Amt.
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Gross</th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Gross</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50 whitespace-normal">
                       Days Attended
                     </th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50">
+                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-blue-50 whitespace-normal">
                       Absent
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-blue-50 whitespace-normal">
                       Attend. Ded.
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-purple-50" title="EPF/ETF Base = Basic + Performance Salary">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-purple-50 whitespace-normal" title="EPF/ETF Base = Basic + Performance Salary">
                       EPF/ETF Base
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(E)</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">APIT</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Stamp</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-orange-50">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">EPF(E)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">APIT</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Stamp</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-orange-50 whitespace-normal">
                       Other Ded.
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-orange-50">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-orange-50 whitespace-normal">
                       Reason
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Total Ded.</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(ER)</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">ETF</th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">CTC</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Total Ded.</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Net</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">EPF(ER)</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">ETF</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">CTC</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -2760,11 +2760,11 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Transport
                       </th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-green-50">
-                        Deficit
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-green-50 whitespace-normal">
+                        Previous Performance Calculation
                       </th>
-                      <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase bg-green-50">
-                        Include
+                      <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase bg-green-50 whitespace-normal">
+                        Unpaid Performance Salary
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
                         Cash Amt.
