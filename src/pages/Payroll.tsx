@@ -84,6 +84,7 @@ interface PayrollPreview {
   employee: Employee;
   basicSalary: number;
   performanceSalary: number;
+  currentMonthPerformance?: number;
   transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
@@ -124,6 +125,8 @@ interface EditEntry {
   deductionReason: string;
   cashPayment: number;
   deficitSalary: number;
+  deficitDetails?: string;
+  currentMonthPerformance?: number;
   includeDeficitInPayroll: boolean;
   originalPerformanceSalary: number;
   grossSalary: number;
@@ -544,8 +547,11 @@ export default function Payroll() {
     const cashPayment = entry.cashPayment || 0;
     const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount - cashPayment;
 
-    // EPF and ETF calculated on (Basic + Performance Salary)
-    const epfEtfBase = basicSalary + performanceSalary;
+    // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+    const currentMonthPerf = (entry.deficitDetails && entry.deficitSalary === 0) 
+      ? (entry.currentMonthPerformance ?? performanceSalary) 
+      : performanceSalary;
+    const epfEtfBase = basicSalary + currentMonthPerf;
     const epfEmployee = Math.round(((epfEtfBase * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((epfEtfBase * taxRates.epfEmployer) / 100) * 100) / 100;
     const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
@@ -1004,8 +1010,11 @@ export default function Payroll() {
     const cashPayment = entry.cashPayment || 0;
     const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitToInclude - cashPayment;
 
-    // EPF and ETF calculated on (Basic + Performance Salary)
-    const epfEtfBase = basicSalary + performanceSalary;
+    // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+    const currentMonthPerf = (entry.deficitDetails && entry.deficitSalary === 0) 
+      ? (entry.currentMonthPerformance ?? performanceSalary) 
+      : performanceSalary;
+    const epfEtfBase = basicSalary + currentMonthPerf;
     const epfEmployee = Math.round(((epfEtfBase * taxRates.epfEmployee) / 100) * 100) / 100;
     const epfEmployer = Math.round(((epfEtfBase * taxRates.epfEmployer) / 100) * 100) / 100;
     const etf = Math.round(((epfEtfBase * taxRates.etf) / 100) * 100) / 100;
@@ -2009,7 +2018,7 @@ export default function Payroll() {
                     <div className="text-purple-700 bg-purple-50 px-2 py-1 rounded">
                       <div className="flex justify-between">
                         <span>EPF/ETF Base:</span>
-                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + (e.currentMonthPerformance ?? e.performanceSalary), 0).toLocaleString()}</span>
                       </div>
                       <p className="text-[10px] italic opacity-80">Basic Salary + Performance Salary (excludes deficit & transport)</p>
                     </div>
@@ -2080,7 +2089,7 @@ export default function Payroll() {
                     <div className="text-purple-700 bg-purple-50 px-2 py-1 rounded">
                       <div className="flex justify-between">
                         <span>EPF/ETF Base:</span>
-                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + (e.currentMonthPerformance ?? e.performanceSalary), 0).toLocaleString()}</span>
                       </div>
                       <p className="text-[10px] italic opacity-80">Basic Salary + Performance Salary (excludes deficit & transport)</p>
                     </div>
