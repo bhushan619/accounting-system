@@ -27,7 +27,7 @@ router.get('/template', (_req, res) => {
     'Transport Allowance': 5000, 'Performance Salary Probation': 10000,
     'Performance Salary Confirmed': 20000, 'Probation End Date': '2025-07-15',
     'EPF Employee Rate': 8, 'EPF Employer Rate': 12, 'ETF Rate': 3,
-    'APIT Scenario': 'employee', 'Status': 'under_probation', 'Bank Name': 'Commercial Bank',
+    'APIT Scenario': 'Employee', 'Status': 'Under Probation', 'Bank Name': 'Commercial Bank',
     'Bank Account Number': '1234567890', 'Bank Account Name': 'John Doe', 'Bank Branch': 'Colombo'
   };
   const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
@@ -71,6 +71,21 @@ const COLUMN_MAP: Record<string, string> = {
   'bankaccountname': 'bankAccountName', 'bank branch': 'bankBranch', 'bankbranch': 'bankBranch',
 };
 
+const VALID_COLUMNS = new Set(Object.keys(COLUMN_MAP));
+
+// Map human-readable values to internal enum values
+const STATUS_MAP: Record<string, string> = {
+  'under probation': 'under_probation', 'under_probation': 'under_probation',
+  'confirmed': 'confirmed', 'closed': 'closed',
+};
+const APIT_MAP: Record<string, string> = {
+  'employee': 'employee', 'employer': 'employer',
+};
+const DEPARTMENT_MAP: Record<string, string> = {
+  'hr department': 'HR department', 'r&d department': 'R&D department',
+  'hr': 'HR department', 'r&d': 'R&D department', '': '',
+};
+
 function parseExcelDate(val: any): Date | null {
   if (!val) return null;
   if (typeof val === 'number') {
@@ -88,6 +103,15 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
     const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
     if (rawRows.length === 0) return res.status(400).json({ error: 'Excel file is empty' });
 
+    // Validate column headers
+    const fileColumns = Object.keys(rawRows[0]).map(c => c.trim().toLowerCase());
+    const unmatchedColumns = fileColumns.filter(c => c && !VALID_COLUMNS.has(c));
+    if (unmatchedColumns.length > 0) {
+      return res.status(400).json({ 
+        error: `Unrecognized column(s): ${unmatchedColumns.map(c => `"${c}"`).join(', ')}. Please use the provided template.` 
+      });
+    }
+
     const results = { created: 0, skipped: 0, errors: [] as string[] };
     for (let i = 0; i < rawRows.length; i++) {
       const raw = rawRows[i];
@@ -98,7 +122,7 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
         if (field) mapped[field] = value;
       }
       if (!mapped.employeeId || !mapped.fullName || !mapped.email || !mapped.basicSalary) {
-        results.errors.push(`Row ${rowNum}: Missing required fields`); results.skipped++; continue;
+        results.errors.push(`Row ${rowNum}: Missing required fields (Employee ID, Full Name, Email, Basic Salary)`); results.skipped++; continue;
       }
       if (await Employee.findOne({ employeeId: mapped.employeeId })) {
         results.errors.push(`Row ${rowNum}: Employee ID "${mapped.employeeId}" already exists`); results.skipped++; continue;
@@ -113,9 +137,22 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
       mapped.workingDaysPerMonth = 30;
       if (mapped.joinDate) { mapped.joinDate = parseExcelDate(mapped.joinDate) || new Date(); }
       if (mapped.probationEndDate) { const d = parseExcelDate(mapped.probationEndDate); if (d) mapped.probationEndDate = d; else delete mapped.probationEndDate; }
-      if (mapped.department && !['HR department', 'R&D department', ''].includes(mapped.department)) mapped.department = '';
-      if (mapped.apitScenario && !['employee', 'employer'].includes(mapped.apitScenario)) mapped.apitScenario = 'employee';
-      if (mapped.status && !['under_probation', 'confirmed', 'closed'].includes(mapped.status)) mapped.status = 'under_probation';
+      // Map human-readable enum values
+      if (mapped.department) {
+        const deptKey = mapped.department.toString().trim().toLowerCase();
+        if (deptKey in DEPARTMENT_MAP) { mapped.department = DEPARTMENT_MAP[deptKey]; }
+        else { results.errors.push(`Row ${rowNum}: Invalid Department "${mapped.department}". Use "HR department" or "R&D department"`); results.skipped++; continue; }
+      }
+      if (mapped.apitScenario) {
+        const apitKey = mapped.apitScenario.toString().trim().toLowerCase();
+        if (apitKey in APIT_MAP) { mapped.apitScenario = APIT_MAP[apitKey]; }
+        else { results.errors.push(`Row ${rowNum}: Invalid APIT Scenario "${mapped.apitScenario}". Use "Employee" or "Employer"`); results.skipped++; continue; }
+      }
+      if (mapped.status) {
+        const statusKey = mapped.status.toString().trim().toLowerCase();
+        if (statusKey in STATUS_MAP) { mapped.status = STATUS_MAP[statusKey]; }
+        else { results.errors.push(`Row ${rowNum}: Invalid Status "${mapped.status}". Use "Under Probation", "Confirmed", or "Closed"`); results.skipped++; continue; }
+      }
       try { await Employee.create(mapped); results.created++; } catch (err: any) { results.errors.push(`Row ${rowNum}: ${err.message}`); results.skipped++; }
     }
     res.json(results);
