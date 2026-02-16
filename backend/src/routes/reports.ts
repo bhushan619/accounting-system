@@ -46,7 +46,7 @@ router.get('/overview', async (req, res) => {
   
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
   const totalExpenses = regularExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const totalPayroll = payrolls.reduce((sum, pay) => sum + pay.netSalary, 0);
+  const totalPayroll = payrolls.reduce((sum, pay) => sum + (pay.netSalary - (pay.cashPayment || 0)), 0);
   const totalPayrollExpenses = payrollExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const totalCosts = totalExpenses + totalPayroll + totalPayrollExpenses;
   const profit = totalRevenue - totalCosts;
@@ -116,7 +116,7 @@ router.get('/profit-loss', async (req, res) => {
       payroll: payrolls.map(pay => ({
         id: pay._id,
         employee: pay.employee,
-        amount: pay.netSalary,
+        amount: pay.netSalary - (pay.cashPayment || 0),
         month: pay.month,
         year: pay.year
       })),
@@ -127,7 +127,7 @@ router.get('/profit-loss', async (req, res) => {
         date: exp.date
       })),
       totalExpenses: regularExpenses.reduce((sum, exp) => sum + exp.amount, 0),
-      totalPayroll: payrolls.reduce((sum, pay) => sum + pay.netSalary, 0),
+      totalPayroll: payrolls.reduce((sum, pay) => sum + (pay.netSalary - (pay.cashPayment || 0)), 0),
       totalPayrollExpenses: payrollExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     }
   });
