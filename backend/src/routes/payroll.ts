@@ -116,7 +116,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
           employee: employee._id,
           $or: [
             { deficitSalary: { $gt: 0 } },
-            { includeDeficitInPayroll: true }
+            { includeDeficitInPayroll: true },
+            { deficitDetails: { $ne: '', $exists: true } }
           ]
         });
         

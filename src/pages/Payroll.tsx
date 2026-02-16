@@ -728,6 +728,7 @@ export default function Payroll() {
         cashPayment: entry.cashPayment || 0,
         deficitSalary: entry.deficitSalary || 0,
         includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
+        deficitDetails: entry.deficitDetails || '',
       }));
 
       const runResponse = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/generate`, {

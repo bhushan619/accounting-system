@@ -175,7 +175,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
             employee: employee._id,
             $or: [
               { deficitSalary: { $gt: 0 } },
-              { includeDeficitInPayroll: true }
+              { includeDeficitInPayroll: true },
+              { deficitDetails: { $ne: '', $exists: true } }
             ]
           });
           
@@ -357,7 +358,8 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
           deductionReason: data.deductionReason || '',
           cashPayment: data.cashPayment || 0,
           deficitSalary: data.deficitSalary || 0,
-          includeDeficitInPayroll: data.includeDeficitInPayroll || false
+          includeDeficitInPayroll: data.includeDeficitInPayroll || false,
+          deficitDetails: data.deficitDetails || ''
         });
       });
     }
@@ -435,6 +437,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const cashPayment = empData?.cashPayment || 0;
       const deficitSalary = empData?.deficitSalary || 0;
       const includeDeficitInPayroll = empData?.includeDeficitInPayroll || false;
+      const deficitDetails = empData?.deficitDetails || '';
       
       // Calculate gross salary - include deficit if flag is set
       const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
@@ -484,6 +487,7 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
         deductionReason,
         cashPayment,
         deficitSalary,
+        deficitDetails,
         includeDeficitInPayroll,
         totalDeductions: deductions,
         netSalary,

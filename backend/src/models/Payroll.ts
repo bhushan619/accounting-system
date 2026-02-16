@@ -20,6 +20,7 @@ const PayrollSchema = new Schema({
   deductionReason: { type: String, default: '' }, // Reason for the deduction
   cashPayment: { type: Number, default: 0 }, // Cash payment portion of net salary
   deficitSalary: { type: Number, default: 0 }, // Deficit salary between probation end and status update
+  deficitDetails: { type: String, default: '' }, // Breakdown of deficit calculation per month
   includeDeficitInPayroll: { type: Boolean, default: false }, // Flag to include deficit in payroll
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
