@@ -110,6 +110,7 @@ interface PayrollPreview {
   deficitSalary: number;
   deficitDetails: string;
   includeDeficitInPayroll: boolean;
+  originalPerformanceSalary: number;
 }
 
 interface EditEntry {
@@ -124,6 +125,7 @@ interface EditEntry {
   cashPayment: number;
   deficitSalary: number;
   includeDeficitInPayroll: boolean;
+  originalPerformanceSalary: number;
   grossSalary: number;
   epfEmployee: number;
   epfEmployer: number;
@@ -659,14 +661,16 @@ export default function Payroll() {
 
   const handleDeficitToggle = (index: number, checked: boolean) => {
     const updatedPreview = [...previewData];
+    const entry = updatedPreview[index];
+    const perfSalary = checked ? (entry.originalPerformanceSalary || entry.performanceSalary) : 0;
     updatedPreview[index] = recalculatePayroll(
-      updatedPreview[index],
-      updatedPreview[index].performanceSalary,
-      updatedPreview[index].transportAllowance,
-      updatedPreview[index].deductionAmount,
-      updatedPreview[index].deductionReason,
-      updatedPreview[index].attendedDays,
-      updatedPreview[index].absentDays,
+      entry,
+      perfSalary,
+      entry.transportAllowance,
+      entry.deductionAmount,
+      entry.deductionReason,
+      entry.attendedDays,
+      entry.absentDays,
       checked,
     );
     setPreviewData(updatedPreview);
@@ -697,6 +701,7 @@ export default function Payroll() {
           deductionAmount: 0,
           deductionReason: "",
           cashPayment: 0,
+          originalPerformanceSalary: entry.performanceSalary,
         };
       });
 
@@ -964,6 +969,7 @@ export default function Payroll() {
           cashPayment: entry.cashPayment || 0,
           deficitSalary: entry.deficitSalary || 0,
           includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
+          originalPerformanceSalary: entry.performanceSalary || 0,
           grossSalary: entry.grossSalary,
           epfEmployee: entry.epfEmployee,
           epfEmployer: entry.epfEmployer,
@@ -1035,11 +1041,13 @@ export default function Payroll() {
 
   const handleEditDeficitToggle = (index: number, checked: boolean) => {
     const updatedData = [...editData];
+    const entry = updatedData[index];
+    const perfSalary = checked ? (entry.originalPerformanceSalary || entry.performanceSalary) : 0;
     updatedData[index] = recalculateEditEntry(
-      updatedData[index],
-      updatedData[index].performanceSalary,
-      updatedData[index].transportAllowance,
-      updatedData[index].deductionAmount,
+      entry,
+      perfSalary,
+      entry.transportAllowance,
+      entry.deductionAmount,
       checked
     );
     setEditData(updatedData);
