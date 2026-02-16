@@ -255,9 +255,12 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const otherLeave = attendance?.otherLeave ?? 0;
       const leaveNotes = attendance?.leaveNotes ?? '';
       
-      // Attendance deduction based on unpaid leave only
+      // Attendance deduction: unpaid leave + any absent days not covered by paid leave types
+      const paidLeave = sickLeave + casualLeave + annualLeave;
+      const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - otherLeave);
+      const deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
       const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
-      const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
+      const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
       
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
       const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
