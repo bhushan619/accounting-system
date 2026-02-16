@@ -1921,98 +1921,153 @@ export default function Payroll() {
               <h4 className="text-sm font-semibold text-foreground mb-3">Calculation Summary</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="space-y-2">
-                  <p className="text-muted-foreground">Income Components</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span>Basic Salary:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}</span>
+                  <p className="text-muted-foreground font-semibold">Income Components</p>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between">
+                        <span>Basic Salary:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Fixed monthly salary as per employment contract</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Performance Salary:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between">
+                        <span>Performance Salary:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Based on employee status: probation or confirmed rate</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Transport Allowance:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between">
+                        <span>Transport Allowance:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Fixed monthly transport allowance per employee</p>
                     </div>
-                    <div className="flex justify-between text-green-700">
-                      <span>Deficit Salary (Included):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between text-green-700">
+                        <span>Deficit Salary (Included):</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Carry-forward difference between confirmed & probation performance rates</p>
                     </div>
-                    <div className="flex justify-between text-destructive">
-                      <span>Less: Attendance Deduction:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between text-destructive">
+                        <span>Less: Attendance Deduction:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">((Basic + Perf. + Transport) ÷ Calendar Days) × Deductible Days</p>
                     </div>
-                    <div className="flex justify-between border-t border-border pt-1">
-                      <span className="font-semibold">Gross Salary:</span>
-                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-muted-foreground">Employee Deductions</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-purple-700 bg-purple-50 px-2 py-1 rounded">
-                      <span>EPF/ETF Base (Basic + Perf.):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-destructive">
-                      <span>EPF (Employee {taxRates?.epfEmployee || 8}%):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-destructive">
-                      <span>APIT:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-destructive">
-                      <span>Stamp Fee:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-orange-600">
-                      <span>Other Deductions:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.deductionAmount, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-border pt-1 text-destructive">
-                      <span className="font-semibold">Total Deductions:</span>
-                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    <div className="border-t border-border pt-1">
+                      <div className="flex justify-between">
+                        <span className="font-semibold">Gross Salary:</span>
+                        <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Basic + Performance + Transport + Deficit − Attendance Deduction</p>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-muted-foreground">Net Payable</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span>Gross Salary:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                  <p className="text-muted-foreground font-semibold">Employee Deductions</p>
+                  <div className="space-y-2">
+                    <div className="text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                      <div className="flex justify-between">
+                        <span>EPF/ETF Base:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] italic opacity-80">Basic Salary + Performance Salary (excludes deficit & transport)</p>
                     </div>
-                    <div className="flex justify-between text-destructive">
-                      <span>Less: Total Deductions:</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between text-destructive">
+                        <span>EPF (Employee {taxRates?.epfEmployee || 8}%):</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">EPF/ETF Base × {taxRates?.epfEmployee || 8}%</p>
                     </div>
-                    <div className="flex justify-between border-t border-border pt-1 text-primary">
-                      <span className="font-semibold">Net Salary:</span>
-                      <span className="font-bold text-lg">Rs. {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between text-destructive">
+                        <span>APIT:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.apit || 0), 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">(Gross × Tax Rate) − Standard Deduction per slab</p>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-destructive">
+                        <span>Stamp Fee:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.stampFee, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Fixed statutory stamp duty per employee</p>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-orange-600">
+                        <span>Other Deductions:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.deductionAmount, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Manual salary deductions with specified reasons</p>
+                    </div>
+                    <div className="border-t border-border pt-1">
+                      <div className="flex justify-between text-destructive">
+                        <span className="font-semibold">Total Deductions:</span>
+                        <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">EPF Employee + APIT + Stamp Fee + Other Deductions</p>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-muted-foreground">Employer Contributions</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-purple-700 bg-purple-50 px-2 py-1 rounded">
-                      <span>EPF/ETF Base (Basic + Perf.):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                  <p className="text-muted-foreground font-semibold">Net Payable</p>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between">
+                        <span>Gross Salary:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-orange-600">
-                      <span>EPF (Employer {taxRates?.epfEmployer || 12}%):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}</span>
+                    <div>
+                      <div className="flex justify-between text-destructive">
+                        <span>Less: Total Deductions:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.totalDeductions, 0).toLocaleString()}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-orange-600">
-                      <span>ETF ({taxRates?.etf || 3}%):</span>
-                      <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}</span>
+                    <div className="border-t border-border pt-1">
+                      <div className="flex justify-between text-primary">
+                        <span className="font-semibold">Net Salary:</span>
+                        <span className="font-bold text-lg">Rs. {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Gross Salary − Total Deductions = Take-home pay</p>
                     </div>
-                    <div className="flex justify-between border-t border-border pt-1">
-                      <span className="font-semibold">Total CTC:</span>
-                      <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground font-semibold">Employer Contributions</p>
+                  <div className="space-y-2">
+                    <div className="text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                      <div className="flex justify-between">
+                        <span>EPF/ETF Base:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] italic opacity-80">Basic Salary + Performance Salary (excludes deficit & transport)</p>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-orange-600">
+                        <span>EPF (Employer {taxRates?.epfEmployer || 12}%):</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">EPF/ETF Base × {taxRates?.epfEmployer || 12}%</p>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-orange-600">
+                        <span>ETF ({taxRates?.etf || 3}%):</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.etf, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">EPF/ETF Base × {taxRates?.etf || 3}%</p>
+                    </div>
+                    <div className="border-t border-border pt-1">
+                      <div className="flex justify-between">
+                        <span className="font-semibold">Total CTC:</span>
+                        <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.totalCTC, 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Gross + EPF Employer + ETF + APIT (if employer-paid)</p>
                     </div>
                   </div>
                 </div>
