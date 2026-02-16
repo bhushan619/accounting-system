@@ -46,7 +46,15 @@ function getWorkingDaysInMonth(month: number, year: number): number {
 
 router.post('/preview', requirePayrollAccess, async (req: any, res) => {
   try {
-    const { month, year, employeeIds } = req.body;
+    const { month, year, employeeIds, attendanceData } = req.body;
+    
+    // Build attendance lookup map by employeeId string
+    const attendanceMap = new Map();
+    if (attendanceData && Array.isArray(attendanceData)) {
+      attendanceData.forEach((a: any) => {
+        attendanceMap.set(a.employeeId, a);
+      });
+    }
     
     // Get employees that are not closed
     const employees = await Employee.find({ 
@@ -236,6 +244,21 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
       
+      // Calculate attendance deduction from uploaded attendance data
+      const attendance = attendanceMap.get(employee.employeeId);
+      const attendedDays = attendance?.attendedDays ?? workingDays;
+      const absentDays = attendance?.absentDays ?? 0;
+      const unpaidLeave = attendance?.unpaidLeave ?? 0;
+      const sickLeave = attendance?.sickLeave ?? 0;
+      const casualLeave = attendance?.casualLeave ?? 0;
+      const annualLeave = attendance?.annualLeave ?? 0;
+      const otherLeave = attendance?.otherLeave ?? 0;
+      const leaveNotes = attendance?.leaveNotes ?? '';
+      
+      // Attendance deduction based on unpaid leave only
+      const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
+      const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
+      
       const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
       const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
       const etfRate = employee.etfRate || taxRates.etf;
@@ -254,7 +277,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       // Scenario A: Employee pays APIT - deducted from salary
       // Scenario B: Employer pays APIT - added to employer costs
       const apitDeduction = apitScenario === 'employee' ? apit : 0;
-      const deductions = epfEmployee + apitDeduction + stampFee;
+      const deductions = epfEmployee + apitDeduction + stampFee + attendanceDeduction;
       const netSalary = grossSalary - deductions;
       const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
       const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
@@ -276,13 +299,22 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         etf,
         apit,
         stampFee,
+        attendanceDeduction,
+        attendedDays,
+        absentDays,
+        unpaidLeave,
+        sickLeave,
+        casualLeave,
+        annualLeave,
+        otherLeave,
+        leaveNotes,
         totalDeductions: deductions,
         netSalary,
         totalCTC: ctc,
         workingDays,
         deficitSalary,
         deficitDetails,
-        includeDeficitInPayroll: deficitSalary > 0 // Auto-flag when carry-forward deficit exists
+        includeDeficitInPayroll: deficitSalary > 0
       });
     }
     

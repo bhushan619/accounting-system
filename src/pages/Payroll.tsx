@@ -501,9 +501,8 @@ export default function Payroll() {
     }
   };
 
-  const getAttendanceForEmployee = (employeeId: string): AttendanceData | undefined => {
-    return attendanceData.find((a) => a.employeeId === employeeId);
-  };
+
+
 
   const recalculatePayroll = (
     entry: PayrollPreview,
@@ -663,48 +662,18 @@ export default function Payroll() {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/preview`, {
         ...formData,
         employeeIds: selectedEmployees,
+        attendanceData: attendanceData,
       });
-      // Add deduction fields and attendance to preview data
+      // Add deduction fields to preview data - attendance deductions now calculated by backend
       const dataWithExtras = response.data.map((entry: PayrollPreview) => {
-        const attendance = getAttendanceForEmployee(entry.employee.employeeId);
-        const attendedDays = attendance?.attendedDays ?? entry.workingDays;
-        const absentDays = attendance?.absentDays ?? 0;
-        const grossSalary = entry.basicSalary + entry.performanceSalary + entry.transportAllowance;
-        const perDaySalary = grossSalary / entry.workingDays;
-        // Only unpaid leave causes deduction
-        const unpaidLeave = attendance?.unpaidLeave ?? 0;
-        const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
-
         return {
           ...entry,
           deductionAmount: 0,
           deductionReason: "",
-          attendedDays,
-          absentDays,
-          sickLeave: attendance?.sickLeave ?? 0,
-          casualLeave: attendance?.casualLeave ?? 0,
-          annualLeave: attendance?.annualLeave ?? 0,
-          unpaidLeave,
-          otherLeave: attendance?.otherLeave ?? 0,
-          leaveNotes: attendance?.leaveNotes ?? "",
-          attendanceDeduction,
         };
       });
 
-      // Recalculate with attendance deductions
-      const recalculatedData = dataWithExtras.map((entry: PayrollPreview) =>
-        recalculatePayroll(
-          entry,
-          entry.performanceSalary,
-          entry.transportAllowance,
-          entry.deductionAmount,
-          entry.deductionReason,
-          entry.attendedDays,
-          entry.absentDays,
-        ),
-      );
-
-      setPreviewData(recalculatedData);
+      setPreviewData(dataWithExtras);
       setShowPreview(true);
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to preview payroll");
