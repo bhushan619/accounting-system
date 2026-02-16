@@ -187,6 +187,12 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const carryForward = isCarryForwardDeficit(employee.probationEndDate, month, year);
     const includeDeficitInPayroll = deficitSalary > 0;
     
+    // Track current month's actual performance for EPF/ETF (excludes carry-forward deficit)
+    const confirmedPerf = employee.performanceSalaryConfirmed || 0;
+    const currentMonthPerformance = (carryForward && deficitDetails) 
+      ? confirmedPerf  // Carry-forward: use only current month confirmed rate
+      : finalPerformanceSalary;  // Normal or in-month deficit: use calculated performance
+    
     // Include carry-forward deficit in gross salary
     const deficitAmount = (carryForward && deficitSalary > 0) ? deficitSalary : 0;
     const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance + deficitAmount;
@@ -197,8 +203,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     const etfRate = employee.etfRate || taxRates.etf;
     const stampFee = taxRates.stampFee;
     
-    // EPF and ETF calculated on (Basic + Performance Salary) - deficit excluded from EPF/ETF base
-    const epfEtfBase = basicSalary + finalPerformanceSalary;
+    // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+    const epfEtfBase = basicSalary + currentMonthPerformance;
     const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
     const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
     const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
