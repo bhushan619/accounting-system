@@ -621,7 +621,16 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-foreground mb-1">{t('users.role')}</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'accountant' | 'employee' | 'unmarked', employeeRef: '', email: '', fullName: '' })}
+                  onChange={(e) => {
+                    const newRole = e.target.value as 'admin' | 'accountant' | 'employee' | 'unmarked';
+                    if (newRole === 'employee') {
+                      // Clear fields — they'll be auto-populated when an employee is selected
+                      setFormData({ ...formData, role: newRole, employeeRef: '', email: '', fullName: '' });
+                    } else {
+                      // Keep existing email/fullName, just clear employeeRef
+                      setFormData({ ...formData, role: newRole, employeeRef: '' });
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="accountant">{t('users.accountant')}</option>
