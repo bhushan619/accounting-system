@@ -19,7 +19,7 @@ function isCarryForwardDeficit(probationEndDate: Date | undefined, month: number
 }
 
 router.use(requireAuth);
-router.use(requireRole('admin'));
+router.use(requireRole(['admin', 'accountant']));
 
 router.get('/', async (req, res) => {
   const payrolls = await Payroll.find()
