@@ -1806,7 +1806,7 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right">
                         <input
                           type="number"
-                          value={entry.performanceSalary + (entry.includeDeficitInPayroll ? (entry.deficitSalary || 0) : 0)}
+                          value={entry.performanceSalary}
                           onChange={(e) => handlePerformanceSalaryChange(idx, e.target.value)}
                           className="w-20 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
                           min="0"
@@ -1889,7 +1889,7 @@ export default function Payroll() {
                     <td className="px-3 py-2 bg-green-50/50"></td>
                     <td className="px-3 py-2 bg-green-50/50"></td>
                     <td className="px-3 py-2 text-right text-foreground">
-                      {previewData.reduce((sum, e) => sum + e.performanceSalary + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-emerald-600 bg-emerald-50/50">
                       {previewData.reduce((sum, e) => sum + (e.cashPayment || 0), 0).toLocaleString()}
@@ -1960,7 +1960,7 @@ export default function Payroll() {
                     <div>
                       <div className="flex justify-between">
                         <span>Performance Salary:</span>
-                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground italic">Based on employee status (includes carry-forward deficit if applicable)</p>
                     </div>
@@ -2584,7 +2584,7 @@ export default function Payroll() {
                           </td>
                           <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-foreground">
-                            {((entry.performanceSalary || 0) + (entry.includeDeficitInPayroll ? (entry.deficitSalary || 0) : 0)).toLocaleString()}
+                            {(entry.performanceSalary || 0).toLocaleString()}
                           </td>
                           <td className="px-3 py-3 text-right text-foreground">{(entry.transportAllowance || 0).toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-emerald-600 bg-emerald-50/50">
@@ -2637,7 +2637,7 @@ export default function Payroll() {
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries
-                            .reduce((sum: number, e: any) => sum + (e.performanceSalary || 0) + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0)
+                            .reduce((sum: number, e: any) => sum + (e.performanceSalary || 0), 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
