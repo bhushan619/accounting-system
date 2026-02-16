@@ -1729,7 +1729,7 @@ export default function Payroll() {
                       Previous Performance Calculation
                     </th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50 whitespace-normal">
-                      Unpaid Performance Salary
+                      Include Unpaid Performance Salary
                     </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Perf. Salary</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-emerald-50 whitespace-normal">
@@ -1791,7 +1791,7 @@ export default function Payroll() {
                         )}
                       </td>
                       <td className="px-3 py-2 text-center bg-green-50/50">
-                        {entry.deficitSalary > 0 ? (
+                        {entry.deficitDetails ? (
                           <input
                             type="checkbox"
                             checked={entry.includeDeficitInPayroll}
@@ -2764,7 +2764,7 @@ export default function Payroll() {
                         Previous Performance Calculation
                       </th>
                       <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase bg-green-50 whitespace-normal">
-                        Unpaid Performance Salary
+                        Include Unpaid Performance Salary
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
                         Cash Amt.
