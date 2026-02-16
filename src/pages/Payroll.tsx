@@ -87,6 +87,7 @@ interface PayrollPreview {
   transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
+  cashPayment: number;
   attendedDays: number;
   absentDays: number;
   sickLeave: number;
@@ -120,6 +121,7 @@ interface EditEntry {
   transportAllowance: number;
   deductionAmount: number;
   deductionReason: string;
+  cashPayment: number;
   deficitSalary: number;
   includeDeficitInPayroll: boolean;
   grossSalary: number;
@@ -633,6 +635,16 @@ export default function Payroll() {
     setPreviewData(updatedPreview);
   };
 
+  const handleCashPaymentChange = (index: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const updatedPreview = [...previewData];
+    updatedPreview[index] = {
+      ...updatedPreview[index],
+      cashPayment: numValue,
+    };
+    setPreviewData(updatedPreview);
+  };
+
   const handleDeficitToggle = (index: number, checked: boolean) => {
     const updatedPreview = [...previewData];
     updatedPreview[index] = recalculatePayroll(
@@ -668,10 +680,11 @@ export default function Payroll() {
       });
       // Add deduction fields to preview data - attendance deductions now calculated by backend
       const dataWithExtras = response.data.map((entry: PayrollPreview) => {
-        return {
+      return {
           ...entry,
           deductionAmount: 0,
           deductionReason: "",
+          cashPayment: 0,
         };
       });
 
@@ -695,6 +708,7 @@ export default function Payroll() {
           : entry.unpaidLeave > 0
             ? `Unpaid Leave ${entry.unpaidLeave} days`
             : "",
+        cashPayment: entry.cashPayment || 0,
         deficitSalary: entry.deficitSalary || 0,
         includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
       }));
@@ -935,6 +949,7 @@ export default function Payroll() {
           transportAllowance: entry.transportAllowance || 0,
           deductionAmount: entry.deductionAmount || 0,
           deductionReason: entry.deductionReason || "",
+          cashPayment: entry.cashPayment || 0,
           deficitSalary: entry.deficitSalary || 0,
           includeDeficitInPayroll: entry.includeDeficitInPayroll || false,
           grossSalary: entry.grossSalary,
@@ -1055,6 +1070,7 @@ export default function Payroll() {
         transportAllowance: entry.transportAllowance,
         deductionAmount: entry.deductionAmount,
         deductionReason: entry.deductionReason,
+        cashPayment: entry.cashPayment,
         deficitSalary: entry.deficitSalary,
         includeDeficitInPayroll: entry.includeDeficitInPayroll,
       }));
@@ -1727,6 +1743,12 @@ export default function Payroll() {
                     </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Total Ded.</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Net</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-emerald-50">
+                      Cash Amt.
+                    </th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground bg-emerald-50">
+                      Bank Transfer
+                    </th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">EPF(ER)</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">ETF</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">CTC</th>
@@ -1826,6 +1848,20 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-right font-semibold text-primary">
                         {entry.netSalary.toLocaleString()}
                       </td>
+                      <td className="px-3 py-2 text-right bg-emerald-50/50">
+                        <input
+                          type="number"
+                          value={entry.cashPayment}
+                          onChange={(e) => handleCashPaymentChange(idx, e.target.value)}
+                          className="w-20 px-2 py-1 text-right border border-emerald-200 rounded bg-background text-foreground focus:ring-1 focus:ring-emerald-400"
+                          min="0"
+                          step="0.01"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right font-medium bg-emerald-50/50 text-emerald-700">
+                        {(entry.netSalary - (entry.cashPayment || 0)).toLocaleString()}
+                      </td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right font-semibold text-foreground">
@@ -1882,6 +1918,12 @@ export default function Payroll() {
                     </td>
                     <td className="px-3 py-2 text-right text-primary">
                       {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-emerald-600 bg-emerald-50/50">
+                      {previewData.reduce((sum, e) => sum + (e.cashPayment || 0), 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right text-emerald-700 bg-emerald-50/50 font-medium">
+                      {previewData.reduce((sum, e) => sum + e.netSalary - (e.cashPayment || 0), 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-orange-600">
                       {previewData.reduce((sum, e) => sum + e.epfEmployer, 0).toLocaleString()}
@@ -2009,6 +2051,20 @@ export default function Payroll() {
                         <span className="font-bold text-lg">Rs. {previewData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground italic">Gross Salary − Total Deductions = Take-home pay</p>
+                    </div>
+                    <div className="mt-1">
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Cash Payment:</span>
+                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.cashPayment || 0), 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Portion of net salary paid in cash</p>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-emerald-800">
+                        <span className="font-semibold">Bank Transfer:</span>
+                        <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.netSalary - (e.cashPayment || 0), 0).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Net Salary − Cash Payment = Amount transferred via bank</p>
                     </div>
                   </div>
                 </div>
@@ -2506,6 +2562,12 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Net Salary
                       </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
+                        Cash Paid
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
+                        Bank Transfer
+                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         EPF (ER)
                       </th>
@@ -2550,6 +2612,12 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-right font-semibold text-primary">
                             {entry.netSalary.toLocaleString()}
                           </td>
+                          <td className="px-3 py-3 text-right text-emerald-600 bg-emerald-50/50">
+                            {(entry.cashPayment || 0).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-3 text-right font-medium text-emerald-700 bg-emerald-50/50">
+                            {(entry.netSalary - (entry.cashPayment || 0)).toLocaleString()}
+                          </td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.epfEmployer.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right text-orange-600">{entry.etf.toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-semibold text-foreground">
@@ -2559,7 +2627,7 @@ export default function Payroll() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={16} className="px-3 py-8 text-center text-muted-foreground">
+                        <td colSpan={18} className="px-3 py-8 text-center text-muted-foreground">
                           No payroll entries found
                         </td>
                       </tr>
@@ -2619,6 +2687,16 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right text-primary">
                           {selectedRun.payrollEntries
                             .reduce((sum: number, e: any) => sum + e.netSalary, 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-emerald-600 bg-emerald-50/50">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + (e.cashPayment || 0), 0)
+                            .toLocaleString()}
+                        </td>
+                        <td className="px-3 py-3 text-right text-emerald-700 bg-emerald-50/50 font-medium">
+                          {selectedRun.payrollEntries
+                            .reduce((sum: number, e: any) => sum + e.netSalary - (e.cashPayment || 0), 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-orange-600">
@@ -2724,6 +2802,12 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Net Salary
                       </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
+                        Cash Amt.
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-emerald-50">
+                        Bank Transfer
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -2809,6 +2893,23 @@ export default function Payroll() {
                         <td className="px-3 py-3 text-right font-semibold text-primary">
                           {entry.netSalary.toLocaleString()}
                         </td>
+                        <td className="px-3 py-3 text-right bg-emerald-50/50">
+                          <input
+                            type="number"
+                            value={entry.cashPayment}
+                            onChange={(e) => {
+                              const updatedData = [...editData];
+                              updatedData[idx] = { ...updatedData[idx], cashPayment: parseFloat(e.target.value) || 0 };
+                              setEditData(updatedData);
+                            }}
+                            className="w-20 px-2 py-1 text-right border border-emerald-200 rounded bg-background text-foreground focus:ring-1 focus:ring-emerald-400"
+                            min="0"
+                            step="0.01"
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-right font-medium bg-emerald-50/50 text-emerald-700">
+                          {(entry.netSalary - (entry.cashPayment || 0)).toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -2849,6 +2950,12 @@ export default function Payroll() {
                       </td>
                       <td className="px-3 py-3 text-right text-primary">
                         {editData.reduce((sum, e) => sum + e.netSalary, 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-emerald-600 bg-emerald-50/50">
+                        {editData.reduce((sum, e) => sum + (e.cashPayment || 0), 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right text-emerald-700 bg-emerald-50/50 font-medium">
+                        {editData.reduce((sum, e) => sum + e.netSalary - (e.cashPayment || 0), 0).toLocaleString()}
                       </td>
                     </tr>
                   </tfoot>
