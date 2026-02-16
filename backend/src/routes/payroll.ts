@@ -121,7 +121,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
         });
         
         if (!existingDeficitPayroll) {
-          // Calculate deficit for ALL months from probation end to current payroll month
+          // Calculate deficit for ALL months from probation end to AND INCLUDING current payroll month
           let totalDeficit = 0;
           const detailParts: string[] = [];
           const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -129,7 +129,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
           let curMonth = probationEnd.getMonth(); // 0-indexed
           let curYear = probationEnd.getFullYear();
           
-          while (curYear < year || (curYear === year && curMonth < month - 1)) {
+          while (curYear < year || (curYear === year && curMonth < month)) {
             const daysInThisMonth = new Date(curYear, curMonth + 1, 0).getDate();
             const dailyDifference = (confirmedPerformance - probationPerformance) / daysInThisMonth;
             
@@ -160,7 +160,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
           }
           
           if (totalDeficit > 0) {
-            deficitSalary = Math.round(totalDeficit * 100) / 100;
+            // Fold total into performanceSalary (not deficitSalary) to avoid double-counting
+            performanceSalary = Math.round(totalDeficit * 100) / 100;
             deficitDetails = detailParts.join(' | ');
           }
         }
