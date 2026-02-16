@@ -180,21 +180,19 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
           });
           
           if (!existingDeficitPayroll) {
-            // Calculate deficit for ALL months from probation end to current payroll month
+            // Calculate deficit for ALL months from probation end to AND INCLUDING current payroll month
             let totalDeficit = 0;
             const detailParts: string[] = [];
             
-            // Start from probation end month, go up to (but not including) the current payroll month
+            // Start from probation end month, go up to AND INCLUDING the current payroll month
             let curMonth = probationEnd.getMonth(); // 0-indexed
             let curYear = probationEnd.getFullYear();
             
-            while (curYear < year || (curYear === year && curMonth < month - 1)) {
+            while (curYear < year || (curYear === year && curMonth < month)) {
               const daysInThisMonth = new Date(curYear, curMonth + 1, 0).getDate();
               const dailyDifference = (confirmedPerformance - probationPerformance) / daysInThisMonth;
               
               let deficitDays = 0;
-              let startDay = '';
-              const endDay = daysInThisMonth;
               const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
               
               if (curYear === probationEnd.getFullYear() && curMonth === probationEnd.getMonth()) {
@@ -202,12 +200,10 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
                 const dayAfterProbation = probationEnd.getDate() + 1;
                 if (dayAfterProbation <= daysInThisMonth) {
                   deficitDays = daysInThisMonth - dayAfterProbation + 1;
-                  startDay = `${dayAfterProbation}`;
                 }
               } else {
                 // Full month
                 deficitDays = daysInThisMonth;
-                startDay = '1';
               }
               
               if (deficitDays > 0) {
@@ -225,9 +221,10 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
             }
             
             if (totalDeficit > 0) {
-              deficitSalary = Math.round(totalDeficit * 100) / 100;
+              // Fold total into performanceSalary (not deficitSalary) to avoid double-counting
+              performanceSalary = Math.round(totalDeficit * 100) / 100;
               deficitDetails = detailParts.join(' | ');
-              console.log(`  Carry-forward deficit (all unpaid months): ${deficitSalary}`);
+              console.log(`  Carry-forward total performance (all unpaid months): ${performanceSalary}`);
               console.log(`  Details: ${deficitDetails}`);
             }
           } else {
