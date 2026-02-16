@@ -241,6 +241,17 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         deficitDetails = `${monthNames[month-1]} ${year}: ${deficitDays}d × ${dailyDiff.toFixed(2)} = ${deficitSalary.toFixed(2)}`;
       }
       
+      // Always append current month's performance salary to deficitDetails
+      {
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const currentMonthLine = `${monthNames[month-1]} ${year} Perf: ${performanceSalary.toLocaleString()}`;
+        if (deficitDetails) {
+          deficitDetails = deficitDetails + ' | ' + currentMonthLine;
+        } else {
+          deficitDetails = currentMonthLine;
+        }
+      }
+      
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
       
