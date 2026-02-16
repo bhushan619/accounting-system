@@ -1698,10 +1698,7 @@ export default function Payroll() {
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Perf. Salary</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Transport</th>
                     <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
-                      Deficit Salary
-                    </th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground bg-green-50">
-                      Include
+                      Include Deficit
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-green-50">
                       Deficit Calc.
@@ -1741,14 +1738,19 @@ export default function Payroll() {
                       <td className="px-3 py-2 text-foreground">{entry.employee.fullName}</td>
                       <td className="px-3 py-2 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right">
-                        <input
-                          type="number"
-                          value={entry.performanceSalary}
-                          onChange={(e) => handlePerformanceSalaryChange(idx, e.target.value)}
-                          className="w-20 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
-                          min="0"
-                          step="0.01"
-                        />
+                        <div className="flex flex-col items-end gap-0.5">
+                          <input
+                            type="number"
+                            value={entry.performanceSalary}
+                            onChange={(e) => handlePerformanceSalaryChange(idx, e.target.value)}
+                            className="w-20 px-2 py-1 text-right border border-border rounded bg-background text-foreground focus:ring-1 focus:ring-primary"
+                            min="0"
+                            step="0.01"
+                          />
+                          {entry.deficitSalary > 0 && entry.includeDeficitInPayroll && (
+                            <span className="text-[10px] text-green-700 font-medium">+{entry.deficitSalary.toLocaleString()} deficit</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2 text-right">
                         <input
@@ -1759,15 +1761,6 @@ export default function Payroll() {
                           min="0"
                           step="0.01"
                         />
-                      </td>
-                      <td className="px-3 py-2 text-right bg-green-50/50">
-                        {entry.deficitSalary > 0 ? (
-                          <span className={`font-medium ${entry.includeDeficitInPayroll ? 'text-green-700' : 'text-muted-foreground'}`}>
-                            {entry.deficitSalary.toLocaleString()}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
                       </td>
                       <td className="px-3 py-2 text-center bg-green-50/50">
                         {entry.deficitSalary > 0 ? (
@@ -1782,12 +1775,15 @@ export default function Payroll() {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-left text-xs bg-green-50/50 max-w-[280px]">
+                      <td className="px-3 py-2 text-left text-xs bg-green-50/50 max-w-[320px]">
                         {entry.deficitSalary > 0 && entry.deficitDetails ? (
                           <div className="text-muted-foreground space-y-0.5">
                             {entry.deficitDetails.split(' | ').map((part: string, i: number) => (
                               <div key={i} className="whitespace-nowrap">{part}</div>
                             ))}
+                            <div className="font-medium text-green-700 border-t border-green-200 pt-0.5 mt-0.5">
+                              Total: {entry.deficitSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </div>
                           </div>
                         ) : entry.deficitSalary > 0 ? (
                           <span className="text-muted-foreground">{entry.deficitSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -1935,7 +1931,13 @@ export default function Payroll() {
                         <span>Performance Salary:</span>
                         <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground italic">Based on employee status: probation or confirmed rate</p>
+                      {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0) > 0 && (
+                        <div className="flex justify-between text-green-700 text-sm">
+                          <span className="ml-2">+ Deficit Salary:</span>
+                          <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-muted-foreground italic">Based on employee status (includes carry-forward deficit if applicable)</p>
                     </div>
                     <div>
                       <div className="flex justify-between">
@@ -1943,13 +1945,6 @@ export default function Payroll() {
                         <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground italic">Fixed monthly transport allowance per employee</p>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-green-700">
-                        <span>Deficit Salary (Included):</span>
-                        <span className="font-medium">Rs. {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground italic">Carry-forward difference between confirmed & probation performance rates</p>
                     </div>
                     <div>
                       <div className="flex justify-between text-destructive">
