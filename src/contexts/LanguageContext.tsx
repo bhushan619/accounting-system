@@ -583,6 +583,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'employeePortal.updatePending': 'Your update request is pending approval',
     'employeePortal.updateApproved': 'Update approved',
     'employeePortal.updateRejected': 'Update rejected',
+    'employeePortal.expenseClaims': 'Expense Claims',
+    'employeePortal.newClaim': 'New Claim',
+    'employeePortal.submitExpenseClaim': 'Submit Expense Claim',
     
     // Employee Login Page
     'employeeLogin.title': 'Employee Portal',
@@ -1250,6 +1253,9 @@ const defaultTranslations: Record<Language, Translations> = {
     'employeePortal.updatePending': '您的更新请求正在等待审批',
     'employeePortal.updateApproved': '更新已批准',
     'employeePortal.updateRejected': '更新已拒绝',
+    'employeePortal.expenseClaims': '费用报销',
+    'employeePortal.newClaim': '新报销',
+    'employeePortal.submitExpenseClaim': '提交费用报销',
     
     // Employee Login Page
     'employeeLogin.title': '员工门户',

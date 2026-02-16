@@ -406,7 +406,7 @@ export default function EmployeePortal() {
           }`}
         >
           <Receipt className="inline mr-2" size={18} />
-          {t('employeePortal.expenseClaims') || 'Expense Claims'}
+          {t('employeePortal.expenseClaims')}
         </button>
         <button
           onClick={() => setActiveTab('requests')}
@@ -582,7 +582,7 @@ export default function EmployeePortal() {
                           <button
                             onClick={() => downloadPayslipPDF(payslip)}
                             className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                            title={t('employeePortal.downloadPayslip') || 'Download PDF'}
+                            title={t('employeePortal.downloadPayslip')}
                           >
                             <Download size={18} />
                           </button>
@@ -600,14 +600,14 @@ export default function EmployeePortal() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-foreground">
-                  {t('employeePortal.expenseClaims') || 'Expense Claims'}
+                  {t('employeePortal.expenseClaims')}
                 </h2>
                 <button
                   onClick={() => setShowClaimForm(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   <Plus size={18} />
-                  {t('employeePortal.newClaim') || 'New Claim'}
+                  {t('employeePortal.newClaim')}
                 </button>
               </div>
 
@@ -617,7 +617,7 @@ export default function EmployeePortal() {
                   <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold text-foreground">
-                        {t('employeePortal.submitExpenseClaim') || 'Submit Expense Claim'}
+                        {t('employeePortal.submitExpenseClaim')}
                       </h3>
                       <button onClick={() => setShowClaimForm(false)} className="text-muted-foreground hover:text-foreground">
                         <X size={24} />
