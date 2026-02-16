@@ -30,7 +30,18 @@ router.get('/template', (_req, res) => {
     'APIT Scenario': 'Employee', 'Status': 'Under Probation', 'Bank Name': 'Commercial Bank',
     'Bank Account Number': '1234567890', 'Bank Account Name': 'John Doe', 'Bank Branch': 'Colombo'
   };
-  const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
+  const notesRow: Record<string, any> = {
+    'Employee ID': '* Required, Unique', 'EPF Number': 'Optional', 'Full Name': '* Required',
+    'Email': '* Required', 'Phone': 'Optional', 'NIC': 'Optional',
+    'Address': 'Optional', 'Basic Information': 'Optional', 'Designation': 'Optional',
+    'Department': 'HR department / R&D department', 'Join Date': 'YYYY-MM-DD', 'Basic Salary': '* Required, Number',
+    'Transport Allowance': 'Number, Default: 0', 'Performance Salary Probation': 'Number, Default: 0',
+    'Performance Salary Confirmed': 'Number, Default: 0', 'Probation End Date': 'YYYY-MM-DD',
+    'EPF Employee Rate': 'Number, Default: 8', 'EPF Employer Rate': 'Number, Default: 12', 'ETF Rate': 'Number, Default: 3',
+    'APIT Scenario': 'Employee / Employer', 'Status': 'Under Probation / Confirmed / Closed',
+    'Bank Name': 'Optional', 'Bank Account Number': 'Optional', 'Bank Account Name': 'Optional', 'Bank Branch': 'Optional'
+  };
+  const ws = XLSX.utils.json_to_sheet([notesRow, sampleRow], { header: headers });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Employees');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
