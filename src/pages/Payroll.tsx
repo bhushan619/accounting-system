@@ -527,11 +527,13 @@ export default function Payroll() {
     const deficitSalary = entry.deficitSalary || 0;
     const includeDeficitInPayroll = newIncludeDeficit;
 
-    // Calculate attendance deduction based on unpaid leave only
-    // Note: Performance salary is already calculated per-day on backend based on probation dates
+    // Attendance deduction: unpaid leave + any absent days not covered by paid leave types
     const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
     const unpaidLeave = entry.unpaidLeave || 0;
-    const attendanceDeduction = Math.round(perDaySalary * unpaidLeave * 100) / 100;
+    const paidLeave = (entry.sickLeave || 0) + (entry.casualLeave || 0) + (entry.annualLeave || 0);
+    const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - (entry.otherLeave || 0));
+    const deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
+    const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
 
     // Include deficit salary if checkbox is checked
     const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
