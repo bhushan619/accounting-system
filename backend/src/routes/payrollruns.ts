@@ -455,10 +455,10 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const stampFee = taxRates.stampFee;
       
       // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
-      // If deficit details exist and deficit is from previous months, use only current month confirmed rate
-      const currentMonthPerformance = (deficitDetails && includeDeficitInPayroll) 
+      // Carry-forward: deficitDetails is set but deficitSalary is 0 (deficit folded into performanceSalary)
+      const currentMonthPerformance = (deficitDetails && deficitSalary === 0) 
         ? confirmedPerformance  // Carry-forward: use only current month confirmed rate
-        : performanceSalary;     // Normal: use calculated performance
+        : performanceSalary;     // Normal or in-month deficit: use calculated performance
       const epfEtfBase = basicSalary + currentMonthPerformance;
       const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
       const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
