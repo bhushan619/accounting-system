@@ -95,7 +95,9 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
           const dailyConfirmedPerformance = confirmedPerformance / daysInMonth;
           const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
           deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
-          performanceSalary = probationPerformance + deficitSalary;
+          // Prorate performance salary: probation days at probation rate + confirmed days at confirmed rate
+          const probationDays = probationEnd.getDate();
+          performanceSalary = Math.round((dailyProbationPerformance * probationDays + dailyConfirmedPerformance * diffDays) * 100) / 100;
         }
       }
     }

@@ -145,7 +145,13 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
               const dailyConfirmedPerformance = confirmedPerformance / daysInMonth;
               const dailyDifference = dailyConfirmedPerformance - dailyProbationPerformance;
               deficitSalary = Math.round(dailyDifference * diffDays * 100) / 100;
+              
+              // Prorate performance salary: probation days at probation rate + confirmed days at confirmed rate
+              const probationDays = probationEnd.getDate();
+              performanceSalary = Math.round((dailyProbationPerformance * probationDays + dailyConfirmedPerformance * diffDays) * 100) / 100;
+              
               console.log(`  Deficit calculation: from ${deficitStart.toISOString().split('T')[0]} to ${deficitEnd.toISOString().split('T')[0]} = ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) / ${daysInMonth} days in month = ${deficitSalary}`);
+              console.log(`  Prorated performance salary: ${performanceSalary}`);
             }
           } else {
             console.log(`  No deficit for this month (probation end not in this payroll period)`);
@@ -241,16 +247,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         deficitDetails = `${monthNames[month-1]} ${year}: ${deficitDays}d × ${dailyDiff.toFixed(2)} = ${deficitSalary.toFixed(2)}`;
       }
       
-      // Always append current month's performance salary to deficitDetails
-      {
-        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const currentMonthLine = `${monthNames[month-1]} ${year} Perf: ${performanceSalary.toLocaleString()}`;
-        if (deficitDetails) {
-          deficitDetails = deficitDetails + ' | ' + currentMonthLine;
-        } else {
-          deficitDetails = currentMonthLine;
-        }
-      }
+      // No longer appending current month's performance to deficit details
       
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
