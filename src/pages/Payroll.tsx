@@ -2508,9 +2508,6 @@ export default function Payroll() {
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Transport
                       </th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase bg-green-50">
-                        Deficit
-                      </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                         Gross
                       </th>
@@ -2551,17 +2548,13 @@ export default function Payroll() {
                             </div>
                           </td>
                           <td className="px-3 py-3 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-foreground">{(entry.performanceSalary || 0).toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right text-foreground">{(entry.transportAllowance || 0).toLocaleString()}</td>
-                          <td className="px-3 py-3 text-right bg-green-50/50">
-                            {(entry.deficitSalary || 0) > 0 ? (
-                              <span className={`font-medium ${entry.includeDeficitInPayroll ? 'text-green-700' : 'text-muted-foreground line-through'}`}>
-                                {(entry.deficitSalary || 0).toLocaleString()}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
+                          <td className="px-3 py-3 text-right text-foreground">
+                            <div>{(entry.performanceSalary || 0).toLocaleString()}</div>
+                            {(entry.deficitSalary || 0) > 0 && entry.includeDeficitInPayroll && (
+                              <div className="text-[10px] text-green-700 font-medium">+{(entry.deficitSalary || 0).toLocaleString()} deficit</div>
                             )}
                           </td>
+                          <td className="px-3 py-3 text-right text-foreground">{(entry.transportAllowance || 0).toLocaleString()}</td>
                           <td className="px-3 py-3 text-right font-medium text-foreground">
                             {entry.grossSalary.toLocaleString()}
                           </td>
@@ -2608,18 +2601,22 @@ export default function Payroll() {
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
-                          {selectedRun.payrollEntries
-                            .reduce((sum: number, e: any) => sum + (e.performanceSalary || 0), 0)
-                            .toLocaleString()}
+                          <div>
+                            {selectedRun.payrollEntries
+                              .reduce((sum: number, e: any) => sum + (e.performanceSalary || 0), 0)
+                              .toLocaleString()}
+                          </div>
+                          {selectedRun.payrollEntries.reduce((sum: number, e: any) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0) > 0 && (
+                            <div className="text-[10px] text-green-700 font-medium">
+                              +{selectedRun.payrollEntries
+                                .reduce((sum: number, e: any) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0)
+                                .toLocaleString()} deficit
+                            </div>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
                           {selectedRun.payrollEntries
                             .reduce((sum: number, e: any) => sum + (e.transportAllowance || 0), 0)
-                            .toLocaleString()}
-                        </td>
-                        <td className="px-3 py-3 text-right text-green-700 bg-green-50/50">
-                          {selectedRun.payrollEntries
-                            .reduce((sum: number, e: any) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0)
                             .toLocaleString()}
                         </td>
                         <td className="px-3 py-3 text-right text-foreground">
