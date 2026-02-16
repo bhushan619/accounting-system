@@ -104,6 +104,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     
     // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
     // Calculate for ALL unpaid months from probation end to current payroll month
+    let deficitDetails = '';
     if (employee.probationEndDate && deficitSalary === 0 && confirmedPerformance > probationPerformance) {
       const probationEnd = new Date(employee.probationEndDate);
       const payrollStart = new Date(year, month - 1, 1);
@@ -122,6 +123,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
         if (!existingDeficitPayroll) {
           // Calculate deficit for ALL months from probation end to current payroll month
           let totalDeficit = 0;
+          const detailParts: string[] = [];
+          const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
           
           let curMonth = probationEnd.getMonth(); // 0-indexed
           let curYear = probationEnd.getFullYear();
@@ -144,7 +147,9 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
             }
             
             if (deficitDays > 0) {
-              totalDeficit += Math.round(dailyDifference * deficitDays * 100) / 100;
+              const monthDeficit = Math.round(dailyDifference * deficitDays * 100) / 100;
+              totalDeficit += monthDeficit;
+              detailParts.push(`${monthNames[curMonth]} ${curYear}: ${deficitDays}d × ${dailyDifference.toFixed(2)} = ${monthDeficit.toFixed(2)}`);
             }
             
             curMonth++;
@@ -156,9 +161,21 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
           
           if (totalDeficit > 0) {
             deficitSalary = Math.round(totalDeficit * 100) / 100;
+            deficitDetails = detailParts.join(' | ');
           }
         }
       }
+    }
+    
+    // Generate deficit details for in-month deficit too
+    if (deficitSalary > 0 && !deficitDetails) {
+      const probationEnd = new Date(employee.probationEndDate!);
+      const dayAfterProbation = probationEnd.getDate() + 1;
+      const daysInMonth = workingDays;
+      const dailyDiff = (confirmedPerformance - probationPerformance) / daysInMonth;
+      const deficitDays = daysInMonth - dayAfterProbation + 1;
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      deficitDetails = `${monthNames[month-1]} ${year}: ${deficitDays}d × ${dailyDiff.toFixed(2)} = ${deficitSalary.toFixed(2)}`;
     }
     
     const finalPerformanceSalary = customPerformance ?? performanceSalary;
@@ -200,6 +217,7 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
       basicSalary,
       performanceSalary: finalPerformanceSalary,
       deficitSalary,
+      deficitDetails,
       includeDeficitInPayroll,
       isCarryForwardDeficit: carryForward,
       transportAllowance,
