@@ -1841,18 +1841,13 @@ export default function Payroll() {
                       {previewData.reduce((sum, e) => sum + e.basicSalary, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-foreground">
-                      {previewData.reduce((sum, e) => sum + e.performanceSalary, 0).toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-right text-green-700 bg-green-50/50">
-                      {previewData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-center bg-green-50/50">
-                      {previewData.filter(e => e.deficitSalary > 0 && e.includeDeficitInPayroll).length}/{previewData.filter(e => e.deficitSalary > 0).length}
-                    </td>
                     <td className="px-3 py-2 bg-green-50/50"></td>
+                    <td className="px-3 py-2 bg-green-50/50"></td>
+                    <td className="px-3 py-2 text-right text-foreground">
+                      {previewData.reduce((sum, e) => sum + e.performanceSalary + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}
+                    </td>
                     <td className="px-3 py-2 text-right text-foreground">
                       {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}
                     </td>
