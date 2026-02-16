@@ -247,6 +247,11 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       
       // No longer appending current month's performance to deficit details
       
+      // Track current month's actual performance for EPF/ETF (excludes carry-forward deficit)
+      const currentMonthPerformance = deficitDetails && deficitSalary === 0 
+        ? confirmedPerformance  // Carry-forward: use only current month confirmed rate
+        : performanceSalary;     // Normal or in-month deficit: use calculated performance
+      
       const transportAllowance = employee.transportAllowance || 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
       
@@ -273,8 +278,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const etfRate = employee.etfRate || taxRates.etf;
       const stampFee = taxRates.stampFee;
       
-      // EPF and ETF calculated on (Basic + Performance Salary)
-      const epfEtfBase = basicSalary + performanceSalary;
+      // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+      const epfEtfBase = basicSalary + currentMonthPerformance;
       const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
       const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
@@ -449,8 +454,12 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const etfRate = employee.etfRate || taxRates.etf;
       const stampFee = taxRates.stampFee;
       
-      // EPF and ETF calculated on (Basic + Performance Salary)
-      const epfEtfBase = basicSalary + performanceSalary;
+      // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+      // If deficit details exist and deficit is from previous months, use only current month confirmed rate
+      const currentMonthPerformance = (deficitDetails && includeDeficitInPayroll) 
+        ? confirmedPerformance  // Carry-forward: use only current month confirmed rate
+        : performanceSalary;     // Normal: use calculated performance
+      const epfEtfBase = basicSalary + currentMonthPerformance;
       const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
       const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
       const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
