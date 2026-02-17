@@ -208,8 +208,13 @@ router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
   const approvalStatus = req.user.role === 'admin' ? 'approved' : 'pending_accountant';
   const status = req.user.role === 'admin' ? 'approved' : 'pending';
   
+  // Sanitize empty strings for ObjectId fields
+  const body = { ...req.body };
+  if (!body.bank) delete body.bank;
+  if (!body.vendor) delete body.vendor;
+  
   const expense = await Expense.create({
-    ...req.body,
+    ...body,
     serialNumber,
     approvalStatus,
     status,
@@ -244,6 +249,9 @@ router.put('/:id', auditLog('update', 'expense'), async (req: any, res) => {
   
   // Strip approvalStatus from non-admin requests to prevent bypassing admin approval
   const { approvalStatus: _ignoredApproval, ...safeBody } = req.body;
+  // Sanitize empty strings for ObjectId fields
+  if (safeBody.bank === '' || safeBody.bank === null) { safeBody.bank = undefined; }
+  if (safeBody.vendor === '' || safeBody.vendor === null) { safeBody.vendor = undefined; }
   const updateData: any = { ...safeBody, updatedAt: new Date() };
   if (isAdmin) {
     if (req.body.status === 'approved' && expense.approvalStatus !== 'approved') {
