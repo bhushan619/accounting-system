@@ -62,7 +62,7 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
 
 // Allow partial updates (e.g., status only)
 router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
-  const { bankId, ...updateData } = req.body;
+  const { bankId, approvalStatus: _ignoredApproval, ...updateData } = req.body;
   const isAdmin = req.user.role === 'admin';
   
   // Non-admin users cannot mark invoices as paid — must go through approval workflow

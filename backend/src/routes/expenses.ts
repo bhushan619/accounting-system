@@ -71,8 +71,9 @@ router.put('/:id', auditLog('update', 'expense'), async (req: any, res) => {
     }
   }
   
-  // Sync approvalStatus when admin changes status
-  const updateData: any = { ...req.body, updatedAt: new Date() };
+  // Strip approvalStatus from non-admin requests to prevent bypassing admin approval
+  const { approvalStatus: _ignoredApproval, ...safeBody } = req.body;
+  const updateData: any = { ...safeBody, updatedAt: new Date() };
   if (isAdmin) {
     if (req.body.status === 'approved' && expense.approvalStatus !== 'approved') {
       updateData.approvalStatus = 'approved';

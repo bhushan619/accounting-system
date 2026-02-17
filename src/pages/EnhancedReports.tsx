@@ -116,7 +116,7 @@ export default function EnhancedReports() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Display Currency</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('reports.displayCurrency')}</label>
               <select
                 value={displayCurrency}
                 onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
