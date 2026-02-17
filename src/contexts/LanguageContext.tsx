@@ -632,6 +632,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.receipt': 'Receipt',
     'expenses.uploading': 'Uploading...',
     'expenses.delete': 'Delete',
+    'expenses.view': 'View',
     
     
     // Additional employee labels
@@ -1310,6 +1311,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'expenses.receipt': '收据',
     'expenses.uploading': '上传中...',
     'expenses.delete': '删除',
+    'expenses.view': '查看',
     
     // Additional employee labels
     'employees.addNew': '添加新员工',

@@ -65,9 +65,17 @@ router.put('/:id', auditLog('update', 'expense'), async (req, res) => {
     }
   }
   
+  // Sync approvalStatus when status is changed
+  const updateData: any = { ...req.body, updatedAt: new Date() };
+  if (req.body.status === 'approved' && expense.approvalStatus !== 'approved') {
+    updateData.approvalStatus = 'approved';
+  } else if (req.body.status === 'rejected' && expense.approvalStatus !== 'rejected') {
+    updateData.approvalStatus = 'rejected';
+  }
+
   const updatedExpense = await Expense.findByIdAndUpdate(
     req.params.id,
-    { ...req.body, updatedAt: new Date() },
+    updateData,
     { new: true }
   );
   res.json(updatedExpense);
