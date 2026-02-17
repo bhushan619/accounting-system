@@ -529,6 +529,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'approvals.noExpenses': 'No expenses pending your approval',
     'approvals.noProfileRequests': 'No profile update requests pending',
     'approvals.approve': 'Approve',
+    'approvals.approveTitle': 'Confirm Approval',
+    'approvals.approveDescription': 'Are you sure you want to approve',
     'approvals.reject': 'Reject',
     'approvals.serial': 'Serial',
     'approvals.submittedBy': 'Submitted By',
@@ -617,6 +619,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.subtotal': 'Subtotal',
     'invoices.total': 'Total',
     'invoices.delete': 'Delete',
+    'invoices.description': 'Description',
     
     
     // Additional expense labels
@@ -1200,6 +1203,8 @@ const defaultTranslations: Record<Language, Translations> = {
     'approvals.noExpenses': '没有待审批的费用',
     'approvals.noProfileRequests': '没有待处理的资料更新请求',
     'approvals.approve': '批准',
+    'approvals.approveTitle': '确认批准',
+    'approvals.approveDescription': '您确定要批准',
     'approvals.reject': '拒绝',
     'approvals.serial': '编号',
     'approvals.submittedBy': '提交人',
@@ -1297,6 +1302,7 @@ const defaultTranslations: Record<Language, Translations> = {
     'invoices.subtotal': '小计',
     'invoices.total': '总计',
     'invoices.delete': '删除',
+    'invoices.description': '描述',
     
     // Additional expense labels
     'expenses.createNew': '添加新费用',
