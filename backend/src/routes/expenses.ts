@@ -1,5 +1,8 @@
 import express from 'express';
+import multer from 'multer';
+import XLSX from 'xlsx';
 import Expense from '../models/Expense';
+import Vendor from '../models/Vendor';
 import { requireAuth } from '../middleware/auth';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
@@ -10,6 +13,174 @@ import config from '../config';
 const router = express.Router();
 
 router.use(requireAuth);
+
+// ── Excel template download ──
+router.get('/template', (_req, res) => {
+  const headers = [
+    'Vendor Name', 'Category', 'Description', 'Amount', 'Currency',
+    'Date', 'Payment Method', 'Status'
+  ];
+  const notesRow: Record<string, any> = {
+    'Vendor Name': 'Optional, must match existing vendor',
+    'Category': '* Required',
+    'Description': '* Required',
+    'Amount': '* Required, Number',
+    'Currency': 'LKR / AED, Default: LKR',
+    'Date': 'YYYY-MM-DD',
+    'Payment Method': 'cash / bank / card, Default: cash',
+    'Status': 'pending / approved / rejected, Default: pending'
+  };
+  const sampleRow: Record<string, any> = {
+    'Vendor Name': 'Office Supplies Ltd',
+    'Category': 'Office',
+    'Description': 'Printer Paper',
+    'Amount': 5000,
+    'Currency': 'LKR',
+    'Date': '2026-01-15',
+    'Payment Method': 'cash',
+    'Status': 'pending'
+  };
+  const ws = XLSX.utils.json_to_sheet([notesRow, sampleRow], { header: headers });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=expense-import-template.xlsx');
+  res.send(buf);
+});
+
+// ── Excel import ──
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.originalname.match(/\.(xlsx|xls|csv)$/i)) cb(null, true);
+    else cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'));
+  }
+});
+
+const EXP_COLUMN_MAP: Record<string, string> = {
+  'vendor name': 'vendorName', 'vendorname': 'vendorName', 'vendor': 'vendorName',
+  'category': 'category',
+  'description': 'description',
+  'amount': 'amount',
+  'currency': 'currency',
+  'date': 'date',
+  'payment method': 'paymentMethod', 'paymentmethod': 'paymentMethod',
+  'status': 'status'
+};
+
+const EXP_VALID_COLUMNS = new Set(Object.keys(EXP_COLUMN_MAP));
+const EXP_STATUS_MAP: Record<string, string> = {
+  'pending': 'pending', 'approved': 'approved', 'rejected': 'rejected'
+};
+const PAYMENT_METHOD_MAP: Record<string, string> = {
+  'cash': 'cash', 'bank': 'bank', 'card': 'card'
+};
+
+function parseExcelDate(val: any): Date | null {
+  if (!val) return null;
+  if (typeof val === 'number') {
+    const date = new Date((val - 25569) * 86400 * 1000);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(val);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+router.post('/import', upload.single('file'), auditLog('import', 'expense'), async (req: any, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  try {
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+    if (rawRows.length === 0) return res.status(400).json({ error: 'Excel file is empty' });
+
+    const fileColumns = Object.keys(rawRows[0]).map(c => c.trim().toLowerCase());
+    const unmatchedColumns = fileColumns.filter(c => c && !EXP_VALID_COLUMNS.has(c));
+    if (unmatchedColumns.length > 0) {
+      return res.status(400).json({
+        error: `Unrecognized column(s): ${unmatchedColumns.map(c => `"${c}"`).join(', ')}. Please use the provided template.`
+      });
+    }
+
+    // Cache vendors for lookup
+    const vendors = await Vendor.find().lean();
+    const vendorMap = new Map(vendors.map(v => [(v.name || '').toLowerCase(), v._id]));
+
+    const results = { created: 0, skipped: 0, errors: [] as string[] };
+    for (let i = 0; i < rawRows.length; i++) {
+      const raw = rawRows[i];
+      const rowNum = i + 2;
+      const mapped: Record<string, any> = {};
+      for (const [key, value] of Object.entries(raw)) {
+        const field = EXP_COLUMN_MAP[key.trim().toLowerCase()];
+        if (field) mapped[field] = value;
+      }
+
+      if (!mapped.category || !mapped.description || !mapped.amount) {
+        results.errors.push(`Row ${rowNum}: Missing required fields (Category, Description, Amount)`);
+        results.skipped++; continue;
+      }
+
+      // Lookup vendor (optional)
+      let vendorId = undefined;
+      if (mapped.vendorName) {
+        vendorId = vendorMap.get(String(mapped.vendorName).toLowerCase());
+        if (!vendorId) {
+          results.errors.push(`Row ${rowNum}: Vendor "${mapped.vendorName}" not found`);
+          results.skipped++; continue;
+        }
+      }
+
+      // Validate status
+      if (mapped.status) {
+        const statusKey = String(mapped.status).trim().toLowerCase();
+        if (statusKey in EXP_STATUS_MAP) mapped.status = EXP_STATUS_MAP[statusKey];
+        else { results.errors.push(`Row ${rowNum}: Invalid status "${mapped.status}". Use pending/approved/rejected`); results.skipped++; continue; }
+      }
+
+      // Validate payment method
+      if (mapped.paymentMethod) {
+        const pmKey = String(mapped.paymentMethod).trim().toLowerCase();
+        if (pmKey in PAYMENT_METHOD_MAP) mapped.paymentMethod = PAYMENT_METHOD_MAP[pmKey];
+        else { results.errors.push(`Row ${rowNum}: Invalid payment method "${mapped.paymentMethod}". Use cash/bank/card`); results.skipped++; continue; }
+      }
+
+      // Validate currency
+      if (mapped.currency && !['LKR', 'AED'].includes(String(mapped.currency).toUpperCase())) {
+        results.errors.push(`Row ${rowNum}: Invalid currency "${mapped.currency}". Use LKR or AED`);
+        results.skipped++; continue;
+      }
+
+      const serialNumber = await getNextSequence('expense', 'EXP');
+      const approvalStatus = req.user.role === 'admin' ? 'approved' : 'pending_accountant';
+      const status = req.user.role === 'admin' ? 'approved' : (mapped.status || 'pending');
+
+      try {
+        await Expense.create({
+          serialNumber,
+          vendor: vendorId,
+          category: String(mapped.category),
+          description: String(mapped.description),
+          amount: Number(mapped.amount) || 0,
+          currency: mapped.currency ? String(mapped.currency).toUpperCase() : 'LKR',
+          date: parseExcelDate(mapped.date) || new Date(),
+          paymentMethod: mapped.paymentMethod || 'cash',
+          status,
+          approvalStatus,
+          createdBy: req.user._id
+        });
+        results.created++;
+      } catch (err: any) {
+        results.errors.push(`Row ${rowNum}: ${err.message}`);
+        results.skipped++;
+      }
+    }
+    res.json(results);
+  } catch (err: any) {
+    res.status(400).json({ error: 'Failed to parse Excel file: ' + err.message });
+  }
+});
 
 router.get('/', async (req, res) => {
   const expenses = await Expense.find()
