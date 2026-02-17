@@ -283,14 +283,14 @@ router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
     updateData.approvalStatus = 'approved';
   }
   
-  const invoice = await Invoice.findByIdAndUpdate(
+  const updated = await Invoice.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedAt: new Date() },
     { new: true }
   );
   
-  if (!invoice) return res.status(404).json({ error: 'Not found' });
-  res.json(invoice);
+  if (!updated) return res.status(404).json({ error: 'Not found' });
+  res.json(updated);
 });
 
 router.put('/:id', validateRequest(createInvoiceSchema), auditLog('update', 'invoice'), async (req: any, res) => {
