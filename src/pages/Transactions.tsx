@@ -69,7 +69,7 @@ export default function Transactions() {
       if (currencyRes.data) setCurrencySettings(currencyRes.data);
 
       const incomeTransactions = invoicesRes.data
-        .filter((inv: any) => inv.status === 'paid')
+        .filter((inv: any) => inv.status === 'paid' && inv.approvalStatus === 'approved')
         .map((inv: any) => ({
           _id: inv._id,
           type: 'income',
@@ -82,7 +82,7 @@ export default function Transactions() {
         }));
 
       const expenseTransactions = expensesRes.data
-        .filter((exp: any) => exp.status === 'approved')
+        .filter((exp: any) => exp.status === 'approved' && exp.approvalStatus === 'approved')
         .map((exp: any) => ({
           _id: exp._id,
           type: exp.category === 'Payroll' ? 'payroll' : 'expense',
@@ -117,7 +117,7 @@ export default function Transactions() {
       const bankMap = new Map(banks.map((bank: any) => [bank._id, bank]));
 
       const bankIncomeTransactions = invoicesRes.data
-        .filter((inv: any) => inv.status === 'paid' && inv.bank)
+        .filter((inv: any) => inv.status === 'paid' && inv.approvalStatus === 'approved' && inv.bank)
         .map((inv: any) => {
           const bank = inv.bank?._id ? inv.bank : bankMap.get(inv.bank);
           return {
@@ -135,7 +135,7 @@ export default function Transactions() {
         });
 
       const bankExpenseTransactions = expensesRes.data
-        .filter((exp: any) => exp.status === 'approved' && exp.bank)
+        .filter((exp: any) => exp.status === 'approved' && exp.approvalStatus === 'approved' && exp.bank)
         .map((exp: any) => {
           const bank = exp.bank?._id ? exp.bank : bankMap.get(exp.bank);
           return {
