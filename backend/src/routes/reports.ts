@@ -24,20 +24,17 @@ router.get('/overview', async (req, res) => {
   const payrollFilter: any = {};
   
   if (startDate || endDate) {
-    if (startDate || endDate) {
-      invoiceFilter.issueDate = {};
-      if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
-      if (endDate) invoiceFilter.issueDate.$lte = endOfDay(endDate as string);
-    
-    if (startDate || endDate) {
-      expenseFilter.date = {};
-      if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
-      if (endDate) expenseFilter.date.$lte = endOfDay(endDate as string);
-    
-    if (startDate || endDate) {
-      payrollFilter.createdAt = {};
-      if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
-      if (endDate) payrollFilter.createdAt.$lte = endOfDay(endDate as string);
+    invoiceFilter.issueDate = {};
+    if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
+    if (endDate) invoiceFilter.issueDate.$lte = endOfDay(endDate as string);
+
+    expenseFilter.date = {};
+    if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
+    if (endDate) expenseFilter.date.$lte = endOfDay(endDate as string);
+
+    payrollFilter.createdAt = {};
+    if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
+    if (endDate) payrollFilter.createdAt.$lte = endOfDay(endDate as string);
   }
   
   const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid', approvalStatus: 'approved' });
