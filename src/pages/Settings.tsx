@@ -30,6 +30,9 @@ interface EmailSettings {
   emailjsServiceId: string;
   emailjsPublicKey: string;
   emailjsPayslipTemplateId: string;
+  emailjsPasswordResetTemplateId: string;
+  emailjsInvoiceTemplateId: string;
+  emailjsNotificationTemplateId: string;
 }
 
 interface CurrencySettings {
@@ -100,6 +103,9 @@ export default function Settings() {
     emailjsServiceId: '',
     emailjsPublicKey: '',
     emailjsPayslipTemplateId: '',
+    emailjsPasswordResetTemplateId: '',
+    emailjsInvoiceTemplateId: '',
+    emailjsNotificationTemplateId: '',
   });
 
   // Currency settings (admin only)
@@ -875,19 +881,74 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground mb-4">Configure template IDs for each type of email sent by the system.</p>
                   
                   <div className="space-y-4">
+                    {/* Payslip Template */}
                     <div className="p-4 bg-muted rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">📧</span>
-                        <h4 className="font-medium text-foreground">Payslip Email Template</h4>
+                        <span className="text-lg">💰</span>
+                        <h4 className="font-medium text-foreground">Payslip Email</h4>
                       </div>
                       <p className="text-xs text-muted-foreground mb-3">
-                        Used when sending payslip emails from the Payroll page. Template variables: month, employee_name, designation, epf_no, nic_number, basic_salary, transport_allowance, performance_allowance, gross_salary, etf_amount, epf_12_amount, total_remuneration, epf_8_amount, apit, stamp_duty, total_deductions, net_pay.
+                        Used when sending payslip emails from the Payroll page. Variables: month, employee_name, designation, epf_no, nic_number, basic_salary, transport_allowance, performance_allowance, gross_salary, etf_amount, epf_12_amount, total_remuneration, epf_8_amount, apit, stamp_duty, total_deductions, net_pay.
                       </p>
                       <input
                         type="text"
                         value={emailSettings.emailjsPayslipTemplateId}
                         onChange={(e) => setEmailSettings({ ...emailSettings, emailjsPayslipTemplateId: e.target.value })}
                         placeholder="template_velosyncpayslip"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+
+                    {/* Password Reset Template */}
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">🔑</span>
+                        <h4 className="font-medium text-foreground">Password Reset Email</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Used for forgot password flow. Variables: to_email, reset_link, user_name, company_name.
+                      </p>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsPasswordResetTemplateId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsPasswordResetTemplateId: e.target.value })}
+                        placeholder="template_passwordreset"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+
+                    {/* Invoice Template */}
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">📄</span>
+                        <h4 className="font-medium text-foreground">Invoice Email</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Used for sending invoices to clients. Variables: to_email, client_name, invoice_number, amount, due_date, company_name.
+                      </p>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsInvoiceTemplateId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsInvoiceTemplateId: e.target.value })}
+                        placeholder="template_invoice"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+
+                    {/* Notification Template */}
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">🔔</span>
+                        <h4 className="font-medium text-foreground">General Notification Email</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Used for general system notifications (approvals, alerts). Variables: to_email, subject, message, user_name, company_name.
+                      </p>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsNotificationTemplateId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsNotificationTemplateId: e.target.value })}
+                        placeholder="template_notification"
                         className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       />
                     </div>
