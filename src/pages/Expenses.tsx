@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, Receipt, Upload, FileDown, Eye } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
@@ -28,7 +29,9 @@ interface CurrencySettings {
 }
 
 export default function Expenses() {
+  const { user } = useAuth();
   const { t } = useLanguage();
+  const isAdmin = user?.role === 'admin';
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -316,10 +319,11 @@ export default function Expenses() {
                     value={expense.status}
                     onChange={(e) => handleStatusChange(expense._id, e.target.value)}
                     className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${getStatusColor(expense.status)}`}
+                    disabled={!isAdmin && (expense.status === 'approved' || expense.status === 'rejected')}
                   >
                     <option value="pending">pending</option>
-                    <option value="approved">approved</option>
-                    <option value="rejected">rejected</option>
+                    {isAdmin && <option value="approved">approved</option>}
+                    {isAdmin && <option value="rejected">rejected</option>}
                   </select>
                 </td>
                 <td className="px-6 py-4 text-sm">

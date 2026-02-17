@@ -63,9 +63,15 @@ router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoi
 // Allow partial updates (e.g., status only)
 router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
   const { bankId, ...updateData } = req.body;
+  const isAdmin = req.user.role === 'admin';
   
-  // If marking as paid and bank is provided, update bank balance and save bank reference
-  if (updateData.status === 'paid' && bankId) {
+  // Non-admin users cannot mark invoices as paid — must go through approval workflow
+  if (!isAdmin && updateData.status === 'paid') {
+    return res.status(403).json({ error: 'Only admin can mark invoices as paid. Please submit for approval.' });
+  }
+  
+  // If marking as paid and bank is provided, update bank balance and save bank reference (admin only)
+  if (isAdmin && updateData.status === 'paid' && bankId) {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ error: 'Not found' });
     
@@ -73,13 +79,16 @@ router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
     const bank = await Bank.findById(bankId);
     if (!bank) return res.status(404).json({ error: 'Bank not found' });
     
-    // Increase bank balance for received payment
     bank.balance += invoice.total;
     bank.updatedAt = new Date();
     await bank.save();
     
-    // Save bank reference to invoice
     updateData.bank = bankId;
+  }
+  
+  // Sync approvalStatus for admin status changes
+  if (isAdmin && updateData.status === 'paid') {
+    updateData.approvalStatus = 'approved';
   }
   
   const invoice = await Invoice.findByIdAndUpdate(

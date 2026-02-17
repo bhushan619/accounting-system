@@ -47,30 +47,38 @@ router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
   res.json(expense);
 });
 
-router.put('/:id', auditLog('update', 'expense'), async (req, res) => {
+router.put('/:id', auditLog('update', 'expense'), async (req: any, res) => {
   const expense = await Expense.findById(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Not found' });
   
-  // If approving expense with bank payment method, update bank balance
-  if (req.body.status === 'approved' && (req.body.bank || expense.bank)) {
+  const isAdmin = req.user.role === 'admin';
+  
+  // Non-admin users cannot set status to approved/rejected — must go through approval workflow
+  if (!isAdmin && (req.body.status === 'approved' || req.body.status === 'rejected')) {
+    return res.status(403).json({ error: 'Only admin can approve or reject expenses. Please submit for approval.' });
+  }
+  
+  // If approving expense with bank payment method, update bank balance (admin only)
+  if (isAdmin && req.body.status === 'approved' && (req.body.bank || expense.bank)) {
     const bankId = req.body.bank || expense.bank;
     const Bank = require('../models/Bank').default;
     const bank = await Bank.findById(bankId);
     
     if (bank) {
-      // Decrease bank balance for expense payment
       bank.balance -= expense.amount;
       bank.updatedAt = new Date();
       await bank.save();
     }
   }
   
-  // Sync approvalStatus when status is changed
+  // Sync approvalStatus when admin changes status
   const updateData: any = { ...req.body, updatedAt: new Date() };
-  if (req.body.status === 'approved' && expense.approvalStatus !== 'approved') {
-    updateData.approvalStatus = 'approved';
-  } else if (req.body.status === 'rejected' && expense.approvalStatus !== 'rejected') {
-    updateData.approvalStatus = 'rejected';
+  if (isAdmin) {
+    if (req.body.status === 'approved' && expense.approvalStatus !== 'approved') {
+      updateData.approvalStatus = 'approved';
+    } else if (req.body.status === 'rejected' && expense.approvalStatus !== 'rejected') {
+      updateData.approvalStatus = 'rejected';
+    }
   }
 
   const updatedExpense = await Expense.findByIdAndUpdate(
