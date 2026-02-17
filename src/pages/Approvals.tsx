@@ -45,6 +45,7 @@ export default function Approvals() {
   const [profileRequests, setProfileRequests] = useState<ProfileUpdateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectModal, setRejectModal] = useState<{type: string; id: string} | null>(null);
+  const [approveModal, setApproveModal] = useState<{type: 'invoice' | 'expense' | 'profile-request'; id: string; label: string} | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
 
@@ -65,7 +66,9 @@ export default function Approvals() {
     setLoading(false);
   };
 
-  const handleApprove = async (type: 'invoice' | 'expense' | 'profile-request', id: string) => {
+  const confirmApprove = async () => {
+    if (!approveModal) return;
+    const { type, id } = approveModal;
     setProcessing(id);
     try {
       if (type === 'profile-request') {
@@ -73,6 +76,7 @@ export default function Approvals() {
       } else {
         await axios.post(`${import.meta.env.VITE_API_URL}/approval/${type}s/${id}/approve`);
       }
+      setApproveModal(null);
       fetchPendingApprovals();
     } catch (error: any) {
       alert(error.response?.data?.error || 'Approval failed');
@@ -151,7 +155,7 @@ export default function Approvals() {
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => handleApprove('invoice', invoice._id)}
+                            onClick={() => setApproveModal({ type: 'invoice', id: invoice._id, label: invoice.serialNumber })}
                             disabled={processing === invoice._id}
                             className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
                             title={t('approvals.approve')}
@@ -215,7 +219,7 @@ export default function Approvals() {
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => handleApprove('expense', expense._id)}
+                            onClick={() => setApproveModal({ type: 'expense', id: expense._id, label: expense.serialNumber })}
                             disabled={processing === expense._id}
                             className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
                             title={t('approvals.approve')}
@@ -285,7 +289,7 @@ export default function Approvals() {
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => handleApprove('profile-request', request._id)}
+                            onClick={() => setApproveModal({ type: 'profile-request', id: request._id, label: request.employee?.fullName || request.employee?.employeeId })}
                             disabled={processing === request._id}
                             className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
                             title={t('approvals.approve')}
@@ -307,6 +311,36 @@ export default function Approvals() {
                 </tbody>
               </table>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Approve Confirmation Modal */}
+      {approveModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <Check className="text-green-600" size={24} />
+              <h3 className="text-lg font-semibold">{t('approvals.approveTitle') || 'Confirm Approval'}</h3>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              {t('approvals.approveDescription') || 'Are you sure you want to approve'} <strong>{approveModal.label}</strong>?
+            </p>
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setApproveModal(null)}
+                className="px-4 py-2 text-muted-foreground hover:text-foreground"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={confirmApprove}
+                disabled={processing === approveModal.id}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {t('approvals.approve')}
+              </button>
+            </div>
           </div>
         </div>
       )}
