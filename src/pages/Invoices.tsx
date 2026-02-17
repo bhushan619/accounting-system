@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 import jsPDF from 'jspdf';
@@ -18,7 +19,9 @@ interface Invoice {
 }
 
 export default function Invoices() {
+  const { user } = useAuth();
   const { t } = useLanguage();
+  const isAdmin = user?.role === 'admin';
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -496,10 +499,11 @@ export default function Invoices() {
                     value={invoice.status}
                     onChange={(e) => handleStatusChange(invoice._id, e.target.value)}
                     className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${getStatusColor(invoice.status)}`}
+                    disabled={!isAdmin && invoice.status === 'paid'}
                   >
                     <option value="draft">draft</option>
                     <option value="sent">sent</option>
-                    <option value="paid">paid</option>
+                    {isAdmin && <option value="paid">paid</option>}
                     <option value="overdue">overdue</option>
                   </select>
                 </td>
