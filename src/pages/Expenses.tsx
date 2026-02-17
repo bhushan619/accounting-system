@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download } from 'lucide-react';
+import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
@@ -477,16 +477,27 @@ export default function Expenses() {
                 <td className="px-6 py-4 text-sm">
                   <div className="flex gap-2 flex-wrap">
                     {expense.billUrl ? (
-                      <a
-                        href={`${import.meta.env.VITE_API_URL}${expense.billUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                        title="View Bill"
-                      >
-                        <FileDown size={14} />
-                        Bill
-                      </a>
+                      <div className="inline-flex items-center gap-1">
+                        <a
+                          href={`${import.meta.env.VITE_API_URL}${expense.billUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          title="View Bill"
+                        >
+                          <FileDown size={14} />
+                          Bill
+                        </a>
+                        <label className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-primary cursor-pointer ml-1" title="Replace Bill">
+                          <RefreshCw size={12} />
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'bill', expense._id)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     ) : (
                       <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
                         <Upload size={14} />
@@ -501,16 +512,27 @@ export default function Expenses() {
                       </label>
                     )}
                     {expense.receiptUrl ? (
-                      <a
-                        href={`${import.meta.env.VITE_API_URL}${expense.receiptUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                        title="View Receipt"
-                      >
-                        <Receipt size={14} />
-                        Receipt
-                      </a>
+                      <div className="inline-flex items-center gap-1">
+                        <a
+                          href={`${import.meta.env.VITE_API_URL}${expense.receiptUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          title="View Receipt"
+                        >
+                          <Receipt size={14} />
+                          Receipt
+                        </a>
+                        <label className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-primary cursor-pointer ml-1" title="Replace Receipt">
+                          <RefreshCw size={12} />
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt', expense._id)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     ) : (
                       <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
                         <Upload size={14} />
