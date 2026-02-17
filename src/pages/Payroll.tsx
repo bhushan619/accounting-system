@@ -1856,7 +1856,7 @@ export default function Payroll() {
                         {entry.attendanceDeduction.toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-right text-purple-700 bg-purple-50/50 font-medium" title="Basic + Performance Salary">
-                        {(entry.basicSalary + entry.performanceSalary).toLocaleString()}
+                        {(entry.basicSalary + (entry.currentMonthPerformance ?? entry.performanceSalary)).toLocaleString()}
                       </td>
                       <td className="px-3 py-2 text-right text-destructive">{entry.epfEmployee.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right text-destructive">{(entry.apit || 0).toLocaleString()}</td>
@@ -1926,7 +1926,7 @@ export default function Payroll() {
                       {previewData.reduce((sum, e) => sum + e.attendanceDeduction, 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-purple-700 bg-purple-50/50 font-medium">
-                      {previewData.reduce((sum, e) => sum + e.basicSalary + e.performanceSalary, 0).toLocaleString()}
+                      {previewData.reduce((sum, e) => sum + e.basicSalary + (e.currentMonthPerformance ?? e.performanceSalary), 0).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-right text-destructive">
                       {previewData.reduce((sum, e) => sum + e.epfEmployee, 0).toLocaleString()}
