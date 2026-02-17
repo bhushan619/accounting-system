@@ -385,7 +385,17 @@ export default function Employees() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setImportResult(response.data);
-      if (response.data.created > 0) loadEmployees();
+      if (response.data.created > 0) {
+        loadEmployees();
+        // Auto-close modal after successful import with no errors
+        if (response.data.errors.length === 0) {
+          setTimeout(() => {
+            setShowImportModal(false);
+            setImportFile(null);
+            setImportResult(null);
+          }, 1500);
+        }
+      }
     } catch (error: any) {
       setImportResult({ created: 0, skipped: 0, errors: [error.response?.data?.error || 'Import failed'] });
     } finally {
