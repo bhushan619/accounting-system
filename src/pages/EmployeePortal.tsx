@@ -272,14 +272,6 @@ export default function EmployeePortal() {
     doc.text(`LKR ${payslip.netSalary.toLocaleString()}`, pageWidth - 25, y, { align: 'right' });
     y += 10;
 
-    if (payslip.cashPayment > 0) {
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Cash Payment: LKR ${payslip.cashPayment.toLocaleString()}`, 25, y);
-      doc.text(`Bank Transfer: LKR ${(payslip.netSalary - payslip.cashPayment).toLocaleString()}`, pageWidth - 25, y, { align: 'right' });
-      y += 8;
-    }
-
     // Employer Contributions
     y += 5;
     doc.setDrawColor(200);
