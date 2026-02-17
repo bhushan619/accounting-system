@@ -138,6 +138,9 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
       if (await Employee.findOne({ employeeId: mapped.employeeId })) {
         results.errors.push(`Row ${rowNum}: Employee ID "${mapped.employeeId}" already exists`); results.skipped++; continue;
       }
+      if (await Employee.findOne({ email: mapped.email })) {
+        results.errors.push(`Row ${rowNum}: Email "${mapped.email}" already exists`); results.skipped++; continue;
+      }
       mapped.basicSalary = Number(mapped.basicSalary) || 0;
       mapped.transportAllowance = Number(mapped.transportAllowance) || 0;
       mapped.performanceSalaryProbation = Number(mapped.performanceSalaryProbation) || 0;
