@@ -140,10 +140,7 @@ interface EditEntry {
   totalCTC: number;
 }
 
-// EmailJS Configuration - loads from environment variables with fallbacks
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const EMAILJS_PAYSLIP_TEMPLATE_ID = "template_velosyncpayslip";
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+// EmailJS Configuration - loaded from settings API
 
 // Get total calendar days in a month
 const getCalendarDaysInMonth = (month: number, year: number): number => {
@@ -180,10 +177,10 @@ export default function Payroll() {
   const [searchQuery, setSearchQuery] = useState("");
   const [taxRates, setTaxRates] = useState<any>(null);
   const [sendingEmails, setSendingEmails] = useState(false);
-  const [emailConfig] = useState({
-    serviceId: EMAILJS_SERVICE_ID,
-    templateId: EMAILJS_PAYSLIP_TEMPLATE_ID,
-    publicKey: EMAILJS_PUBLIC_KEY,
+  const [emailConfig, setEmailConfig] = useState({
+    serviceId: '',
+    templateId: '',
+    publicKey: '',
   });
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
@@ -206,11 +203,12 @@ export default function Payroll() {
 
   const loadData = async () => {
     try {
-      const [runsRes, employeesRes, banksRes, taxRes] = await Promise.all([
+      const [runsRes, employeesRes, banksRes, taxRes, settingsRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/payrollruns`),
         axios.get(`${import.meta.env.VITE_API_URL}/employees`),
         axios.get(`${import.meta.env.VITE_API_URL}/banks`),
         axios.get(`${import.meta.env.VITE_API_URL}/taxconfig`),
+        axios.get(`${import.meta.env.VITE_API_URL}/settings`).catch(() => ({ data: {} })),
       ]);
       setRuns(runsRes.data);
       setEmployees(employeesRes.data.filter((e: Employee) => e.status !== "closed"));
@@ -232,6 +230,16 @@ export default function Payroll() {
       });
 
       setTaxRates(rates);
+
+      // Load EmailJS config from settings
+      const emailData = settingsRes.data?.email;
+      if (emailData) {
+        setEmailConfig({
+          serviceId: emailData.emailjsServiceId || '',
+          templateId: emailData.emailjsPayslipTemplateId || '',
+          publicKey: emailData.emailjsPublicKey || '',
+        });
+      }
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {

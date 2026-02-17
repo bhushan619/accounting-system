@@ -28,8 +28,8 @@ interface DefaultSettings {
 
 interface EmailSettings {
   emailjsServiceId: string;
-  emailjsTemplateId: string;
   emailjsPublicKey: string;
+  emailjsPayslipTemplateId: string;
 }
 
 interface CurrencySettings {
@@ -98,8 +98,8 @@ export default function Settings() {
   // Email settings (admin only)
   const [emailSettings, setEmailSettings] = useState<EmailSettings>({
     emailjsServiceId: '',
-    emailjsTemplateId: '',
-    emailjsPublicKey: ''
+    emailjsPublicKey: '',
+    emailjsPayslipTemplateId: '',
   });
 
   // Currency settings (admin only)
@@ -835,9 +835,9 @@ export default function Settings() {
               
               <form onSubmit={handleEmailSettingsSave} className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-foreground mb-4">EmailJS Configuration</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">EmailJS Credentials</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Configure EmailJS to send payslip emails directly from the browser. 
+                    Configure EmailJS to send emails directly from the browser.
                     Get your credentials from{' '}
                     <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
                       emailjs.com
@@ -857,17 +857,6 @@ export default function Settings() {
                       <p className="text-xs text-muted-foreground mt-1">Found in EmailJS Dashboard → Email Services</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Template ID</label>
-                      <input
-                        type="text"
-                        value={emailSettings.emailjsTemplateId}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsTemplateId: e.target.value })}
-                        placeholder="template_xxxxxxx"
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">Found in EmailJS Dashboard → Email Templates</p>
-                    </div>
-                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-foreground mb-1">Public Key</label>
                       <input
                         type="text"
@@ -881,13 +870,28 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium text-foreground mb-2">📧 Payslip Template</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Use template ID <code className="px-1 py-0.5 bg-background rounded text-foreground text-xs">template_velosyncpayslip</code> for payslip emails. 
-                    The template should include variables: month, employee_name, designation, epf_no, nic_number, basic_salary, transport_allowance, 
-                    performance_allowance, gross_salary, etf_amount, epf_12_amount, total_remuneration, epf_8_amount, apit, stamp_duty, total_deductions, and net_pay.
-                  </p>
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-2">Email Templates</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Configure template IDs for each type of email sent by the system.</p>
+                  
+                  <div className="space-y-4">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">📧</span>
+                        <h4 className="font-medium text-foreground">Payslip Email Template</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Used when sending payslip emails from the Payroll page. Template variables: month, employee_name, designation, epf_no, nic_number, basic_salary, transport_allowance, performance_allowance, gross_salary, etf_amount, epf_12_amount, total_remuneration, epf_8_amount, apit, stamp_duty, total_deductions, net_pay.
+                      </p>
+                      <input
+                        type="text"
+                        value={emailSettings.emailjsPayslipTemplateId}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, emailjsPayslipTemplateId: e.target.value })}
+                        placeholder="template_velosyncpayslip"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
