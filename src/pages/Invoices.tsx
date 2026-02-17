@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import { usePreventSwipe } from '../hooks/usePreventSwipe';
-import jsPDF from 'jspdf';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { usePreventSwipe } from "../hooks/usePreventSwipe";
+import jsPDF from "jspdf";
 
-interface ImportResult { created: number; skipped: number; errors: string[] }
+interface ImportResult {
+  created: number;
+  skipped: number;
+  errors: string[];
+}
 interface Invoice {
   _id: string;
   serialNumber: string;
@@ -23,7 +27,7 @@ interface Invoice {
 export default function Invoices() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -32,37 +36,39 @@ export default function Invoices() {
   const [showModal, setShowModal] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<any>(null);
   const [showBankModal, setShowBankModal] = useState(false);
-  const [pendingStatusChange, setPendingStatusChange] = useState<{id: string, status: string, amount: number} | null>(null);
-  const [selectedBank, setSelectedBank] = useState('');
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: string; amount: number } | null>(
+    null,
+  );
+  const [selectedBank, setSelectedBank] = useState("");
   const [formData, setFormData] = useState({
-    client: '',
-    issueDate: new Date().toISOString().split('T')[0],
-    dueDate: '',
-    currency: 'LKR',
-    lines: [{ description: '', quantity: 1, unitPrice: 0 }],
+    client: "",
+    issueDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+    currency: "LKR",
+    lines: [{ description: "", quantity: 1, unitPrice: 0 }],
     tax: 0,
     discount: 0,
-    notes: '',
-    status: 'draft',
-    attachmentUrl: '',
-    receiptUrl: '',
+    notes: "",
+    status: "draft",
+    attachmentUrl: "",
+    receiptUrl: "",
     isVatApplicable: false,
-    vatCategory: 'standard' as 'standard' | 'zero_rated'
+    vatCategory: "standard" as "standard" | "zero_rated",
   });
   const [currencySettings, setCurrencySettings] = useState<any>(null);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
-  const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'invoice' | 'receipt'} | null>(null);
+  const [uploadingForId, setUploadingForId] = useState<{ id: string; type: "invoice" | "receipt" } | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [filterNumber, setFilterNumber] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterNumber, setFilterNumber] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
-  const filteredInvoices = invoices.filter(inv => {
+  const filteredInvoices = invoices.filter((inv) => {
     if (filterNumber && !inv.serialNumber.toLowerCase().includes(filterNumber.toLowerCase())) return false;
     if (filterDateFrom && new Date(inv.issueDate) < new Date(filterDateFrom)) return false;
     if (filterDateTo) {
@@ -75,10 +81,10 @@ export default function Invoices() {
   });
 
   const clearFilters = () => {
-    setFilterNumber('');
-    setFilterDateFrom('');
-    setFilterDateTo('');
-    setFilterStatus('');
+    setFilterNumber("");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterStatus("");
   };
 
   const hasActiveFilters = filterNumber || filterDateFrom || filterDateTo || filterStatus;
@@ -87,21 +93,21 @@ export default function Invoices() {
 
   const handleDownloadTemplate = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/invoices/template`, {
-        responseType: 'blob',
-        headers: { Authorization: `Bearer ${token}` }
+        responseType: "blob",
+        headers: { Authorization: `Bearer ${token}` },
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'invoice-import-template.xlsx');
+      link.setAttribute("download", "invoice-import-template.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to download template:', error);
+      console.error("Failed to download template:", error);
     }
   };
 
@@ -110,11 +116,11 @@ export default function Invoices() {
     setImporting(true);
     setImportResult(null);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const fd = new FormData();
-      fd.append('file', importFile);
+      fd.append("file", importFile);
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/invoices/import`, fd, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
       setImportResult(response.data);
       if (response.data.created > 0) {
@@ -128,7 +134,7 @@ export default function Invoices() {
         }
       }
     } catch (error: any) {
-      setImportResult({ created: 0, skipped: 0, errors: [error.response?.data?.error || 'Import failed'] });
+      setImportResult({ created: 0, skipped: 0, errors: [error.response?.data?.error || "Import failed"] });
     } finally {
       setImporting(false);
     }
@@ -140,23 +146,27 @@ export default function Invoices() {
 
   const loadData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const [invoicesRes, clientsRes, banksRes, companyRes, currencyRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/invoices`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/clients`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get(`${import.meta.env.VITE_API_URL}/banks`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`${import.meta.env.VITE_API_URL}/settings/company`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: {} })),
-        axios.get(`${import.meta.env.VITE_API_URL}/settings/currency`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ data: null }))
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/settings/company`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .catch(() => ({ data: {} })),
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/settings/currency`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .catch(() => ({ data: null })),
       ]);
       setInvoices(invoicesRes.data);
       setClients(clientsRes.data);
@@ -164,7 +174,7 @@ export default function Invoices() {
       setCompanySettings(companyRes.data);
       if (currencyRes.data) setCurrencySettings(currencyRes.data);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error("Failed to load data:", error);
     } finally {
       setLoading(false);
     }
@@ -173,125 +183,133 @@ export default function Invoices() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const region = companySettings.region || 'LK';
-      const vatRate = formData.vatCategory === 'zero_rated' ? 0 : 
-        (currencySettings?.vatRates?.[region]?.standard || (region === 'AE' ? 5 : 18));
-      
-      await axios.post(`${import.meta.env.VITE_API_URL}/invoices`, {
-        ...formData,
-        vatRate,
-        isVatApplicable: formData.isVatApplicable
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const token = localStorage.getItem("token");
+      const region = companySettings.region || "LK";
+      const vatRate =
+        formData.vatCategory === "zero_rated"
+          ? 0
+          : currencySettings?.vatRates?.[region]?.standard || (region === "AE" ? 5 : 18);
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/invoices`,
+        {
+          ...formData,
+          vatRate,
+          isVatApplicable: formData.isVatApplicable,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       setShowModal(false);
       resetForm();
       loadData();
     } catch (error) {
-      console.error('Failed to save invoice:', error);
+      console.error("Failed to save invoice:", error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this invoice?')) return;
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       await axios.delete(`${import.meta.env.VITE_API_URL}/invoices/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       loadData();
     } catch (error) {
-      console.error('Failed to delete invoice:', error);
+      console.error("Failed to delete invoice:", error);
     }
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     // If changing to "paid", show bank selection modal
-    if (newStatus === 'paid') {
-      const invoice = invoices.find(inv => inv._id === id);
+    if (newStatus === "paid") {
+      const invoice = invoices.find((inv) => inv._id === id);
       if (invoice) {
         setPendingStatusChange({ id, status: newStatus, amount: invoice.total });
         setShowBankModal(true);
         return;
       }
     }
-    
+
     // For other status changes, proceed normally
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${id}`, 
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/invoices/${id}`,
         { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       loadData();
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error("Failed to update status:", error);
     }
   };
 
   const confirmBankUpdate = async () => {
     if (!selectedBank || !pendingStatusChange) return;
-    
+
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${pendingStatusChange.id}`, 
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/invoices/${pendingStatusChange.id}`,
         { status: pendingStatusChange.status, bankId: selectedBank },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setShowBankModal(false);
       setPendingStatusChange(null);
-      setSelectedBank('');
+      setSelectedBank("");
       loadData();
     } catch (error) {
-      console.error('Failed to update status:', error);
-      alert('Failed to update invoice status');
+      console.error("Failed to update status:", error);
+      alert("Failed to update invoice status");
     }
   };
 
   const handleViewInvoice = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/invoices/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setViewInvoice(res.data);
     } catch (error) {
-      console.error('Failed to load invoice:', error);
+      console.error("Failed to load invoice:", error);
     }
   };
 
-  const handleFileUpload = async (file: File, type: 'invoice' | 'receipt', invoiceId?: string) => {
-    const setUploading = type === 'invoice' ? setUploadingInvoice : setUploadingReceipt;
+  const handleFileUpload = async (file: File, type: "invoice" | "receipt", invoiceId?: string) => {
+    const setUploading = type === "invoice" ? setUploadingInvoice : setUploadingReceipt;
     setUploading(true);
     if (invoiceId) {
       setUploadingForId({ id: invoiceId, type });
     }
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      
+      formDataUpload.append("file", file);
+
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/uploads/${type}`, formDataUpload, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
-      
+
       if (invoiceId) {
         // Update existing invoice with file URL
-        const updateData = type === 'invoice' ? { attachmentUrl: res.data.url } : { receiptUrl: res.data.url };
+        const updateData = type === "invoice" ? { attachmentUrl: res.data.url } : { receiptUrl: res.data.url };
         await axios.patch(`${import.meta.env.VITE_API_URL}/invoices/${invoiceId}`, updateData, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         loadData();
       } else {
         // Update form data for new invoice
-        if (type === 'invoice') {
-          setFormData(prev => ({ ...prev, attachmentUrl: res.data.url }));
+        if (type === "invoice") {
+          setFormData((prev) => ({ ...prev, attachmentUrl: res.data.url }));
         } else {
-          setFormData(prev => ({ ...prev, receiptUrl: res.data.url }));
+          setFormData((prev) => ({ ...prev, receiptUrl: res.data.url }));
         }
       }
     } catch (error) {
@@ -305,32 +323,32 @@ export default function Invoices() {
 
   const resetForm = () => {
     setFormData({
-      client: '',
-      issueDate: new Date().toISOString().split('T')[0],
-      dueDate: '',
-      currency: 'LKR',
-      lines: [{ description: '', quantity: 1, unitPrice: 0 }],
+      client: "",
+      issueDate: new Date().toISOString().split("T")[0],
+      dueDate: "",
+      currency: "LKR",
+      lines: [{ description: "", quantity: 1, unitPrice: 0 }],
       tax: 0,
       discount: 0,
-      notes: '',
-      status: 'draft',
-      attachmentUrl: '',
-      receiptUrl: '',
+      notes: "",
+      status: "draft",
+      attachmentUrl: "",
+      receiptUrl: "",
       isVatApplicable: false,
-      vatCategory: 'standard'
+      vatCategory: "standard",
     });
   };
 
   const getVatRate = () => {
-    const region = companySettings.region || 'LK';
-    if (formData.vatCategory === 'zero_rated') return 0;
-    return currencySettings?.vatRates?.[region]?.standard || (region === 'AE' ? 5 : 18);
+    const region = companySettings.region || "LK";
+    if (formData.vatCategory === "zero_rated") return 0;
+    return currencySettings?.vatRates?.[region]?.standard || (region === "AE" ? 5 : 18);
   };
 
   const addLine = () => {
     setFormData({
       ...formData,
-      lines: [...formData.lines, { description: '', quantity: 1, unitPrice: 0 }]
+      lines: [...formData.lines, { description: "", quantity: 1, unitPrice: 0 }],
     });
   };
 
@@ -346,27 +364,27 @@ export default function Invoices() {
 
   const getStatusColor = (status: string) => {
     const colors: any = {
-      draft: 'bg-gray-100 text-gray-800',
-      sent: 'bg-blue-100 text-blue-800',
-      paid: 'bg-green-100 text-green-800',
-      overdue: 'bg-red-100 text-red-800'
+      draft: "bg-gray-100 text-gray-800",
+      sent: "bg-blue-100 text-blue-800",
+      paid: "bg-green-100 text-green-800",
+      overdue: "bg-red-100 text-red-800",
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const generateInvoicePDF = (invoice: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 20;
-    
+
     // Company header
     doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(companySettings.name || 'Company Name', 20, yPos);
+    doc.setFont("helvetica", "bold");
+    doc.text(companySettings.name || "Company Name", 20, yPos);
     yPos += 8;
-    
+
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     if (companySettings.address) {
       doc.text(companySettings.address, 20, yPos);
       yPos += 5;
@@ -383,32 +401,32 @@ export default function Invoices() {
       doc.text(`Tax No: ${companySettings.taxNumber}`, 20, yPos);
       yPos += 5;
     }
-    
+
     // Invoice title
     yPos += 10;
     doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE', pageWidth - 20, 30, { align: 'right' });
-    
+    doc.setFont("helvetica", "bold");
+    doc.text("INVOICE", pageWidth - 20, 30, { align: "right" });
+
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Invoice No: ${invoice.serialNumber}`, pageWidth - 20, 40, { align: 'right' });
-    doc.text(`Date: ${new Date(invoice.issueDate).toLocaleDateString()}`, pageWidth - 20, 46, { align: 'right' });
+    doc.setFont("helvetica", "normal");
+    doc.text(`Invoice No: ${invoice.serialNumber}`, pageWidth - 20, 40, { align: "right" });
+    doc.text(`Date: ${new Date(invoice.issueDate).toLocaleDateString()}`, pageWidth - 20, 46, { align: "right" });
     if (invoice.dueDate) {
-      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, pageWidth - 20, 52, { align: 'right' });
+      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, pageWidth - 20, 52, { align: "right" });
     }
-    
+
     // Bill To section
     yPos = 70;
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Bill To:', 20, yPos);
+    doc.setFont("helvetica", "bold");
+    doc.text("Bill To:", 20, yPos);
     yPos += 6;
-    
-    doc.setFont('helvetica', 'normal');
+
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     if (invoice.client) {
-      doc.text(invoice.client.name || '', 20, yPos);
+      doc.text(invoice.client.name || "", 20, yPos);
       yPos += 5;
       if (invoice.client.email) {
         doc.text(invoice.client.email, 20, yPos);
@@ -423,41 +441,43 @@ export default function Invoices() {
         yPos += 5;
       }
     }
-    
+
     // Line items table
     yPos = 110;
     doc.setFillColor(240, 240, 240);
-    doc.rect(20, yPos - 5, pageWidth - 40, 10, 'F');
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Description', 22, yPos);
-    doc.text('Qty', 110, yPos, { align: 'right' });
-    doc.text('Unit Price', 140, yPos, { align: 'right' });
-    doc.text('Total', pageWidth - 22, yPos, { align: 'right' });
-    
+    doc.rect(20, yPos - 5, pageWidth - 40, 10, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Description", 22, yPos);
+    doc.text("Qty", 110, yPos, { align: "right" });
+    doc.text("Unit Price", 140, yPos, { align: "right" });
+    doc.text("Total", pageWidth - 22, yPos, { align: "right" });
+
     yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    
+    doc.setFont("helvetica", "normal");
+
     invoice.lines?.forEach((line: any) => {
       doc.text(line.description.substring(0, 40), 22, yPos);
-      doc.text(line.quantity.toString(), 110, yPos, { align: 'right' });
-      doc.text(`${invoice.currency} ${line.unitPrice.toLocaleString()}`, 140, yPos, { align: 'right' });
-      doc.text(`${invoice.currency} ${(line.quantity * line.unitPrice).toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.text(line.quantity.toString(), 110, yPos, { align: "right" });
+      doc.text(`${invoice.currency} ${line.unitPrice.toLocaleString()}`, 140, yPos, { align: "right" });
+      doc.text(`${invoice.currency} ${(line.quantity * line.unitPrice).toLocaleString()}`, pageWidth - 22, yPos, {
+        align: "right",
+      });
       yPos += 8;
     });
-    
+
     // Totals
     yPos += 10;
     doc.line(pageWidth - 80, yPos - 5, pageWidth - 20, yPos - 5);
-    
-    doc.text('Subtotal:', pageWidth - 80, yPos);
-    doc.text(`${invoice.currency} ${invoice.subtotal?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+
+    doc.text("Subtotal:", pageWidth - 80, yPos);
+    doc.text(`${invoice.currency} ${invoice.subtotal?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
     yPos += 8;
-    
+
     if (invoice.tax > 0) {
       const taxAmount = (invoice.subtotal * invoice.tax) / 100;
       doc.text(`Tax (${invoice.tax}%):`, pageWidth - 80, yPos);
-      doc.text(`${invoice.currency} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.text(`${invoice.currency} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
 
@@ -465,77 +485,91 @@ export default function Invoices() {
     if (invoice.isVatApplicable && invoice.vatRate > 0) {
       const vatAmount = (invoice.subtotal * invoice.vatRate) / 100;
       doc.setFillColor(245, 245, 245);
-      doc.rect(pageWidth - 82, yPos - 4, 62, 10, 'F');
-      doc.text(`VAT (${invoice.vatRate}% - ${invoice.vatCategory === 'zero_rated' ? 'Zero' : 'Std'}):`, pageWidth - 80, yPos);
-      doc.text(`${invoice.currency} ${vatAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.rect(pageWidth - 82, yPos - 4, 62, 10, "F");
+      doc.text(
+        `VAT (${invoice.vatRate}% - ${invoice.vatCategory === "zero_rated" ? "Zero" : "Std"}):`,
+        pageWidth - 80,
+        yPos,
+      );
+      doc.text(`${invoice.currency} ${vatAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 10;
     } else if (invoice.isVatApplicable && invoice.vatRate === 0) {
-      doc.text('VAT (Zero Rated):', pageWidth - 80, yPos);
-      doc.text(`${invoice.currency} 0`, pageWidth - 22, yPos, { align: 'right' });
+      doc.text("VAT (Zero Rated):", pageWidth - 80, yPos);
+      doc.text(`${invoice.currency} 0`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
-    
+
     if (invoice.discount > 0) {
-      doc.text('Discount:', pageWidth - 80, yPos);
-      doc.text(`-${invoice.currency} ${invoice.discount?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.text("Discount:", pageWidth - 80, yPos);
+      doc.text(`-${invoice.currency} ${invoice.discount?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
-    
+
     yPos += 2;
-    doc.setFont('helvetica', 'bold');
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text('Total:', pageWidth - 80, yPos);
-    doc.text(`${invoice.currency} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: 'right' });
+    doc.text("Total:", pageWidth - 80, yPos);
+    doc.text(`${invoice.currency} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
 
     // Show converted amount if currency settings available
     if (currencySettings) {
       yPos += 8;
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(128, 128, 128);
-      const convertedCurrency = invoice.currency === 'LKR' ? 'AED' : 'LKR';
-      const rate = invoice.currency === 'LKR' ? currencySettings.exchangeRates.LKR_AED : currencySettings.exchangeRates.AED_LKR;
+      const convertedCurrency = invoice.currency === "LKR" ? "AED" : "LKR";
+      const rate =
+        invoice.currency === "LKR" ? currencySettings.exchangeRates.LKR_AED : currencySettings.exchangeRates.AED_LKR;
       const convertedAmount = invoice.total * rate;
-      doc.text(`≈ ${convertedCurrency} ${convertedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, pageWidth - 22, yPos, { align: 'right' });
+      doc.text(
+        `≈ ${convertedCurrency} ${convertedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        pageWidth - 22,
+        yPos,
+        { align: "right" },
+      );
       doc.setTextColor(0, 0, 0);
     }
-    
+
     // Status badge
     yPos += 15;
     doc.setFontSize(10);
     doc.text(`Status: ${invoice.status.toUpperCase()}`, pageWidth - 80, yPos);
-    
+
     // Notes
     if (invoice.notes) {
       yPos += 20;
-      doc.setFont('helvetica', 'bold');
-      doc.text('Notes:', 20, yPos);
+      doc.setFont("helvetica", "bold");
+      doc.text("Notes:", 20, yPos);
       yPos += 6;
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.text(invoice.notes, 20, yPos);
     }
-    
+
     // Footer
     const footerY = doc.internal.pageSize.getHeight() - 20;
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
-    doc.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
+    doc.text("Thank you for your business!", pageWidth / 2, footerY, { align: "center" });
     if (companySettings.name) {
-      doc.text(`Generated by ${companySettings.name}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      doc.text(`Generated by ${companySettings.name}`, pageWidth / 2, footerY + 5, { align: "center" });
     }
-    
+
     doc.save(`Invoice-${invoice.serialNumber}.pdf`);
   };
 
-  if (loading) return <div>{t('common.loading')}</div>;
+  if (loading) return <div>{t("common.loading")}</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{t('invoices.title')}</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t("invoices.title")}</h1>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
+            onClick={() => {
+              setShowImportModal(true);
+              setImportFile(null);
+              setImportResult(null);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
           >
             <Upload size={20} />
@@ -546,7 +580,7 @@ export default function Invoices() {
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
           >
             <Plus size={20} />
-            {t('invoices.addInvoice')}
+            {t("invoices.addInvoice")}
           </button>
         </div>
       </div>
@@ -555,20 +589,22 @@ export default function Invoices() {
       <div className="bg-card rounded-lg shadow border border-border p-4 mb-4">
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('invoices.invoiceNumber')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              {t("invoices.invoiceNumber")}
+            </label>
             <div className="relative">
               <Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 value={filterNumber}
                 onChange={(e) => setFilterNumber(e.target.value)}
-                placeholder={t('common.search') || 'Search...'}
+                placeholder={t("common.search") || "Search..."}
                 className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
               />
             </div>
           </div>
           <div className="min-w-[140px]">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('taxConfig.from')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t("taxConfig.from")}</label>
             <input
               type="date"
               value={filterDateFrom}
@@ -577,7 +613,7 @@ export default function Invoices() {
             />
           </div>
           <div className="min-w-[140px]">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('taxConfig.to')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t("taxConfig.to")}</label>
             <input
               type="date"
               value={filterDateTo}
@@ -586,13 +622,13 @@ export default function Invoices() {
             />
           </div>
           <div className="min-w-[120px]">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('common.status')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t("common.status")}</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
             >
-              <option value="">{t('common.all') || 'All'}</option>
+              <option value="">{t("common.all") || "All"}</option>
               <option value="draft">Draft</option>
               <option value="sent">Sent</option>
               <option value="paid">Paid</option>
@@ -605,7 +641,7 @@ export default function Invoices() {
               className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
             >
               <X size={14} />
-              {t('common.clear') || 'Clear'}
+              {t("common.clear") || "Clear"}
             </button>
           )}
         </div>
@@ -615,13 +651,17 @@ export default function Invoices() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('invoices.invoiceNumber')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('invoices.client')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.date')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.amount')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.status')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('invoices.files') || 'Files'}</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('common.actions')}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
+                {t("invoices.invoiceNumber")}
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t("invoices.client")}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t("common.date")}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t("common.amount")}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t("common.status")}</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
+                {t("invoices.files") || "Files"}
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -633,11 +673,14 @@ export default function Invoices() {
                   {new Date(invoice.issueDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground">
-                  <div className="font-medium">{invoice.currency} {invoice.total.toLocaleString()}</div>
+                  <div className="font-medium">
+                    {invoice.currency} {invoice.total.toLocaleString()}
+                  </div>
                   {currencySettings && (
                     <div className="text-xs text-muted-foreground">
-                      ≈ {invoice.currency === 'LKR' ? 'AED' : 'LKR'} {(invoice.currency === 'LKR' 
-                        ? invoice.total * currencySettings.exchangeRates.LKR_AED 
+                      ≈ {invoice.currency === "LKR" ? "AED" : "LKR"}{" "}
+                      {(invoice.currency === "LKR"
+                        ? invoice.total * currencySettings.exchangeRates.LKR_AED
                         : invoice.total * currencySettings.exchangeRates.AED_LKR
                       ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
@@ -648,7 +691,7 @@ export default function Invoices() {
                     value={invoice.status}
                     onChange={(e) => handleStatusChange(invoice._id, e.target.value)}
                     className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${getStatusColor(invoice.status)}`}
-                    disabled={!isAdmin && invoice.status === 'paid'}
+                    disabled={!isAdmin && invoice.status === "paid"}
                   >
                     <option value="draft">draft</option>
                     <option value="sent">sent</option>
@@ -672,13 +715,17 @@ export default function Invoices() {
                     ) : (
                       <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
                         <Upload size={14} />
-                        {uploadingForId?.id === invoice._id && uploadingForId?.type === 'invoice' ? 'Uploading...' : 'Invoice'}
+                        {uploadingForId?.id === invoice._id && uploadingForId?.type === "invoice"
+                          ? "Uploading..."
+                          : "Invoice"}
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'invoice', invoice._id)}
+                          onChange={(e) =>
+                            e.target.files?.[0] && handleFileUpload(e.target.files[0], "invoice", invoice._id)
+                          }
                           className="hidden"
-                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === 'invoice'}
+                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === "invoice"}
                         />
                       </label>
                     )}
@@ -696,32 +743,36 @@ export default function Invoices() {
                     ) : (
                       <label className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer">
                         <Upload size={14} />
-                        {uploadingForId?.id === invoice._id && uploadingForId?.type === 'receipt' ? 'Uploading...' : 'Receipt'}
+                        {uploadingForId?.id === invoice._id && uploadingForId?.type === "receipt"
+                          ? "Uploading..."
+                          : "Receipt"}
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt', invoice._id)}
+                          onChange={(e) =>
+                            e.target.files?.[0] && handleFileUpload(e.target.files[0], "receipt", invoice._id)
+                          }
                           className="hidden"
-                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === 'receipt'}
+                          disabled={uploadingForId?.id === invoice._id && uploadingForId?.type === "receipt"}
                         />
                       </label>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
-                  <button 
+                  <button
                     onClick={() => handleViewInvoice(invoice._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
                   >
                     <Eye size={14} />
-                    {t('invoices.view')}
+                    {t("invoices.view")}
                   </button>
                   <button
                     onClick={() => handleDelete(invoice._id)}
                     className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90"
                   >
                     <Trash2 size={14} />
-                    {t('invoices.delete')}
+                    {t("invoices.delete")}
                   </button>
                 </td>
               </tr>
@@ -730,7 +781,7 @@ export default function Invoices() {
         </table>
         {filteredInvoices.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            {hasActiveFilters ? (t('common.noResults') || 'No matching results') : t('invoices.noInvoices')}
+            {hasActiveFilters ? t("common.noResults") || "No matching results" : t("invoices.noInvoices")}
           </div>
         )}
       </div>
@@ -738,25 +789,27 @@ export default function Invoices() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-3xl p-6 m-4 border border-border max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">{t('invoices.createNew')}</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">{t("invoices.createNew")}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.client')}</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.client")}</label>
                   <select
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     required
                   >
-                    <option value="">{t('invoices.selectClient')}</option>
+                    <option value="">{t("invoices.selectClient")}</option>
                     {clients.map((client) => (
-                      <option key={client._id} value={client._id}>{client.name}</option>
+                      <option key={client._id} value={client._id}>
+                        {client.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.currency')}</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.currency")}</label>
                   <select
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
@@ -767,7 +820,7 @@ export default function Invoices() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.issueDate')}</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.issueDate")}</label>
                   <input
                     type="date"
                     value={formData.issueDate}
@@ -777,7 +830,7 @@ export default function Invoices() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('invoices.dueDate')}</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.dueDate")}</label>
                   <input
                     type="date"
                     value={formData.dueDate}
@@ -788,30 +841,30 @@ export default function Invoices() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">{t('invoices.lineItems')}</label>
+                <label className="block text-sm font-medium text-foreground">{t("invoices.lineItems")}</label>
                 {formData.lines.map((line, index) => (
                   <div key={index} className="flex gap-2">
                     <input
                       type="text"
-                      placeholder={t('invoices.description')}
+                      placeholder={t("invoices.description")}
                       value={line.description}
-                      onChange={(e) => updateLine(index, 'description', e.target.value)}
+                      onChange={(e) => updateLine(index, "description", e.target.value)}
                       className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       required
                     />
                     <input
                       type="number"
-                      placeholder={t('invoices.quantity')}
+                      placeholder={t("invoices.quantity")}
                       value={line.quantity}
-                      onChange={(e) => updateLine(index, 'quantity', Number(e.target.value))}
+                      onChange={(e) => updateLine(index, "quantity", Number(e.target.value))}
                       className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       required
                     />
                     <input
                       type="number"
-                      placeholder={t('invoices.rate')}
+                      placeholder={t("invoices.rate")}
                       value={line.unitPrice}
-                      onChange={(e) => updateLine(index, 'unitPrice', Number(e.target.value))}
+                      onChange={(e) => updateLine(index, "unitPrice", Number(e.target.value))}
                       className="w-32 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       required
                     />
@@ -826,11 +879,7 @@ export default function Invoices() {
                     )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addLine}
-                  className="text-sm text-primary hover:underline"
-                >
+                <button type="button" onClick={addLine} className="text-sm text-primary hover:underline">
                   + Add Line Item
                 </button>
               </div>
@@ -846,7 +895,7 @@ export default function Invoices() {
                     className="w-4 h-4"
                   />
                   <label htmlFor="isVatApplicable" className="text-sm font-medium">
-                    VAT Applicable ({companySettings.region === 'AE' ? '🇦🇪 UAE' : '🇱🇰 LK'}: {getVatRate()}%)
+                    VAT Applicable ({companySettings.region === "AE" ? "🇦🇪 UAE" : "🇱🇰 LK"}: {getVatRate()}%)
                   </label>
                 </div>
                 {formData.isVatApplicable && (
@@ -855,7 +904,9 @@ export default function Invoices() {
                       <label className="block text-xs text-muted-foreground mb-1">VAT Category</label>
                       <select
                         value={formData.vatCategory}
-                        onChange={(e) => setFormData({ ...formData, vatCategory: e.target.value as 'standard' | 'zero_rated' })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, vatCategory: e.target.value as "standard" | "zero_rated" })
+                        }
                         className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                       >
                         <option value="standard">Standard Rate ({getVatRate()}%)</option>
@@ -903,17 +954,17 @@ export default function Invoices() {
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
                       <Upload size={16} />
-                      {uploadingInvoice ? 'Uploading...' : 'Upload Invoice'}
+                      {uploadingInvoice ? "Uploading..." : "Upload Invoice"}
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'invoice')}
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "invoice")}
                         className="hidden"
                         disabled={uploadingInvoice}
                       />
                     </label>
                     {formData.attachmentUrl && (
-                      <a 
+                      <a
                         href={`${import.meta.env.VITE_API_URL}${formData.attachmentUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -930,17 +981,17 @@ export default function Invoices() {
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
                       <Upload size={16} />
-                      {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
+                      {uploadingReceipt ? "Uploading..." : "Upload Receipt"}
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'receipt')}
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "receipt")}
                         className="hidden"
                         disabled={uploadingReceipt}
                       />
                     </label>
                     {formData.receiptUrl && (
-                      <a 
+                      <a
                         href={`${import.meta.env.VITE_API_URL}${formData.receiptUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -995,12 +1046,14 @@ export default function Invoices() {
                 <div>
                   <p className="text-sm text-muted-foreground">Due Date</p>
                   <p className="font-medium text-foreground">
-                    {viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString() : 'N/A'}
+                    {viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString() : "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Status</p>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(viewInvoice.status)}`}>
+                  <span
+                    className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(viewInvoice.status)}`}
+                  >
                     {viewInvoice.status}
                   </span>
                 </div>
@@ -1026,7 +1079,9 @@ export default function Invoices() {
                       <tr key={idx} className="border-t border-border">
                         <td className="px-4 py-2 text-sm text-foreground">{line.description}</td>
                         <td className="px-4 py-2 text-sm text-foreground text-right">{line.quantity}</td>
-                        <td className="px-4 py-2 text-sm text-foreground text-right">{line.unitPrice.toLocaleString()}</td>
+                        <td className="px-4 py-2 text-sm text-foreground text-right">
+                          {line.unitPrice.toLocaleString()}
+                        </td>
                         <td className="px-4 py-2 text-sm text-foreground text-right">
                           {(line.quantity * line.unitPrice).toLocaleString()}
                         </td>
@@ -1039,7 +1094,9 @@ export default function Invoices() {
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="font-medium text-foreground">{viewInvoice.currency} {viewInvoice.subtotal?.toLocaleString()}</span>
+                  <span className="font-medium text-foreground">
+                    {viewInvoice.currency} {viewInvoice.subtotal?.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Tax ({viewInvoice.tax}%)</span>
@@ -1050,27 +1107,34 @@ export default function Invoices() {
                 {viewInvoice.isVatApplicable && (
                   <div className="flex justify-between mb-2 bg-muted/50 p-2 rounded">
                     <span className="text-sm text-muted-foreground">
-                      VAT ({viewInvoice.vatRate || 0}% - {viewInvoice.vatCategory === 'zero_rated' ? 'Zero Rated' : 'Standard'})
+                      VAT ({viewInvoice.vatRate || 0}% -{" "}
+                      {viewInvoice.vatCategory === "zero_rated" ? "Zero Rated" : "Standard"})
                     </span>
                     <span className="font-medium text-foreground">
-                      {viewInvoice.currency} {((viewInvoice.subtotal * (viewInvoice.vatRate || 0)) / 100).toLocaleString()}
+                      {viewInvoice.currency}{" "}
+                      {((viewInvoice.subtotal * (viewInvoice.vatRate || 0)) / 100).toLocaleString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Discount</span>
-                  <span className="font-medium text-foreground">{viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}</span>
+                  <span className="font-medium text-foreground">
+                    {viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold border-t border-border pt-2">
                   <span className="text-foreground">Total</span>
-                  <span className="text-foreground">{viewInvoice.currency} {viewInvoice.total?.toLocaleString()}</span>
+                  <span className="text-foreground">
+                    {viewInvoice.currency} {viewInvoice.total?.toLocaleString()}
+                  </span>
                 </div>
                 {currencySettings && (
                   <div className="flex justify-between text-sm text-muted-foreground mt-1">
                     <span>Converted</span>
                     <span>
-                      ≈ {viewInvoice.currency === 'LKR' ? 'AED' : 'LKR'} {(viewInvoice.currency === 'LKR' 
-                        ? viewInvoice.total * currencySettings.exchangeRates.LKR_AED 
+                      ≈ {viewInvoice.currency === "LKR" ? "AED" : "LKR"}{" "}
+                      {(viewInvoice.currency === "LKR"
+                        ? viewInvoice.total * currencySettings.exchangeRates.LKR_AED
                         : viewInvoice.total * currencySettings.exchangeRates.AED_LKR
                       ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
@@ -1088,13 +1152,6 @@ export default function Invoices() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={() => generateInvoicePDF(viewInvoice)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-              >
-                <Download size={16} />
-                Download PDF
-              </button>
-              <button
                 onClick={() => setViewInvoice(null)}
                 className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
               >
@@ -1111,7 +1168,9 @@ export default function Invoices() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 m-4 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">Select Bank Account</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Which bank account received the payment of {invoices.find(inv => inv._id === pendingStatusChange.id)?.currency} {pendingStatusChange.amount.toLocaleString()}?
+              Which bank account received the payment of{" "}
+              {invoices.find((inv) => inv._id === pendingStatusChange.id)?.currency}{" "}
+              {pendingStatusChange.amount.toLocaleString()}?
             </p>
             <div className="space-y-4">
               <div>
@@ -1135,7 +1194,7 @@ export default function Invoices() {
                   onClick={() => {
                     setShowBankModal(false);
                     setPendingStatusChange(null);
-                    setSelectedBank('');
+                    setSelectedBank("");
                   }}
                   className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
                 >
@@ -1158,7 +1217,10 @@ export default function Invoices() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-lg p-6 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">Import Invoices from Excel</h2>
             <div className="mb-4">
-              <button onClick={handleDownloadTemplate} className="flex items-center gap-2 text-sm text-primary hover:underline">
+              <button
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2 text-sm text-primary hover:underline"
+              >
                 <Download size={16} />
                 Download Template (.xlsx)
               </button>
@@ -1168,7 +1230,10 @@ export default function Invoices() {
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
-                onChange={(e) => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }}
+                onChange={(e) => {
+                  setImportFile(e.target.files?.[0] || null);
+                  setImportResult(null);
+                }}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
               />
               <p className="text-xs text-muted-foreground mt-1">Supported formats: .xlsx, .xls, .csv (max 5MB)</p>
@@ -1181,18 +1246,28 @@ export default function Invoices() {
                 {importResult.errors.length > 0 && (
                   <div className="mt-2 max-h-32 overflow-y-auto">
                     {importResult.errors.map((err, i) => (
-                      <p key={i} className="text-xs text-destructive">{err}</p>
+                      <p key={i} className="text-xs text-destructive">
+                        {err}
+                      </p>
                     ))}
                   </div>
                 )}
               </div>
             )}
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80">
-                {t('common.cancel')}
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+              >
+                {t("common.cancel")}
               </button>
-              <button onClick={handleImport} disabled={!importFile || importing} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
-                {importing ? 'Importing...' : 'Import'}
+              <button
+                onClick={handleImport}
+                disabled={!importFile || importing}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+              >
+                {importing ? "Importing..." : "Import"}
               </button>
             </div>
           </div>
