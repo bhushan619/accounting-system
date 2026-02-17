@@ -243,6 +243,20 @@ router.patch('/:id', auditLog('update', 'invoice'), async (req: any, res) => {
   const { bankId, approvalStatus: _ignoredApproval, ...updateData } = req.body;
   const isAdmin = req.user.role === 'admin';
   
+  // Delete old file when replacing attachmentUrl or receiptUrl
+  const invoice = await Invoice.findById(req.params.id);
+  if (invoice) {
+    const fieldsToCheck = ['attachmentUrl', 'receiptUrl'];
+    for (const field of fieldsToCheck) {
+      if (updateData[field] && (invoice as any)[field] && updateData[field] !== (invoice as any)[field]) {
+        try {
+          const oldPath = path.join(process.cwd(), (invoice as any)[field].replace(/^\//, ''));
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        } catch (e) { console.error(`Failed to delete old ${field}:`, e); }
+      }
+    }
+  }
+  
   // Non-admin users cannot mark invoices as paid — must go through approval workflow
   if (!isAdmin && updateData.status === 'paid') {
     return res.status(403).json({ error: 'Only admin can mark invoices as paid. Please submit for approval.' });

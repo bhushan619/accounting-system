@@ -227,6 +227,17 @@ router.put('/:id', auditLog('update', 'expense'), async (req: any, res) => {
   const expense = await Expense.findById(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Not found' });
   
+  // Delete old file when replacing billUrl or receiptUrl
+  const fieldsToCheck = ['billUrl', 'receiptUrl'];
+  for (const field of fieldsToCheck) {
+    if (req.body[field] && (expense as any)[field] && req.body[field] !== (expense as any)[field]) {
+      try {
+        const oldPath = path.join(process.cwd(), (expense as any)[field].replace(/^\//, ''));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      } catch (e) { console.error(`Failed to delete old ${field}:`, e); }
+    }
+  }
+  
   const isAdmin = req.user.role === 'admin';
   
   // Non-admin users cannot set status to approved/rejected — must go through approval workflow
