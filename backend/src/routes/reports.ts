@@ -36,8 +36,8 @@ router.get('/overview', async (req, res) => {
     }
   }
   
-  const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid' });
-  const expenses = await Expense.find({ ...expenseFilter, status: 'approved' });
+  const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid', approvalStatus: 'approved' });
+  const expenses = await Expense.find({ ...expenseFilter, status: 'approved', approvalStatus: 'approved' });
   const payrolls = await Payroll.find({ ...payrollFilter, status: 'paid' });
   
   // Separate payroll category expenses
@@ -85,8 +85,8 @@ router.get('/profit-loss', async (req, res) => {
     if (endDate) payrollFilter.createdAt.$lte = new Date(endDate as string);
   }
   
-  const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid' }).populate('client');
-  const expenses = await Expense.find({ ...expenseFilter, status: 'approved' }).populate('vendor');
+  const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid', approvalStatus: 'approved' }).populate('client');
+  const expenses = await Expense.find({ ...expenseFilter, status: 'approved', approvalStatus: 'approved' }).populate('vendor');
   const payrolls = await Payroll.find({ ...payrollFilter, status: 'paid' }).populate('employee');
   
   // Separate expenses: Payroll category goes to payroll section, others to expenses section
@@ -143,7 +143,7 @@ router.get('/expenses-breakdown', async (req, res) => {
     if (endDate) filter.date.$lte = new Date(endDate as string);
   }
   
-  const expenses = await Expense.find({ ...filter, status: 'approved' });
+  const expenses = await Expense.find({ ...filter, status: 'approved', approvalStatus: 'approved' });
   
   const byCategory = expenses.reduce((acc: any, exp) => {
     if (!acc[exp.category]) {
