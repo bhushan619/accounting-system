@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download } from 'lucide-react';
+import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
@@ -51,6 +51,31 @@ export default function Invoices() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'invoice' | 'receipt'} | null>(null);
+  const [filterNumber, setFilterNumber] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  const filteredInvoices = invoices.filter(inv => {
+    if (filterNumber && !inv.serialNumber.toLowerCase().includes(filterNumber.toLowerCase())) return false;
+    if (filterDateFrom && new Date(inv.issueDate) < new Date(filterDateFrom)) return false;
+    if (filterDateTo) {
+      const end = new Date(filterDateTo);
+      end.setHours(23, 59, 59, 999);
+      if (new Date(inv.issueDate) > end) return false;
+    }
+    if (filterStatus && inv.status !== filterStatus) return false;
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilterNumber('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterStatus('');
+  };
+
+  const hasActiveFilters = filterNumber || filterDateFrom || filterDateTo || filterStatus;
 
   usePreventSwipe(showModal || !!viewInvoice || showBankModal);
 
@@ -462,6 +487,66 @@ export default function Invoices() {
         </button>
       </div>
 
+      {/* Filters */}
+      <div className="bg-card rounded-lg shadow border border-border p-4 mb-4">
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('invoices.invoiceNumber')}</label>
+            <div className="relative">
+              <Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={filterNumber}
+                onChange={(e) => setFilterNumber(e.target.value)}
+                placeholder={t('common.search') || 'Search...'}
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+              />
+            </div>
+          </div>
+          <div className="min-w-[140px]">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('taxConfig.from')}</label>
+            <input
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+            />
+          </div>
+          <div className="min-w-[140px]">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('taxConfig.to')}</label>
+            <input
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+            />
+          </div>
+          <div className="min-w-[120px]">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('common.status')}</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+            >
+              <option value="">{t('common.all') || 'All'}</option>
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <X size={14} />
+              {t('common.clear') || 'Clear'}
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="bg-card rounded-lg shadow border border-border overflow-hidden">
         <table className="w-full">
           <thead className="bg-muted">
@@ -476,7 +561,7 @@ export default function Invoices() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {invoices.map((invoice) => (
+            {filteredInvoices.map((invoice) => (
               <tr key={invoice._id} className="hover:bg-accent/50">
                 <td className="px-6 py-4 text-sm font-medium text-foreground">{invoice.serialNumber}</td>
                 <td className="px-6 py-4 text-sm text-foreground">{invoice.client?.name}</td>
@@ -579,8 +664,10 @@ export default function Invoices() {
             ))}
           </tbody>
         </table>
-        {invoices.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">{t('invoices.noInvoices')}</div>
+        {filteredInvoices.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            {hasActiveFilters ? (t('common.noResults') || 'No matching results') : t('invoices.noInvoices')}
+          </div>
         )}
       </div>
 
