@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 import jsPDF from 'jspdf';
+
+interface ImportResult { created: number; skipped: number; errors: string[] }
 interface Invoice {
   _id: string;
   serialNumber: string;
@@ -51,6 +53,10 @@ export default function Invoices() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadingForId, setUploadingForId] = useState<{id: string, type: 'invoice' | 'receipt'} | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [filterNumber, setFilterNumber] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
@@ -77,7 +83,56 @@ export default function Invoices() {
 
   const hasActiveFilters = filterNumber || filterDateFrom || filterDateTo || filterStatus;
 
-  usePreventSwipe(showModal || !!viewInvoice || showBankModal);
+  usePreventSwipe(showModal || !!viewInvoice || showBankModal || showImportModal);
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/invoices/template`, {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'invoice-import-template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download template:', error);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const token = localStorage.getItem('token');
+      const fd = new FormData();
+      fd.append('file', importFile);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/invoices/import`, fd, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+      });
+      setImportResult(response.data);
+      if (response.data.created > 0) {
+        loadData();
+        if (response.data.errors.length === 0) {
+          setTimeout(() => {
+            setShowImportModal(false);
+            setImportFile(null);
+            setImportResult(null);
+          }, 1500);
+        }
+      }
+    } catch (error: any) {
+      setImportResult({ created: 0, skipped: 0, errors: [error.response?.data?.error || 'Import failed'] });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -478,13 +533,22 @@ export default function Invoices() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-foreground">{t('invoices.title')}</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-        >
-          <Plus size={20} />
-          {t('invoices.addInvoice')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
+            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+          >
+            <Upload size={20} />
+            Import Excel
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            <Plus size={20} />
+            {t('invoices.addInvoice')}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -1085,6 +1149,51 @@ export default function Invoices() {
                   Confirm
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-lg p-6 border border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Import Invoices from Excel</h2>
+            <div className="mb-4">
+              <button onClick={handleDownloadTemplate} className="flex items-center gap-2 text-sm text-primary hover:underline">
+                <Download size={16} />
+                Download Template (.xlsx)
+              </button>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-foreground">Select Excel File</label>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={(e) => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Supported formats: .xlsx, .xls, .csv (max 5MB)</p>
+            </div>
+            {importResult && (
+              <div className="mb-4 p-3 rounded-lg border border-border bg-muted/50">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Import Results: {importResult.created} created, {importResult.skipped} skipped
+                </p>
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto">
+                    {importResult.errors.map((err, i) => (
+                      <p key={i} className="text-xs text-destructive">{err}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80">
+                {t('common.cancel')}
+              </button>
+              <button onClick={handleImport} disabled={!importFile || importing} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                {importing ? 'Importing...' : 'Import'}
+              </button>
             </div>
           </div>
         </div>
