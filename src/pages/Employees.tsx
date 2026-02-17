@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock, Upload, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock, Upload, Download, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
+
+type SortKey = 'employeeId' | 'fullName' | 'designation' | 'department' | 'basicSalary' | 'status';
+type SortDir = 'asc' | 'desc';
 
 interface Employee {
   _id: string;
@@ -44,6 +47,8 @@ export default function Employees() {
   const { t } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>('fullName');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -406,6 +411,28 @@ export default function Employees() {
     }
   };
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown size={14} className="text-muted-foreground/50" />;
+    return sortDir === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
+  };
+
+  const sortedEmployees = useMemo(() => {
+    return [...employees].sort((a, b) => {
+      let aVal: any = a[sortKey] ?? '';
+      let bVal: any = b[sortKey] ?? '';
+      if (sortKey === 'basicSalary') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+      aVal = String(aVal).toLowerCase();
+      bVal = String(bVal).toLowerCase();
+      const cmp = aVal.localeCompare(bVal);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [employees, sortKey, sortDir]);
+
   if (loading) return <div>{t('common.loading')}</div>;
 
   return (
@@ -434,17 +461,27 @@ export default function Employees() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.employeeId') || 'Employee ID'}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.name')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.designation')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.department') || 'Department'}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('employees.basicSalary')}</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('common.status')}</th>
+              {([
+                ['employeeId', t('employees.employeeId') || 'Employee ID'],
+                ['fullName', t('common.name')],
+                ['designation', t('employees.designation')],
+                ['department', t('employees.department') || 'Department'],
+                ['basicSalary', t('employees.basicSalary')],
+                ['status', t('common.status')],
+              ] as [SortKey, string][]).map(([key, label]) => (
+                <th
+                  key={key}
+                  onClick={() => handleSort(key)}
+                  className="px-6 py-3 text-left text-sm font-semibold text-foreground cursor-pointer select-none hover:bg-accent/50"
+                >
+                  <span className="inline-flex items-center gap-1">{label} <SortIcon col={key} /></span>
+                </th>
+              ))}
               <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {employees.map((employee) => (
+            {sortedEmployees.map((employee) => (
               <tr key={employee._id} className="hover:bg-accent/50">
                 <td className="px-6 py-4 text-sm font-medium text-foreground">{employee.employeeId}</td>
                 <td className="px-6 py-4">
