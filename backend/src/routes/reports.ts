@@ -8,6 +8,13 @@ const router = express.Router();
 
 router.use(requireAuth);
 
+// Helper to set endDate to end of day
+const endOfDay = (dateStr: string) => {
+  const d = new Date(dateStr);
+  d.setUTCHours(23, 59, 59, 999);
+  return d;
+};
+
 router.get('/overview', async (req, res) => {
   const { startDate, endDate } = req.query;
   
@@ -20,20 +27,17 @@ router.get('/overview', async (req, res) => {
     if (startDate || endDate) {
       invoiceFilter.issueDate = {};
       if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
-      if (endDate) invoiceFilter.issueDate.$lte = new Date(endDate as string);
-    }
+      if (endDate) invoiceFilter.issueDate.$lte = endOfDay(endDate as string);
     
     if (startDate || endDate) {
       expenseFilter.date = {};
       if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
-      if (endDate) expenseFilter.date.$lte = new Date(endDate as string);
-    }
+      if (endDate) expenseFilter.date.$lte = endOfDay(endDate as string);
     
     if (startDate || endDate) {
       payrollFilter.createdAt = {};
       if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
-      if (endDate) payrollFilter.createdAt.$lte = new Date(endDate as string);
-    }
+      if (endDate) payrollFilter.createdAt.$lte = endOfDay(endDate as string);
   }
   
   const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid', approvalStatus: 'approved' });
@@ -74,15 +78,15 @@ router.get('/profit-loss', async (req, res) => {
   if (startDate || endDate) {
     invoiceFilter.issueDate = {};
     if (startDate) invoiceFilter.issueDate.$gte = new Date(startDate as string);
-    if (endDate) invoiceFilter.issueDate.$lte = new Date(endDate as string);
+    if (endDate) invoiceFilter.issueDate.$lte = endOfDay(endDate as string);
     
     expenseFilter.date = {};
     if (startDate) expenseFilter.date.$gte = new Date(startDate as string);
-    if (endDate) expenseFilter.date.$lte = new Date(endDate as string);
+    if (endDate) expenseFilter.date.$lte = endOfDay(endDate as string);
     
     payrollFilter.createdAt = {};
     if (startDate) payrollFilter.createdAt.$gte = new Date(startDate as string);
-    if (endDate) payrollFilter.createdAt.$lte = new Date(endDate as string);
+    if (endDate) payrollFilter.createdAt.$lte = endOfDay(endDate as string);
   }
   
   const invoices = await Invoice.find({ ...invoiceFilter, status: 'paid', approvalStatus: 'approved' }).populate('client');
@@ -140,7 +144,7 @@ router.get('/expenses-breakdown', async (req, res) => {
   if (startDate || endDate) {
     filter.date = {};
     if (startDate) filter.date.$gte = new Date(startDate as string);
-    if (endDate) filter.date.$lte = new Date(endDate as string);
+    if (endDate) filter.date.$lte = endOfDay(endDate as string);
   }
   
   const expenses = await Expense.find({ ...filter, status: 'approved', approvalStatus: 'approved' });
