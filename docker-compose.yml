@@ -13,7 +13,13 @@ services:
     image: accounting-system-backend:latest
     environment:
       - MONGODB_URI=mongodb://mongo:27005/velosync
-    depends_on:
+      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-secure-random-string-at-least-32-chars}
+      - JWT_EXP=15m
+      - REFRESH_EXP=7d
+      - UPLOADS_DIR=./uploads
+      - NODE_ENV=production
+      - ALLOWED_ORIGINS=http://localhost:8005
+      - FRONTEND_URL=http://localhost:8005
       - mongo
     ports:
       - "4005:4005"
