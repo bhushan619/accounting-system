@@ -41,6 +41,8 @@ interface CurrencySettings {
   exchangeRates: {
     LKR_AED: number;
     AED_LKR: number;
+    LKR_CNY: number;
+    CNY_LKR: number;
   };
   vatRates: {
     LK: { standard: number; zeroRated: number };
@@ -111,16 +113,20 @@ export default function Settings() {
   // Currency settings (admin only)
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings>({
     baseCurrency: 'LKR',
-    supportedCurrencies: ['LKR', 'AED'],
+    supportedCurrencies: ['LKR', 'AED', 'CNY'],
     exchangeRates: {
       LKR_AED: 0.010,
-      AED_LKR: 100.0
+      AED_LKR: 100.0,
+      LKR_CNY: 0.024,
+      CNY_LKR: 41.67
     },
     vatRates: {
       LK: { standard: 18, zeroRated: 0 },
       AE: { standard: 5, zeroRated: 0 }
     }
   });
+  
+  const [fetchingRates, setFetchingRates] = useState(false);
 
   usePreventSwipe(showModal);
 
@@ -231,6 +237,34 @@ export default function Settings() {
       showMessage('error', error.response?.data?.error || 'Failed to save email settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const fetchLiveRates = async () => {
+    setFetchingRates(true);
+    try {
+      // Frankfurter API - free, no API key, no limits, ECB reference rates
+      const response = await fetch('https://api.frankfurter.dev/v1/latest?base=LKR&symbols=AED,CNY');
+      const data = await response.json();
+      if (data.rates) {
+        const lkrToAed = data.rates.AED;
+        const lkrToCny = data.rates.CNY;
+        setCurrencySettings(prev => ({
+          ...prev,
+          exchangeRates: {
+            LKR_AED: parseFloat(lkrToAed.toFixed(6)),
+            AED_LKR: parseFloat((1 / lkrToAed).toFixed(4)),
+            LKR_CNY: parseFloat(lkrToCny.toFixed(6)),
+            CNY_LKR: parseFloat((1 / lkrToCny).toFixed(4)),
+          }
+        }));
+        showMessage('success', `Live rates updated (ECB data from ${data.date})`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch live rates:', error);
+      showMessage('error', 'Failed to fetch live rates. Please try again.');
+    } finally {
+      setFetchingRates(false);
     }
   };
 
@@ -716,8 +750,25 @@ export default function Settings() {
 
                 {/* Exchange Rates */}
                 <div>
-                  <h3 className="text-lg font-medium text-foreground mb-4">Fixed Exchange Rates</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Set the fixed exchange rates between supported currencies.</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">Exchange Rates</h3>
+                      <p className="text-sm text-muted-foreground">Set exchange rates manually or fetch live rates from the European Central Bank (Frankfurter API - free, no API key required).</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fetchLiveRates}
+                      disabled={fetchingRates}
+                      className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 disabled:opacity-50 text-sm font-medium"
+                    >
+                      {fetchingRates ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Globe size={16} />
+                      )}
+                      {fetchingRates ? 'Fetching...' : 'Fetch Live Rates'}
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">1 LKR = AED</label>
@@ -741,6 +792,32 @@ export default function Settings() {
                         onChange={(e) => setCurrencySettings({
                           ...currencySettings,
                           exchangeRates: { ...currencySettings.exchangeRates, AED_LKR: parseFloat(e.target.value) }
+                        })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">1 LKR = CNY</label>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={currencySettings.exchangeRates.LKR_CNY}
+                        onChange={(e) => setCurrencySettings({
+                          ...currencySettings,
+                          exchangeRates: { ...currencySettings.exchangeRates, LKR_CNY: parseFloat(e.target.value) }
+                        })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">1 CNY = LKR</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={currencySettings.exchangeRates.CNY_LKR}
+                        onChange={(e) => setCurrencySettings({
+                          ...currencySettings,
+                          exchangeRates: { ...currencySettings.exchangeRates, CNY_LKR: parseFloat(e.target.value) }
                         })}
                         className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       />
