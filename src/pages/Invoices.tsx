@@ -840,6 +840,7 @@ export default function Invoices() {
                   >
                     <option value="LKR">LKR</option>
                     <option value="AED">AED</option>
+                    <option value="CNY">CNY</option>
                   </select>
                 </div>
                 <div>

@@ -564,8 +564,9 @@ export default function Settings() {
                       onChange={(e) => setCompanySettings({ ...companySettings, currency: e.target.value })}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
-                      <option value="LKR">LKR - Sri Lankan Rupee</option>
-                      <option value="AED">AED - UAE Dirham</option>
+                        <option value="LKR">LKR - Sri Lankan Rupee</option>
+                        <option value="AED">AED - UAE Dirham</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
                     </select>
                   </div>
                   <div>
@@ -656,8 +657,9 @@ export default function Settings() {
                       onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultCurrency: e.target.value })}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
-                      <option value="LKR">LKR - Sri Lankan Rupee</option>
-                      <option value="AED">AED - UAE Dirham</option>
+                        <option value="LKR">LKR - Sri Lankan Rupee</option>
+                        <option value="AED">AED - UAE Dirham</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
                     </select>
                   </div>
                   <div>
@@ -743,6 +745,7 @@ export default function Settings() {
                       >
                         <option value="LKR">LKR - Sri Lankan Rupee</option>
                         <option value="AED">AED - UAE Dirham</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
                       </select>
                     </div>
                   </div>

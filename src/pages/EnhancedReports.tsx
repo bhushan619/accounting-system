@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface CurrencySettings {
-  exchangeRates: { LKR_AED: number; AED_LKR: number };
+  exchangeRates: { LKR_AED: number; AED_LKR: number; LKR_CNY: number; CNY_LKR: number };
 }
 
 export default function EnhancedReports() {
@@ -20,7 +20,7 @@ export default function EnhancedReports() {
   const [profitLossData, setProfitLossData] = useState<any>(null);
   const [expensesData, setExpensesData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>('LKR');
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
 
   useEffect(() => {
@@ -44,13 +44,22 @@ export default function EnhancedReports() {
 
   const convertAmount = (amount: number, fromCurrency: string = 'LKR'): number => {
     if (!currencySettings || fromCurrency === displayCurrency) return amount;
-    if (displayCurrency === 'AED') {
-      return amount * currencySettings.exchangeRates.LKR_AED;
-    }
-    return amount * currencySettings.exchangeRates.AED_LKR;
+    // Convert to LKR first
+    let lkrAmount = amount;
+    if (fromCurrency === 'AED') lkrAmount = amount * currencySettings.exchangeRates.AED_LKR;
+    else if (fromCurrency === 'CNY') lkrAmount = amount * currencySettings.exchangeRates.CNY_LKR;
+    // Convert to target
+    if (displayCurrency === 'LKR') return lkrAmount;
+    if (displayCurrency === 'AED') return lkrAmount * currencySettings.exchangeRates.LKR_AED;
+    if (displayCurrency === 'CNY') return lkrAmount * currencySettings.exchangeRates.LKR_CNY;
+    return amount;
   };
 
-  const getCurrencySymbol = () => displayCurrency === 'LKR' ? 'Rs.' : 'AED';
+  const getCurrencySymbol = () => {
+    if (displayCurrency === 'LKR') return 'Rs.';
+    if (displayCurrency === 'CNY') return '¥';
+    return displayCurrency;
+  };
 
   const loadReports = async () => {
     setLoading(true);
@@ -119,11 +128,12 @@ export default function EnhancedReports() {
               <label className="block text-sm font-medium text-foreground mb-1">{t('reports.displayCurrency')}</label>
               <select
                 value={displayCurrency}
-                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED' | 'CNY')}
                 className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
                 <option value="LKR">LKR (Rs.)</option>
                 <option value="AED">AED</option>
+                <option value="CNY">CNY (¥)</option>
               </select>
             </div>
             <button

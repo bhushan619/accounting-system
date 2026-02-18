@@ -8,7 +8,7 @@ export const createInvoiceSchema = z.object({
   client: z.string().min(1),
   issueDate: z.string().optional(),
   dueDate: z.string().optional(),
-  currency: z.enum(['LKR','AED']).default('LKR'),
+  currency: z.enum(['LKR','AED','CNY']).default('LKR'),
   tax: z.number().min(0).default(0),
   discount: z.number().min(0).default(0),
   lines: z.array(invoiceLineSchema).min(1),

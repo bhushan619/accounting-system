@@ -6,7 +6,7 @@ const ExpenseSchema = new Schema({
   category: { type: String, required: true },
   description: { type: String, required: true },
   amount: { type: Number, required: true },
-  currency: { type: String, enum: ['LKR', 'AED'], default: 'LKR' },
+  currency: { type: String, enum: ['LKR', 'AED', 'CNY'], default: 'LKR' },
   date: { type: Date, default: Date.now },
   billUrl: String,
   receiptUrl: String,

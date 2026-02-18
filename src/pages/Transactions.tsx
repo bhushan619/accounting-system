@@ -29,7 +29,7 @@ interface BankTransaction {
 }
 
 interface CurrencySettings {
-  exchangeRates: { LKR_AED: number; AED_LKR: number };
+  exchangeRates: { LKR_AED: number; AED_LKR: number; LKR_CNY: number; CNY_LKR: number };
 }
 
 const getMonthName = (month: number) => {
@@ -47,7 +47,7 @@ export default function Transactions() {
   const [activeTab, setActiveTab] = useState<'transactions' | 'bank'>('transactions');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'payroll'>('all');
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
-  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>('LKR');
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -187,10 +187,15 @@ export default function Transactions() {
 
   const convertToDisplayCurrency = (amount: number, currency: string): number => {
     if (!currencySettings || currency === displayCurrency) return amount;
-    if (displayCurrency === 'AED') {
-      return amount * currencySettings.exchangeRates.LKR_AED;
-    }
-    return amount * currencySettings.exchangeRates.AED_LKR;
+    // First convert to LKR if not already
+    let lkrAmount = amount;
+    if (currency === 'AED') lkrAmount = amount * currencySettings.exchangeRates.AED_LKR;
+    else if (currency === 'CNY') lkrAmount = amount * currencySettings.exchangeRates.CNY_LKR;
+    // Then convert to target
+    if (displayCurrency === 'LKR') return lkrAmount;
+    if (displayCurrency === 'AED') return lkrAmount * currencySettings.exchangeRates.LKR_AED;
+    if (displayCurrency === 'CNY') return lkrAmount * currencySettings.exchangeRates.LKR_CNY;
+    return amount;
   };
 
   const totalIncome = transactions
@@ -215,7 +220,11 @@ export default function Transactions() {
     return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
   };
 
-  const getCurrencySymbol = (currency: string) => currency === 'LKR' ? 'Rs.' : 'AED';
+  const getCurrencySymbol = (currency: string) => {
+    if (currency === 'LKR') return 'Rs.';
+    if (currency === 'CNY') return '¥';
+    return currency;
+  };
 
   if (loading) return <div className="text-foreground">Loading...</div>;
 
@@ -231,11 +240,12 @@ export default function Transactions() {
         <span className="text-sm text-muted-foreground">Display in:</span>
         <select
           value={displayCurrency}
-          onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+          onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED' | 'CNY')}
           className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
         >
           <option value="LKR">LKR (Rs.)</option>
           <option value="AED">AED</option>
+          <option value="CNY">CNY (¥)</option>
         </select>
       </div>
 

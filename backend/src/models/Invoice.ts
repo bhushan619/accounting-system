@@ -11,7 +11,7 @@ const InvoiceSchema = new Schema({
   client: { type: Schema.Types.ObjectId, ref: 'Client', required: false },
   issueDate: { type: Date, default: Date.now },
   dueDate: { type: Date },
-  currency: { type: String, enum: ['LKR', 'AED'], default: 'LKR' },
+  currency: { type: String, enum: ['LKR', 'AED', 'CNY'], default: 'LKR' },
   lines: [InvoiceLineSchema],
   subtotal: { type: Number, required: true },
   tax: { type: Number, default: 0 },

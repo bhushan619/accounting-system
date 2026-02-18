@@ -37,10 +37,12 @@ const defaultEmailSettings = {
 // Currency and exchange rate settings
 const defaultCurrencySettings = {
   baseCurrency: 'LKR',
-  supportedCurrencies: ['LKR', 'AED'],
+  supportedCurrencies: ['LKR', 'AED', 'CNY'],
   exchangeRates: {
     LKR_AED: 0.010, // 1 LKR = 0.010 AED (approx)
-    AED_LKR: 100.0  // 1 AED = 100 LKR (approx)
+    AED_LKR: 100.0, // 1 AED = 100 LKR (approx)
+    LKR_CNY: 0.024, // 1 LKR = 0.024 CNY (approx)
+    CNY_LKR: 41.67  // 1 CNY = 41.67 LKR (approx)
   },
   vatRates: {
     LK: { standard: 18, zeroRated: 0 },
