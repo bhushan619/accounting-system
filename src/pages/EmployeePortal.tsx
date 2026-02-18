@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { currencySymbol } from '../utils/currency';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import jsPDF from 'jspdf';
@@ -736,7 +737,7 @@ export default function EmployeePortal() {
                           <td className="px-4 py-3 text-sm">{claim.category}</td>
                           <td className="px-4 py-3 text-sm max-w-[200px] truncate">{claim.description}</td>
                           <td className="px-4 py-3 text-sm text-right font-medium">
-                            {claim.currency} {claim.amount.toLocaleString()}
+                            {currencySymbol(claim.currency)} {claim.amount.toLocaleString()}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>

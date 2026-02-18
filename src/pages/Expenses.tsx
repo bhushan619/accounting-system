@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { currencySymbol } from '../utils/currency';
 import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -455,10 +456,10 @@ export default function Expenses() {
                   {new Date(expense.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground">
-                  <div className="font-medium">{expense.currency} {expense.amount.toLocaleString()}</div>
+                  <div className="font-medium">{currencySymbol(expense.currency)} {expense.amount.toLocaleString()}</div>
                   {currencySettings && (
                     <div className="text-xs text-muted-foreground">
-                      ≈ {getConvertedAmount(expense.amount, expense.currency)?.currency} {getConvertedAmount(expense.amount, expense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      ≈ {currencySymbol(getConvertedAmount(expense.amount, expense.currency)?.currency || '')} {getConvertedAmount(expense.amount, expense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
                   )}
                 </td>
@@ -835,7 +836,7 @@ export default function Expenses() {
               <div className="border-t border-border pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Base Amount</span>
-                  <span className="font-medium text-foreground">{viewExpense.currency} {viewExpense.amount.toLocaleString()}</span>
+                  <span className="font-medium text-foreground">{currencySymbol(viewExpense.currency)} {viewExpense.amount.toLocaleString()}</span>
                 </div>
                 {viewExpense.isVatApplicable && (
                   <div className="flex justify-between bg-muted/50 p-2 rounded">
@@ -843,21 +844,21 @@ export default function Expenses() {
                       VAT ({viewExpense.vatRate || 0}% - {viewExpense.vatCategory === 'zero_rated' ? 'Zero Rated' : 'Standard'})
                     </span>
                     <span className="font-medium text-foreground">
-                      {viewExpense.currency} {((viewExpense.amount * (viewExpense.vatRate || 0)) / 100).toLocaleString()}
+                      {currencySymbol(viewExpense.currency)} {((viewExpense.amount * (viewExpense.vatRate || 0)) / 100).toLocaleString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-semibold border-t border-border pt-2">
                   <span className="text-foreground">Total (inc. VAT)</span>
                   <span className="text-foreground">
-                    {viewExpense.currency} {(viewExpense.amount + (viewExpense.isVatApplicable ? (viewExpense.amount * (viewExpense.vatRate || 0)) / 100 : 0)).toLocaleString()}
+                    {currencySymbol(viewExpense.currency)} {(viewExpense.amount + (viewExpense.isVatApplicable ? (viewExpense.amount * (viewExpense.vatRate || 0)) / 100 : 0)).toLocaleString()}
                   </span>
                 </div>
                 {currencySettings && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Converted</span>
                     <span>
-                      ≈ {getConvertedAmount(viewExpense.amount, viewExpense.currency)?.currency} {getConvertedAmount(viewExpense.amount, viewExpense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      ≈ {currencySymbol(getConvertedAmount(viewExpense.amount, viewExpense.currency)?.currency || '')} {getConvertedAmount(viewExpense.amount, viewExpense.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 )}
@@ -907,7 +908,7 @@ export default function Expenses() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 m-4 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">Select Bank Account</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Which bank account paid the expense of {pendingStatusChange.expense.currency} {pendingStatusChange.expense.amount.toLocaleString()}?
+              Which bank account paid the expense of {currencySymbol(pendingStatusChange.expense.currency)} {pendingStatusChange.expense.amount.toLocaleString()}?
             </p>
             <div className="space-y-4">
               <div>

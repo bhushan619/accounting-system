@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { currencySymbol } from '../utils/currency';
 import { Download, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -55,11 +56,7 @@ export default function EnhancedReports() {
     return amount;
   };
 
-  const getCurrencySymbol = () => {
-    if (displayCurrency === 'LKR') return 'Rs.';
-    if (displayCurrency === 'CNY') return '¥';
-    return displayCurrency;
-  };
+  const getCurrencySymbol = () => currencySymbol(displayCurrency);
 
   const loadReports = async () => {
     setLoading(true);

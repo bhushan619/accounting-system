@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { currencySymbol } from "../utils/currency";
 import axios from "axios";
 import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X, RefreshCw } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -460,8 +461,8 @@ export default function Invoices() {
     invoice.lines?.forEach((line: any) => {
       doc.text(line.description.substring(0, 40), 22, yPos);
       doc.text(line.quantity.toString(), 110, yPos, { align: "right" });
-      doc.text(`${invoice.currency} ${line.unitPrice.toLocaleString()}`, 140, yPos, { align: "right" });
-      doc.text(`${invoice.currency} ${(line.quantity * line.unitPrice).toLocaleString()}`, pageWidth - 22, yPos, {
+      doc.text(`${currencySymbol(invoice.currency)} ${line.unitPrice.toLocaleString()}`, 140, yPos, { align: "right" });
+      doc.text(`${currencySymbol(invoice.currency)} ${(line.quantity * line.unitPrice).toLocaleString()}`, pageWidth - 22, yPos, {
         align: "right",
       });
       yPos += 8;
@@ -472,13 +473,13 @@ export default function Invoices() {
     doc.line(pageWidth - 80, yPos - 5, pageWidth - 20, yPos - 5);
 
     doc.text("Subtotal:", pageWidth - 80, yPos);
-    doc.text(`${invoice.currency} ${invoice.subtotal?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
+    doc.text(`${currencySymbol(invoice.currency)} ${invoice.subtotal?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
     yPos += 8;
 
     if (invoice.tax > 0) {
       const taxAmount = (invoice.subtotal * invoice.tax) / 100;
       doc.text(`Tax (${invoice.tax}%):`, pageWidth - 80, yPos);
-      doc.text(`${invoice.currency} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
+      doc.text(`${currencySymbol(invoice.currency)} ${taxAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
 
@@ -492,17 +493,17 @@ export default function Invoices() {
         pageWidth - 80,
         yPos,
       );
-      doc.text(`${invoice.currency} ${vatAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
+      doc.text(`${currencySymbol(invoice.currency)} ${vatAmount.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 10;
     } else if (invoice.isVatApplicable && invoice.vatRate === 0) {
       doc.text("VAT (Zero Rated):", pageWidth - 80, yPos);
-      doc.text(`${invoice.currency} 0`, pageWidth - 22, yPos, { align: "right" });
+      doc.text(`${currencySymbol(invoice.currency)} 0`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
 
     if (invoice.discount > 0) {
       doc.text("Discount:", pageWidth - 80, yPos);
-      doc.text(`-${invoice.currency} ${invoice.discount?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
+      doc.text(`-${currencySymbol(invoice.currency)} ${invoice.discount?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
       yPos += 8;
     }
 
@@ -510,7 +511,7 @@ export default function Invoices() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Total:", pageWidth - 80, yPos);
-    doc.text(`${invoice.currency} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
+    doc.text(`${currencySymbol(invoice.currency)} ${invoice.total?.toLocaleString()}`, pageWidth - 22, yPos, { align: "right" });
 
     // Show converted amount if currency settings available
     if (currencySettings) {
@@ -675,11 +676,11 @@ export default function Invoices() {
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground">
                   <div className="font-medium">
-                    {invoice.currency} {invoice.total.toLocaleString()}
+                    {invoice.currency === 'LKR' ? 'Rs.' : invoice.currency === 'CNY' ? '¥' : invoice.currency} {invoice.total.toLocaleString()}
                   </div>
                   {currencySettings && (
                     <div className="text-xs text-muted-foreground">
-                      ≈ {invoice.currency === "LKR" ? "AED" : "LKR"}{" "}
+                      ≈ {currencySymbol(invoice.currency === "LKR" ? "AED" : "LKR")}{" "}
                       {(invoice.currency === "LKR"
                         ? invoice.total * currencySettings.exchangeRates.LKR_AED
                         : invoice.total * currencySettings.exchangeRates.AED_LKR
@@ -1119,13 +1120,13 @@ export default function Invoices() {
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Subtotal</span>
                   <span className="font-medium text-foreground">
-                    {viewInvoice.currency} {viewInvoice.subtotal?.toLocaleString()}
+                    {viewInvoice.currency === 'LKR' ? 'Rs.' : viewInvoice.currency === 'CNY' ? '¥' : viewInvoice.currency} {viewInvoice.subtotal?.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Tax ({viewInvoice.tax}%)</span>
                   <span className="font-medium text-foreground">
-                    {viewInvoice.currency} {((viewInvoice.subtotal * viewInvoice.tax) / 100).toLocaleString()}
+                    {viewInvoice.currency === 'LKR' ? 'Rs.' : viewInvoice.currency === 'CNY' ? '¥' : viewInvoice.currency} {((viewInvoice.subtotal * viewInvoice.tax) / 100).toLocaleString()}
                   </span>
                 </div>
                 {viewInvoice.isVatApplicable && (
@@ -1135,7 +1136,7 @@ export default function Invoices() {
                       {viewInvoice.vatCategory === "zero_rated" ? "Zero Rated" : "Standard"})
                     </span>
                     <span className="font-medium text-foreground">
-                      {viewInvoice.currency}{" "}
+                      {viewInvoice.currency === 'LKR' ? 'Rs.' : viewInvoice.currency === 'CNY' ? '¥' : viewInvoice.currency}{" "}
                       {((viewInvoice.subtotal * (viewInvoice.vatRate || 0)) / 100).toLocaleString()}
                     </span>
                   </div>
@@ -1143,20 +1144,20 @@ export default function Invoices() {
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Discount</span>
                   <span className="font-medium text-foreground">
-                    {viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}
+                    {viewInvoice.currency === 'LKR' ? 'Rs.' : viewInvoice.currency === 'CNY' ? '¥' : viewInvoice.currency} {viewInvoice.discount?.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold border-t border-border pt-2">
                   <span className="text-foreground">Total</span>
                   <span className="text-foreground">
-                    {viewInvoice.currency} {viewInvoice.total?.toLocaleString()}
+                    {viewInvoice.currency === 'LKR' ? 'Rs.' : viewInvoice.currency === 'CNY' ? '¥' : viewInvoice.currency} {viewInvoice.total?.toLocaleString()}
                   </span>
                 </div>
                 {currencySettings && (
                   <div className="flex justify-between text-sm text-muted-foreground mt-1">
                     <span>Converted</span>
                     <span>
-                      ≈ {viewInvoice.currency === "LKR" ? "AED" : "LKR"}{" "}
+                      ≈ {currencySymbol(viewInvoice.currency === "LKR" ? "AED" : "LKR")}{" "}
                       {(viewInvoice.currency === "LKR"
                         ? viewInvoice.total * currencySettings.exchangeRates.LKR_AED
                         : viewInvoice.total * currencySettings.exchangeRates.AED_LKR

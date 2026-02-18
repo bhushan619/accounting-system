@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { fmtCurrency, currencySymbol } from '../utils/currency';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Globe, Calculator, ArrowRightLeft } from 'lucide-react';
 
@@ -63,7 +64,7 @@ export default function VATReports() {
   };
 
   const formatCurrency = (amount: number, currency: string = 'LKR') => {
-    return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return fmtCurrency(amount, currency);
   };
 
   return (
@@ -222,12 +223,12 @@ export default function VATReports() {
                           {inv.vatRate}%
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right">{inv.currency} {inv.subtotal?.toLocaleString()}</td>
-                      <td className="px-4 py-2 text-right">{inv.currency} {inv.vatAmount?.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(inv.subtotal || 0, inv.currency)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(inv.vatAmount || 0, inv.currency)}</td>
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {inv.currency !== report.currency && (
-                            <>{report.currency} {inv.convertedTotal?.toLocaleString()}</>
+                            <>{currencySymbol(report.currency)} {inv.convertedTotal?.toLocaleString()}</>
                           )}
                         </td>
                       )}
@@ -267,12 +268,12 @@ export default function VATReports() {
                           {exp.vatRate}%
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right">{exp.currency} {exp.amount?.toLocaleString()}</td>
-                      <td className="px-4 py-2 text-right">{exp.currency} {exp.vatAmount?.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(exp.amount || 0, exp.currency)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(exp.vatAmount || 0, exp.currency)}</td>
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {exp.currency !== report.currency && (
-                            <>{report.currency} {exp.convertedAmount?.toLocaleString()}</>
+                            <>{currencySymbol(report.currency)} {exp.convertedAmount?.toLocaleString()}</>
                           )}
                         </td>
                       )}
