@@ -147,8 +147,8 @@ router.post('/import', upload.single('file'), auditLog('import', 'expense'), asy
       }
 
       // Validate currency
-      if (mapped.currency && !['LKR', 'AED'].includes(String(mapped.currency).toUpperCase())) {
-        results.errors.push(`Row ${rowNum}: Invalid currency "${mapped.currency}". Use LKR or AED`);
+      if (mapped.currency && !['LKR', 'AED', 'CNY'].includes(String(mapped.currency).toUpperCase())) {
+        results.errors.push(`Row ${rowNum}: Invalid currency "${mapped.currency}". Use LKR, AED, or CNY`);
         results.skipped++; continue;
       }
 

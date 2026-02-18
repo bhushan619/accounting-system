@@ -26,7 +26,7 @@ interface Expense {
 }
 
 interface CurrencySettings {
-  exchangeRates: { LKR_AED: number; AED_LKR: number };
+  exchangeRates: { LKR_AED: number; AED_LKR: number; LKR_CNY: number; CNY_LKR: number };
   vatRates: { LK: { standard: number }; AE: { standard: number }; [key: string]: { standard: number } };
 }
 
@@ -637,6 +637,7 @@ export default function Expenses() {
                   >
                     <option value="LKR">LKR</option>
                     <option value="AED">AED</option>
+                    <option value="CNY">CNY</option>
                   </select>
                 </div>
                 <div>

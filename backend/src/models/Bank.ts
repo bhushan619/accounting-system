@@ -7,7 +7,7 @@ const BankSchema = new Schema({
   branch: String,
   swiftCode: String,
   balance: { type: Number, default: 0 },
-  currency: { type: String, enum: ['LKR', 'AED'], default: 'LKR' },
+  currency: { type: String, enum: ['LKR', 'AED', 'CNY'], default: 'LKR' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
