@@ -148,7 +148,7 @@ export default function Approvals() {
                       <td className="px-4 py-3 font-medium">{invoice.serialNumber}</td>
                       <td className="px-4 py-3">{invoice.client?.name || '-'}</td>
                       <td className="px-4 py-3 text-right font-medium">
-                        {invoice.currency} {invoice.total.toLocaleString()}
+                        {invoice.currency === 'LKR' ? 'Rs.' : invoice.currency === 'CNY' ? '¥' : invoice.currency} {invoice.total.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-sm">{invoice.createdBy?.fullName || invoice.createdBy?.email}</td>
                       <td className="px-4 py-3 text-sm">{new Date(invoice.createdAt).toLocaleDateString()}</td>
@@ -213,7 +213,7 @@ export default function Approvals() {
                       <td className="px-4 py-3">{expense.vendor?.name || '-'}</td>
                       <td className="px-4 py-3">{expense.category}</td>
                       <td className="px-4 py-3 text-right font-medium">
-                        {expense.currency} {expense.amount.toLocaleString()}
+                        {expense.currency === 'LKR' ? 'Rs.' : expense.currency === 'CNY' ? '¥' : expense.currency} {expense.amount.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-sm">{expense.createdBy?.fullName || expense.createdBy?.email}</td>
                       <td className="px-4 py-3">

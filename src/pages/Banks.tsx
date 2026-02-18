@@ -145,7 +145,7 @@ export default function Banks() {
             <div className="mb-4 p-3 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground mb-1">{t('banks.balance')}</p>
               <p className="text-2xl font-bold text-foreground">
-                {bank.currency} {bank.balance.toLocaleString()}
+                {bank.currency === 'LKR' ? 'Rs.' : bank.currency === 'CNY' ? '¥' : bank.currency} {bank.balance.toLocaleString()}
               </p>
             </div>
 

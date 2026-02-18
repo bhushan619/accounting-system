@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { fmtCurrency } from "../utils/currency";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign,
@@ -91,7 +92,7 @@ export default function Dashboard() {
 
   const formatAmount = (amount: number): string => {
     const converted = convertAmount(amount);
-    return `${displayCurrency} ${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; 
+    return fmtCurrency(converted, displayCurrency);
   };
 
   const handleApplyFilter = () => {

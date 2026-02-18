@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { currencySymbol } from '../utils/currency';
 import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -220,11 +221,7 @@ export default function Transactions() {
     return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
   };
 
-  const getCurrencySymbol = (currency: string) => {
-    if (currency === 'LKR') return 'Rs.';
-    if (currency === 'CNY') return '¥';
-    return currency;
-  };
+  const getCurrencySymbol = (currency: string) => currencySymbol(currency);
 
   if (loading) return <div className="text-foreground">Loading...</div>;
 
@@ -399,11 +396,11 @@ export default function Transactions() {
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       <div className="font-medium">
-                        {transaction.type === 'income' ? '+' : '-'} {transaction.currency} {transaction.amount.toLocaleString()}
+                        {transaction.type === 'income' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString()}
                       </div>
                       {currencySettings && (
                         <div className="text-xs text-muted-foreground">
-                          ≈ {getConvertedAmount(transaction.amount, transaction.currency)?.currency} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ≈ {getCurrencySymbol(getConvertedAmount(transaction.amount, transaction.currency)?.currency || '')} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </div>
                       )}
                     </td>
@@ -457,11 +454,11 @@ export default function Transactions() {
                       transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       <div className="font-medium">
-                        {transaction.type === 'credit' ? '+' : '-'} {transaction.currency} {transaction.amount.toLocaleString()}
+                        {transaction.type === 'credit' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString()}
                       </div>
                       {currencySettings && (
                         <div className="text-xs text-muted-foreground">
-                          ≈ {getConvertedAmount(transaction.amount, transaction.currency)?.currency} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ≈ {getCurrencySymbol(getConvertedAmount(transaction.amount, transaction.currency)?.currency || '')} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </div>
                       )}
                     </td>
