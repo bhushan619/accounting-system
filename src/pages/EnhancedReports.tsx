@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { currencySymbol } from '../utils/currency';
+import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { Download, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -56,7 +56,7 @@ export default function EnhancedReports() {
     return amount;
   };
 
-  const getCurrencySymbol = () => currencySymbol(displayCurrency);
+  const getCurrencySymbol = () => <CurrencySymbolDisplay currency={displayCurrency} />;
 
   const loadReports = async () => {
     setLoading(true);

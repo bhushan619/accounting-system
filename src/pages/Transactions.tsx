@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { currencySymbol } from '../utils/currency';
+import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -221,7 +221,7 @@ export default function Transactions() {
     return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
   };
 
-  const getCurrencySymbol = (currency: string) => currencySymbol(currency);
+  const getCurrencySymbol = (currency: string) => <CurrencySymbolDisplay currency={currency} />;
 
   if (loading) return <div className="text-foreground">Loading...</div>;
 
