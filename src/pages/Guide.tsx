@@ -15,6 +15,8 @@ export default function Guide() {
     { titleKey: 'guide.trackingExpenses', contentKey: 'guide.trackingExpensesContent' },
     { titleKey: 'guide.employeeManagement', contentKey: 'guide.employeeManagementContent' },
     { titleKey: 'guide.employeePortal', contentKey: 'guide.employeePortalContent' },
+    { titleKey: 'guide.employeeLogin', contentKey: 'guide.employeeLoginContent' },
+    { titleKey: 'guide.expenseClaims', contentKey: 'guide.expenseClaimsContent' },
     { titleKey: 'guide.payrollProcessing', contentKey: 'guide.payrollProcessingContent' },
     { titleKey: 'guide.payrollApprovalWorkflow', contentKey: 'guide.payrollApprovalWorkflowContent' },
     { titleKey: 'guide.attendanceTracking', contentKey: 'guide.attendanceTrackingContent' },
@@ -24,13 +26,16 @@ export default function Guide() {
     { titleKey: 'guide.vatFiling', contentKey: 'guide.vatFilingContent' },
     { titleKey: 'guide.transactionsTracking', contentKey: 'guide.transactionsTrackingContent' },
     { titleKey: 'guide.financialReports', contentKey: 'guide.financialReportsContent' },
+    { titleKey: 'guide.multiCurrency', contentKey: 'guide.multiCurrencyContent' },
     { titleKey: 'guide.approvalWorkflows', contentKey: 'guide.approvalWorkflowsContent' },
     { titleKey: 'guide.userManagement', contentKey: 'guide.userManagementContent' },
     { titleKey: 'guide.rolePermissions', contentKey: 'guide.rolePermissionsContent' },
+    { titleKey: 'guide.settingsPage', contentKey: 'guide.settingsPageContent' },
     { titleKey: 'guide.multiLanguage', contentKey: 'guide.multiLanguageContent' },
     { titleKey: 'guide.fileAttachments', contentKey: 'guide.fileAttachmentsContent' },
     { titleKey: 'guide.auditLogs', contentKey: 'guide.auditLogsContent' },
     { titleKey: 'guide.passwordRecovery', contentKey: 'guide.passwordRecoveryContent' },
+    { titleKey: 'guide.dockerDeployment', contentKey: 'guide.dockerDeploymentContent' },
   ];
 
   return (
