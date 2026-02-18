@@ -18,7 +18,7 @@ services:
       - REFRESH_EXP=7d
       - UPLOADS_DIR=./uploads
       - NODE_ENV=production
-      - ALLOWED_ORIGINS=http://localhost:8005
+      - ALLOWED_ORIGINS=http://localhost:8005,http://localhost
       - FRONTEND_URL=http://localhost:8005
       - mongo
     ports:
