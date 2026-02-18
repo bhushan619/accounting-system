@@ -57,7 +57,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 // Update role permissions (admin only)
 router.put('/:role', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { role } = req.params;
+    const role = req.params.role as string;
     const { permissions } = req.body;
     const user = (req as any).user;
 
