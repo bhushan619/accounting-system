@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { fmtCurrency } from "../utils/currency";
+import { FormattedCurrency } from "../utils/FormattedCurrency";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign,
@@ -90,10 +90,6 @@ export default function Dashboard() {
     return amount;
   };
 
-  const formatAmount = (amount: number): string => {
-    const converted = convertAmount(amount);
-    return fmtCurrency(converted, displayCurrency);
-  };
 
   const handleApplyFilter = () => {
     loadStats(true);
@@ -288,7 +284,7 @@ export default function Dashboard() {
             </div>
             <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
             <p className={`text-2xl font-bold ${stat.valueColor}`}>
-              {formatAmount(stat.value)}
+              <FormattedCurrency amount={convertAmount(stat.value)} currency={displayCurrency} />
             </p>
           </div>
         ))}
@@ -380,7 +376,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.revenue')}</span>
                   </div>
-                  <span className="font-semibold text-green-600">{formatAmount(stats.totalRevenue || 0)}</span>
+                  <span className="font-semibold text-green-600"><FormattedCurrency amount={convertAmount(stats.totalRevenue || 0)} currency={displayCurrency} /></span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
@@ -390,7 +386,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.expenses')}</span>
                   </div>
-                  <span className="font-semibold text-red-600">{formatAmount(stats.totalExpenses || 0)}</span>
+                  <span className="font-semibold text-red-600"><FormattedCurrency amount={convertAmount(stats.totalExpenses || 0)} currency={displayCurrency} /></span>
                 </div>
 
                 {isAdmin && (
@@ -402,7 +398,7 @@ export default function Dashboard() {
                       <span className="text-sm text-foreground">{t('dashboard.payroll')}</span>
                     </div>
                     <span className="font-semibold text-orange-600">
-                      {formatAmount(stats.totalPayroll || 0)}
+                      <FormattedCurrency amount={convertAmount(stats.totalPayroll || 0)} currency={displayCurrency} />
                     </span>
                   </div>
                 )}
@@ -416,7 +412,7 @@ export default function Dashboard() {
                       <span className="text-sm font-medium text-foreground">{t('dashboard.netProfit')}</span>
                     </div>
                     <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
-                      {formatAmount(stats.profit || 0)}
+                      <FormattedCurrency amount={convertAmount(stats.profit || 0)} currency={displayCurrency} />
                     </span>
                   </div>
                 </div>
