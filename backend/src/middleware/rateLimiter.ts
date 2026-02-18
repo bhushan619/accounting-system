@@ -10,9 +10,8 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: false, // Count all requests, not just failed ones
   keyGenerator: (req) => {
-    // Use IP + email for more granular limiting
-    const email = req.body?.email || '';
-    return `${req.ip}-${email}`;
+    const email = req.body?.email || 'unknown';
+    return email;
   }
 });
 
