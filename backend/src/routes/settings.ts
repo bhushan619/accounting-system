@@ -72,7 +72,7 @@ router.get('/', requireAuth, requireRole('admin'), async (req: AuthRequest, res)
 router.get('/:type', requireAuth, async (req, res) => {
   const authReq = req as AuthRequest;
   try {
-    const { type } = req.params;
+    const type = req.params.type as string;
     
     if (!['company', 'defaults', 'email', 'currency'].includes(type)) {
       return res.status(400).json({ error: 'Invalid settings type' });
@@ -113,7 +113,7 @@ router.get('/:type', requireAuth, async (req, res) => {
 router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Settings'), async (req, res) => {
   const authReq = req as AuthRequest;
   try {
-    const { type } = req.params;
+    const type = req.params.type as string;
     const data = req.body;
     
     if (!['company', 'defaults', 'email', 'currency'].includes(type)) {
