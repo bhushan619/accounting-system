@@ -2,9 +2,9 @@ services:
   mongo:
     image: mongo:8.0
     container_name: mongo
-    command: ["mongod", "--port", "27005", "--bind_ip_all"]
+    command: ["mongod", "--port", "27019", "--bind_ip_all"]
     ports:
-      - "27005:27005"
+      - "27019:27019"
     volumes:
       - mongo-data:/data/db
 
@@ -12,9 +12,9 @@ services:
     build: ./backend
     image: accounting-system-backend:latest
     environment:
-      - MONGODB_URI=mongodb://mongo:27005/velosync
-      - JWT_SECRET=${JWT_SECRET:-change-me-to-a-secure-random-string-at-least-32-chars}
-      - JWT_EXP=15m
+      - MONGODB_URI=mongodb://mongo:27019/velosync
+      - JWT_SECRET=$${JWT_SECRET:hrVwJGQgD4d2T5WeMhjatlEFisfyJgWow3m+jlwlLLEpAT6kt+h3Da4IlIsCVsjL1PuWGFnoFxi0bEQxwKGZjQ==}
+      - JWT_EXP=7d
       - REFRESH_EXP=7d
       - UPLOADS_DIR=./uploads
       - NODE_ENV=production
