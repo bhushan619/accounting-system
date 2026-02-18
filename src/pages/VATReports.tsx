@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { fmtCurrency, currencySymbol } from '../utils/currency';
+import { fmtCurrency } from '../utils/currency';
+import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Globe, Calculator, ArrowRightLeft } from 'lucide-react';
 
@@ -228,7 +229,7 @@ export default function VATReports() {
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {inv.currency !== report.currency && (
-                            <>{currencySymbol(report.currency)} {inv.convertedTotal?.toLocaleString()}</>
+                            <><CurrencySymbolDisplay currency={report.currency} /> {inv.convertedTotal?.toLocaleString()}</>
                           )}
                         </td>
                       )}
@@ -273,7 +274,7 @@ export default function VATReports() {
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {exp.currency !== report.currency && (
-                            <>{currencySymbol(report.currency)} {exp.convertedAmount?.toLocaleString()}</>
+                            <><CurrencySymbolDisplay currency={report.currency} /> {exp.convertedAmount?.toLocaleString()}</>
                           )}
                         </td>
                       )}

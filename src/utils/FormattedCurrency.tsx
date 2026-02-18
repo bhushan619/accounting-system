@@ -22,15 +22,22 @@ export const FormattedCurrency: React.FC<FormattedCurrencyProps> = ({
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
+
+  return (
+    <span className={className}>
+      <CurrencySymbolDisplay currency={currency} /> {formatted}
+    </span>
+  );
+};
+
+/**
+ * Renders just the currency symbol with proper font styling.
+ * Use this when you need to display the symbol separately from the amount.
+ */
+export const CurrencySymbolDisplay: React.FC<{ currency: string }> = ({ currency }) => {
   const symbol = currencySymbol(currency);
-
   if (usesDirhamFont(currency)) {
-    return (
-      <span className={className}>
-        <span className="dirham-symbol">{symbol}</span> {formatted}
-      </span>
-    );
+    return <span className="dirham-symbol">{symbol}</span>;
   }
-
-  return <span className={className}>{symbol} {formatted}</span>;
+  return <>{symbol}</>;
 };
