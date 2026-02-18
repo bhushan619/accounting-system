@@ -25,7 +25,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currencySettings, setCurrencySettings] = useState<any>(null);
-  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED'>('LKR');
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>('LKR');
 
   // Date filter state
   const [startDate, setStartDate] = useState(() => {
@@ -77,8 +77,13 @@ export default function Dashboard() {
 
   const convertAmount = (amount: number): number => {
     if (!amount) return 0;
-    const rate = currencySettings?.exchangeRate || 0.012;
+    if (displayCurrency === 'LKR') return amount;
     if (displayCurrency === 'AED') {
+      const rate = currencySettings?.exchangeRates?.LKR_AED || 0.012;
+      return amount * rate;
+    }
+    if (displayCurrency === 'CNY') {
+      const rate = currencySettings?.exchangeRates?.LKR_CNY || 0.024;
       return amount * rate;
     }
     return amount;
@@ -245,11 +250,12 @@ export default function Dashboard() {
               <label className="block text-xs text-muted-foreground mb-1">{t('transactions.displayCurrency') || 'Display Currency'}</label>
               <select
                 value={displayCurrency}
-                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED')}
+                onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED' | 'CNY')}
                 className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
               >
                 <option value="LKR">LKR</option>
                 <option value="AED">AED</option>
+                <option value="CNY">CNY</option>
               </select>
             </div>
           </div>
