@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Shared password validation schema - minimum 12 characters for security
 export const passwordSchema = z.string()
-  .min(12, 'Password must be at least 12 characters')
+  .min(8, 'Password must be at least 8 characters')
   .max(128, 'Password must be less than 128 characters');
 
 export const signupSchema = z.object({
