@@ -542,12 +542,17 @@ export default function Payroll() {
     const deficitSalary = entry.deficitSalary || 0;
     const includeDeficitInPayroll = newIncludeDeficit;
 
-    // Attendance deduction: unpaid leave + any absent days not covered by paid leave types
+    // Attendance deduction: during probation ALL leaves are unpaid
     const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
     const unpaidLeave = entry.unpaidLeave || 0;
-    const paidLeave = (entry.sickLeave || 0) + (entry.casualLeave || 0) + (entry.annualLeave || 0);
-    const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - (entry.otherLeave || 0));
-    const deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
+    let deductibleDays: number;
+    if (entry.employee.status === 'under_probation') {
+      deductibleDays = absentDays;
+    } else {
+      const paidLeave = (entry.sickLeave || 0) + (entry.casualLeave || 0) + (entry.annualLeave || 0);
+      const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - (entry.otherLeave || 0));
+      deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
+    }
     const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
 
     // Include deficit salary if checkbox is checked
@@ -1748,7 +1753,7 @@ export default function Payroll() {
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground whitespace-normal">Employee</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground whitespace-normal sticky left-0 z-10 bg-muted">Employee</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Basic</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground whitespace-normal">Transport</th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground bg-green-50 whitespace-normal">
@@ -1793,7 +1798,7 @@ export default function Payroll() {
                 <tbody className="divide-y divide-border">
                   {previewData.map((entry, idx) => (
                     <tr key={idx} className="hover:bg-accent/50">
-                      <td className="px-3 py-2 text-foreground">{entry.employee.fullName}</td>
+                      <td className="px-3 py-2 text-foreground sticky left-0 z-10 bg-card">{entry.employee.fullName}</td>
                       <td className="px-3 py-2 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right">
                         <input
@@ -2774,7 +2779,7 @@ export default function Payroll() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase sticky left-0 z-10 bg-muted">
                         Employee
                       </th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
@@ -2822,7 +2827,7 @@ export default function Payroll() {
                   <tbody className="divide-y divide-border">
                     {editData.map((entry, idx) => (
                       <tr key={entry._id} className="hover:bg-accent/50">
-                        <td className="px-3 py-3 text-foreground">
+                        <td className="px-3 py-3 text-foreground sticky left-0 z-10 bg-card">
                           <div>
                             <p className="font-medium">{entry.employee?.fullName || "N/A"}</p>
                             <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ""}</p>

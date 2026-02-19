@@ -266,10 +266,17 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const otherLeave = attendance?.otherLeave ?? 0;
       const leaveNotes = attendance?.leaveNotes ?? '';
       
-      // Attendance deduction: unpaid leave + any absent days not covered by paid leave types
-      const paidLeave = sickLeave + casualLeave + annualLeave;
-      const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - otherLeave);
-      const deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
+      // Attendance deduction: during probation ALL leaves are unpaid
+      // After confirmation, only unpaid leave + absent days not covered by paid leave
+      let deductibleDays: number;
+      if (employee.status === 'under_probation') {
+        // All leaves are unpaid during probation
+        deductibleDays = absentDays;
+      } else {
+        const paidLeave = sickLeave + casualLeave + annualLeave;
+        const effectiveUnpaidDays = Math.max(0, absentDays - paidLeave - otherLeave);
+        deductibleDays = unpaidLeave > 0 ? unpaidLeave : effectiveUnpaidDays;
+      }
       const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
       const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
       
