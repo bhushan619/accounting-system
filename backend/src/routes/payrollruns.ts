@@ -33,7 +33,7 @@ router.get('/:id', requirePayrollAccess, async (req, res) => {
     .populate('rejectedBy', 'email')
     .populate({
       path: 'payrollEntries',
-      populate: { path: 'employee', select: 'fullName employeeId epfNumber email nic designation department' }
+      populate: { path: 'employee', select: 'fullName nickname employeeId epfNumber email nic designation department' }
     });
   if (!run) return res.status(404).json({ error: 'Not found' });
   res.json(run);
@@ -308,6 +308,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
           _id: employee._id,
           employeeId: employee.employeeId,
           fullName: employee.fullName,
+          nickname: employee.nickname || '',
           status: employee.status,
           apitScenario: employee.apitScenario || 'employee'
         },
@@ -640,7 +641,7 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       .populate('createdBy', 'email')
       .populate({
         path: 'payrollEntries',
-        populate: { path: 'employee', select: 'fullName employeeId status' }
+        populate: { path: 'employee', select: 'fullName nickname employeeId status' }
       });
     
     res.json(updatedRun);

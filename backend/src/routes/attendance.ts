@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
   if (year) filter.year = parseInt(year as string);
   
   const records = await Attendance.find(filter)
-    .populate('employee', 'employeeId fullName')
+    .populate('employee', 'employeeId fullName nickname')
     .populate('payrollRun', 'runNumber')
     .sort({ year: -1, month: -1 })
     .lean();
@@ -33,7 +33,7 @@ router.get('/month/:year/:month', async (req, res) => {
     month: parseInt(month),
     year: parseInt(year)
   })
-    .populate('employee', 'employeeId fullName basicSalary')
+    .populate('employee', 'employeeId fullName nickname basicSalary')
     .lean();
   
   res.json(records);

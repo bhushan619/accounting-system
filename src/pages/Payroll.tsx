@@ -33,6 +33,7 @@ interface Employee {
   _id: string;
   employeeId: string;
   fullName: string;
+  nickname?: string;
   email: string;
   basicSalary: number;
   transportAllowance: number;
@@ -58,7 +59,7 @@ interface AttendanceData {
 
 interface AttendanceHistory {
   _id: string;
-  employee: { _id: string; employeeId: string; fullName: string; basicSalary: number };
+  employee: { _id: string; employeeId: string; fullName: string; nickname?: string; basicSalary: number };
   month: number;
   year: number;
   workingDays: number;
@@ -1141,6 +1142,7 @@ export default function Payroll() {
   const selectAll = () => {
     const filtered = employees.filter(
       (emp) =>
+        (emp.nickname || emp.fullName).toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
     );
@@ -1278,6 +1280,7 @@ export default function Payroll() {
 
   const filteredEmployees = employees.filter(
     (emp) =>
+      (emp.nickname || emp.fullName).toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -1643,7 +1646,7 @@ export default function Payroll() {
                         <tbody>
                           {attendanceHistory.map((record) => (
                             <tr key={record._id} className="border-b border-blue-100">
-                              <td className="px-2 py-1">{record.employee?.fullName || record.employee?.employeeId}</td>
+                              <td className="px-2 py-1">{record.employee?.nickname || record.employee?.fullName || record.employee?.employeeId}</td>
                               <td className="px-2 py-1 text-center">{record.workingDays}</td>
                               <td className="px-2 py-1 text-center">{record.attendedDays}</td>
                               <td className="px-2 py-1 text-center text-green-600">{record.sickLeave || 0}</td>
@@ -1707,7 +1710,7 @@ export default function Payroll() {
                           className="rounded border-border"
                         />
                         <span className="text-sm text-foreground flex-1">
-                          {emp.employeeId} - {emp.fullName}
+                          {emp.employeeId} - {emp.nickname || emp.fullName}
                         </span>
                         <span className="text-xs text-muted-foreground">Rs. {emp.basicSalary.toLocaleString()}</span>
                       </label>
@@ -1798,7 +1801,7 @@ export default function Payroll() {
                 <tbody className="divide-y divide-border">
                   {previewData.map((entry, idx) => (
                     <tr key={idx} className="hover:bg-accent/50">
-                      <td className="px-3 py-2 text-foreground sticky left-0 z-10 bg-card">{entry.employee.fullName}</td>
+                      <td className="px-3 py-2 text-foreground sticky left-0 z-10 bg-card">{entry.employee.nickname || entry.employee.fullName}</td>
                       <td className="px-3 py-2 text-right text-foreground">{entry.basicSalary.toLocaleString()}</td>
                       <td className="px-3 py-2 text-right">
                         <input
@@ -2251,7 +2254,7 @@ export default function Payroll() {
                     <tbody className="divide-y divide-border">
                       {(selectedRun.payrollEntries as any[])?.map((entry: any) => (
                         <tr key={entry._id} className="hover:bg-accent/50">
-                          <td className="px-3 py-2 text-foreground">{entry.employee?.fullName || "N/A"}</td>
+                          <td className="px-3 py-2 text-foreground">{entry.employee?.nickname || entry.employee?.fullName || "N/A"}</td>
                           <td className="px-3 py-2 text-muted-foreground text-xs">{entry.employee?.email || "-"}</td>
                           <td className="px-3 py-2 text-right text-foreground font-medium">
                             LKR {entry.netSalary?.toLocaleString()}
@@ -2383,7 +2386,7 @@ export default function Payroll() {
                 <tbody>
                   <tr>
                     <td className="text-[#555] py-1.5">Employee Name:</td>
-                    <td className="text-right font-bold text-black">{previewEmployee.employee?.fullName || "N/A"}</td>
+                    <td className="text-right font-bold text-black">{previewEmployee.employee?.nickname || previewEmployee.employee?.fullName || "N/A"}</td>
                   </tr>
                   <tr>
                     <td className="text-[#555] py-1.5">Designation:</td>
@@ -2609,7 +2612,7 @@ export default function Payroll() {
                           <td className="px-3 py-3 text-foreground">{entry.serialNumber}</td>
                           <td className="px-3 py-3 text-foreground">
                             <div>
-                              <p className="font-medium">{entry.employee?.fullName || "N/A"}</p>
+                              <p className="font-medium">{entry.employee?.nickname || entry.employee?.fullName || "N/A"}</p>
                               <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ""}</p>
                             </div>
                           </td>
@@ -2829,7 +2832,7 @@ export default function Payroll() {
                       <tr key={entry._id} className="hover:bg-accent/50">
                         <td className="px-3 py-3 text-foreground sticky left-0 z-10 bg-card">
                           <div>
-                            <p className="font-medium">{entry.employee?.fullName || "N/A"}</p>
+                            <p className="font-medium">{entry.employee?.nickname || entry.employee?.fullName || "N/A"}</p>
                             <p className="text-xs text-muted-foreground">{entry.employee?.employeeId || ""}</p>
                           </div>
                         </td>
