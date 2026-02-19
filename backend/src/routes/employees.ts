@@ -210,6 +210,15 @@ router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
     data.statusUpdateDate = new Date();
   }
   
+  // Set closeDate when status changes to closed
+  if (data.status === 'closed' && currentEmployee.status !== 'closed') {
+    data.closeDate = data.closeDate || new Date();
+  }
+  // Clear closeDate if reopening
+  if (data.status !== 'closed' && currentEmployee.status === 'closed') {
+    data.closeDate = null;
+  }
+  
   const employee = await Employee.findByIdAndUpdate(
     req.params.id,
     data,

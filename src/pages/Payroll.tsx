@@ -41,6 +41,7 @@ interface Employee {
   performanceSalaryConfirmed?: number;
   status: string;
   apitScenario?: string;
+  closeDate?: string;
 }
 
 interface AttendanceData {
@@ -212,7 +213,8 @@ export default function Payroll() {
         axios.get(`${import.meta.env.VITE_API_URL}/settings`).catch(() => ({ data: {} })),
       ]);
       setRuns(runsRes.data);
-      setEmployees(employeesRes.data.filter((e: Employee) => e.status !== "closed"));
+      // Include active employees + closed employees (backend will filter by closeDate during payroll calc)
+      setEmployees(employeesRes.data);
       setBanks(banksRes.data);
 
       // Extract tax rates from tax config
