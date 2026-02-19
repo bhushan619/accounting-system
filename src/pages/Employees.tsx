@@ -292,9 +292,12 @@ export default function Employees() {
   };
 
   const handleCloseEmployee = async (id: string) => {
+    const closeDateStr = prompt('Enter close date (YYYY-MM-DD) or leave empty for today:');
+    if (closeDateStr === null) return; // User cancelled
     if (!confirm('Are you sure you want to close this employee record? This will mark them as inactive.')) return;
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/employees/${id}`, { status: 'closed' });
+      const closeDate = closeDateStr?.trim() ? new Date(closeDateStr.trim()).toISOString() : new Date().toISOString();
+      await axios.put(`${import.meta.env.VITE_API_URL}/employees/${id}`, { status: 'closed', closeDate });
       loadEmployees();
     } catch (error) {
       console.error('Failed to close employee:', error);

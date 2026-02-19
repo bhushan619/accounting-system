@@ -56,10 +56,15 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       });
     }
     
-    // Get employees that are not closed
+    // Get employees: active ones + closed employees whose closeDate is within the payroll month
+    const payrollMonthStart = new Date(year, month - 1, 1);
+    const payrollMonthEnd = new Date(year, month, 0, 23, 59, 59, 999);
     const employees = await Employee.find({ 
       _id: { $in: employeeIds },
-      status: { $ne: 'closed' }
+      $or: [
+        { status: { $ne: 'closed' } },
+        { status: 'closed', closeDate: { $gte: payrollMonthStart, $lte: payrollMonthEnd } }
+      ]
     });
     
     const taxRates = await getActiveTaxRates();
@@ -355,10 +360,15 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
     const runNumber = await getNextSequence('payrollrun', 'RUN');
     const workingDays = getWorkingDaysInMonth(month, year);
     
-    // Get employees that are not closed
+    // Get employees: active ones + closed employees whose closeDate is within the payroll month
+    const genPayrollMonthStart = new Date(year, month - 1, 1);
+    const genPayrollMonthEnd = new Date(year, month, 0, 23, 59, 59, 999);
     const employees = await Employee.find({ 
       _id: { $in: employeeIds },
-      status: { $ne: 'closed' }
+      $or: [
+        { status: { $ne: 'closed' } },
+        { status: 'closed', closeDate: { $gte: genPayrollMonthStart, $lte: genPayrollMonthEnd } }
+      ]
     });
     
     // Create a map of employee data (performance salary, transport allowance, deductions, deficit)

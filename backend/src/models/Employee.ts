@@ -37,6 +37,7 @@ const EmployeeSchema = new Schema({
     default: 'under_probation' 
   },
   statusUpdateDate: { type: Date }, // Date when status was changed to 'confirmed'
+  closeDate: { type: Date }, // Date when employee was closed/deactivated
   // Bank details for salary payment
   bankName: String,
   bankAccountNumber: String,
