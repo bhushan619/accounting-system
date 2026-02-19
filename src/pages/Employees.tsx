@@ -11,6 +11,7 @@ interface Employee {
   _id: string;
   employeeId: string;
   fullName: string;
+  nickname?: string;
   email: string;
   phone?: string;
   designation?: string;
@@ -55,12 +56,15 @@ export default function Employees() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [_taxConfigs, setTaxConfigs] = useState<TaxConfig[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
     epfNumber: '',
     fullName: '',
+    nickname: '',
     email: '',
     phone: '',
     nic: '',
@@ -253,6 +257,7 @@ export default function Employees() {
       employeeId: employee.employeeId,
       epfNumber: emp.epfNumber || '',
       fullName: employee.fullName,
+      nickname: emp.nickname || '',
       email: employee.email,
       phone: employee.phone || '',
       nic: emp.nic || '',
@@ -296,6 +301,37 @@ export default function Employees() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedEmployees.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedEmployees.map(e => e._id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} employee(s)?`)) return;
+    setBulkDeleting(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/employees/bulk-delete`, { ids: Array.from(selectedIds) });
+      setSelectedIds(new Set());
+      loadEmployees();
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const getDaysRemaining = (probationEndDate?: string): number | null => {
     if (!probationEndDate) return null;
     const endDate = new Date(probationEndDate);
@@ -329,6 +365,7 @@ export default function Employees() {
       employeeId: '',
       epfNumber: '',
       fullName: '',
+      nickname: '',
       email: '',
       phone: '',
       nic: '',
@@ -448,7 +485,19 @@ export default function Employees() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{t('employees.title')}</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-foreground">{t('employees.title')}</h1>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} selected`}
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
@@ -471,6 +520,14 @@ export default function Employees() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
+              <th className="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={sortedEmployees.length > 0 && selectedIds.size === sortedEmployees.length}
+                  onChange={toggleSelectAll}
+                  className="rounded border-border"
+                />
+              </th>
               {([
                 ['employeeId', t('employees.employeeId') || 'Employee ID'],
                 ['fullName', t('common.name')],
@@ -492,11 +549,22 @@ export default function Employees() {
           </thead>
           <tbody className="divide-y divide-border">
             {sortedEmployees.map((employee) => (
-              <tr key={employee._id} className="hover:bg-accent/50">
+              <tr key={employee._id} className={`hover:bg-accent/50 ${selectedIds.has(employee._id) ? 'bg-accent/30' : ''}`}>
+                <td className="px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(employee._id)}
+                    onChange={() => toggleSelect(employee._id)}
+                    className="rounded border-border"
+                  />
+                </td>
                 <td className="px-6 py-4 text-sm font-medium text-foreground">{employee.employeeId}</td>
                 <td className="px-6 py-4">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{employee.fullName}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {employee.fullName}
+                      {employee.nickname && <span className="text-muted-foreground font-normal"> ({employee.nickname})</span>}
+                    </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Mail size={12} />
                       {employee.email}
@@ -625,7 +693,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.fullName')} *</label>
                   <input
@@ -634,6 +702,16 @@ export default function Employees() {
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Nickname</label>
+                  <input
+                    type="text"
+                    value={formData.nickname}
+                    onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    placeholder="Optional"
                   />
                 </div>
                 <div>

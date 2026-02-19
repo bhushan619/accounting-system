@@ -13,7 +13,7 @@ router.use(requireRole('admin'));
 // ── Excel template download (must be before /:id) ──
 router.get('/template', (_req, res) => {
   const headers = [
-    'Employee ID', 'EPF Number', 'Full Name', 'Email', 'Phone', 'NIC', 'Address',
+    'Employee ID', 'EPF Number', 'Full Name', 'Nickname', 'Email', 'Phone', 'NIC', 'Address',
     'Basic Information', 'Designation', 'Department', 'Join Date', 'Basic Salary',
     'Transport Allowance', 'Performance Salary Probation', 'Performance Salary Confirmed',
     'Probation End Date', 'EPF Employee Rate', 'EPF Employer Rate', 'ETF Rate',
@@ -21,7 +21,7 @@ router.get('/template', (_req, res) => {
   ];
   const sampleRow: Record<string, any> = {
     'Employee ID': 'EMP001', 'EPF Number': 'EPF001', 'Full Name': 'John Doe',
-    'Email': 'john@example.com', 'Phone': '0771234567', 'NIC': '200012345678',
+    'Nickname': 'Johnny', 'Email': 'john@example.com', 'Phone': '0771234567', 'NIC': '200012345678',
     'Address': '123 Main St, Colombo', 'Basic Information': '', 'Designation': 'Software Engineer',
     'Department': 'R&D department', 'Join Date': '2025-01-15', 'Basic Salary': 100000,
     'Transport Allowance': 5000, 'Performance Salary Probation': 10000,
@@ -32,7 +32,7 @@ router.get('/template', (_req, res) => {
   };
   const notesRow: Record<string, any> = {
     'Employee ID': '* Required, Unique', 'EPF Number': 'Optional', 'Full Name': '* Required',
-    'Email': '* Required', 'Phone': 'Optional', 'NIC': 'Optional',
+    'Nickname': 'Optional', 'Email': '* Required', 'Phone': 'Optional', 'NIC': 'Optional',
     'Address': 'Optional', 'Basic Information': 'Optional', 'Designation': 'Optional',
     'Department': 'HR department / R&D department', 'Join Date': 'YYYY-MM-DD', 'Basic Salary': '* Required, Number',
     'Transport Allowance': 'Number, Default: 0', 'Performance Salary Probation': 'Number, Default: 0',
@@ -63,6 +63,7 @@ const upload = multer({
 const COLUMN_MAP: Record<string, string> = {
   'employee id': 'employeeId', 'employeeid': 'employeeId', 'epf number': 'epfNumber',
   'epfnumber': 'epfNumber', 'full name': 'fullName', 'fullname': 'fullName', 'name': 'fullName',
+  'nickname': 'nickname',
   'email': 'email', 'phone': 'phone', 'nic': 'nic', 'address': 'address',
   'basic information': 'basicInformation', 'basicinformation': 'basicInformation',
   'designation': 'designation', 'department': 'department', 'join date': 'joinDate',
@@ -216,6 +217,14 @@ router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
   );
   if (!employee) return res.status(404).json({ error: 'Not found' });
   res.json(employee);
+});
+
+// ── Bulk delete ──
+router.post('/bulk-delete', auditLog('bulk-delete', 'employee'), async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
+  const result = await Employee.deleteMany({ _id: { $in: ids } });
+  res.json({ deleted: result.deletedCount });
 });
 
 router.delete('/:id', auditLog('delete', 'employee'), async (req, res) => {

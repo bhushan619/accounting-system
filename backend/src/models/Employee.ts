@@ -4,6 +4,7 @@ const EmployeeSchema = new Schema({
   employeeId: { type: String, required: true, unique: true },
   epfNumber: String, // EPF Number for statutory records
   fullName: { type: String, required: true },
+  nickname: String,
   email: { type: String, required: true },
   phone: String,
   nic: String,
