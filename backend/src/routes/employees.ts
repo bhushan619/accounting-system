@@ -114,14 +114,7 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
     const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
     if (rawRows.length === 0) return res.status(400).json({ error: 'Excel file is empty' });
 
-    // Validate column headers
-    const fileColumns = Object.keys(rawRows[0]).map(c => c.trim().toLowerCase());
-    const unmatchedColumns = fileColumns.filter(c => c && !VALID_COLUMNS.has(c));
-    if (unmatchedColumns.length > 0) {
-      return res.status(400).json({ 
-        error: `Unrecognized column(s): ${unmatchedColumns.map(c => `"${c}"`).join(', ')}. Please use the provided template.` 
-      });
-    }
+    // Skip unrecognized columns silently — allows rearranged or extra columns
 
     const results = { created: 0, skipped: 0, errors: [] as string[] };
     for (let i = 0; i < rawRows.length; i++) {
