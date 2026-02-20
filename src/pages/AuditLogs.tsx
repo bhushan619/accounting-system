@@ -75,7 +75,7 @@ export default function AuditLogs() {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
-      const res = await axios.get(`${API}/api/auditlogs`, {
+      const res = await axios.get(`${API}/auditlogs`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
