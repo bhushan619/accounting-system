@@ -4,6 +4,8 @@ import XLSX from 'xlsx';
 import Employee from '../models/Employee';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { auditLog } from '../middleware/auditLog';
+import { invalidateCache } from '../middleware/cache';
+
 
 const router = express.Router();
 
@@ -169,29 +171,27 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
 
 // Removed auto-update logic - status is now manually controlled via dropdown
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   const employees = await Employee.find().sort({ fullName: 1 }).lean();
   res.json(employees);
 });
 
 router.get('/:id', async (req, res) => {
-  const employee = await Employee.findById(req.params.id);
+  const employee = await Employee.findById(req.params.id).lean();
   if (!employee) return res.status(404).json({ error: 'Not found' });
   res.json(employee);
 });
 
 router.post('/', auditLog('create', 'employee'), async (req, res) => {
-  // Determine initial status based on probation end date
   const data = { ...req.body };
   if (data.probationEndDate && new Date(data.probationEndDate) <= new Date()) {
     data.status = 'confirmed';
   } else if (!data.status) {
     data.status = 'under_probation';
   }
-  // Always set workingDaysPerMonth to 30
   data.workingDaysPerMonth = 30;
-  
   const employee = await Employee.create(data);
+  invalidateCache('/employees');
   res.json(employee);
 });
 
@@ -225,6 +225,7 @@ router.put('/:id', auditLog('update', 'employee'), async (req, res) => {
     { new: true }
   );
   if (!employee) return res.status(404).json({ error: 'Not found' });
+  invalidateCache('/employees');
   res.json(employee);
 });
 
@@ -233,13 +234,16 @@ router.post('/bulk-delete', auditLog('bulk-delete', 'employee'), async (req, res
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
   const result = await Employee.deleteMany({ _id: { $in: ids } });
+  invalidateCache('/employees');
   res.json({ deleted: result.deletedCount });
 });
 
 router.delete('/:id', auditLog('delete', 'employee'), async (req, res) => {
   const employee = await Employee.findByIdAndDelete(req.params.id);
   if (!employee) return res.status(404).json({ error: 'Not found' });
+  invalidateCache('/employees');
   res.json({ message: 'Deleted' });
 });
 
 export default router;
+

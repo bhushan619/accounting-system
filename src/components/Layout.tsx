@@ -1,18 +1,18 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, memo, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
-import { 
-  Home, 
-  Users, 
-  FileText, 
-  Receipt, 
-  Building2, 
-  Landmark, 
-  UserCog, 
-  DollarSign, 
-  Settings as SettingsIcon, 
+import {
+  Home,
+  Users,
+  FileText,
+  Receipt,
+  Building2,
+  Landmark,
+  UserCog,
+  DollarSign,
+  Settings as SettingsIcon,
   BookOpen,
   LogOut,
   Menu,
@@ -30,7 +30,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default memo(function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -40,12 +40,12 @@ export default function Layout({ children }: LayoutProps) {
   const [bookkeepingOpen, setBookkeepingOpen] = useState(true);
   const [salaryOpen, setSalaryOpen] = useState(true);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
 
   const NavLink = ({ to, icon: Icon, children: linkChildren }: { to: string; icon: React.ElementType; children: React.ReactNode }) => (
     <Link
@@ -57,25 +57,22 @@ export default function Layout({ children }: LayoutProps) {
     </Link>
   );
 
-  const NavGroup = ({ 
-    title, 
-    icon: Icon, 
-    isOpen, 
-    onToggle, 
-    children: groupChildren 
-  }: { 
-    title: string; 
-    icon: React.ElementType; 
-    isOpen: boolean; 
-    onToggle: () => void; 
-    children: React.ReactNode 
+  const NavGroup = ({
+    title,
+    icon: Icon,
+    isOpen,
+    onToggle,
+    children: groupChildren
+  }: {
+    title: string;
+    icon: React.ElementType;
+    isOpen: boolean;
+    onToggle: () => void;
+    children: React.ReactNode
   }) => (
     <div className="space-y-1">
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          onToggle();
-        }}
+        onClick={(e) => { e.preventDefault(); onToggle(); }}
         type="button"
         className="w-full flex items-center gap-3 px-3 py-2.5 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-all duration-200"
       >
@@ -98,7 +95,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-sidebar-bg flex flex-col transition-all duration-300 ease-in-out`}
       >
         {/* Logo */}
@@ -112,17 +109,16 @@ export default function Layout({ children }: LayoutProps) {
               <p className="text-xs text-sidebar-foreground/50">Accounts</p>
             </div>
           )}
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)} 
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
             className="ml-auto p-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted rounded-lg transition-colors"
           >
             {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin">
-          {/* Employee-specific navigation */}
           {user?.role === 'employee' ? (
             <>
               <NavLink to="/employee-portal" icon={Home}>{t('nav.employeePortal')}</NavLink>
@@ -130,15 +126,13 @@ export default function Layout({ children }: LayoutProps) {
             </>
           ) : (
             <>
-              {/* Dashboard */}
               <NavLink to="/dashboard" icon={Home}>{t('nav.dashboard')}</NavLink>
 
-              {/* Masters Group */}
-              <NavGroup 
-                title={t('nav.masters')} 
+              <NavGroup
+                title={t('nav.masters')}
                 icon={Building2}
-                isOpen={mastersOpen} 
-                onToggle={() => setMastersOpen(!mastersOpen)}
+                isOpen={mastersOpen}
+                onToggle={() => setMastersOpen(o => !o)}
               >
                 <NavLink to="/clients" icon={Users}>{t('nav.clients')}</NavLink>
                 <NavLink to="/vendors" icon={Building2}>{t('nav.vendors')}</NavLink>
@@ -148,12 +142,11 @@ export default function Layout({ children }: LayoutProps) {
                 )}
               </NavGroup>
 
-              {/* Bookkeeping Group */}
-              <NavGroup 
-                title={t('nav.bookkeeping')} 
+              <NavGroup
+                title={t('nav.bookkeeping')}
                 icon={FileText}
-                isOpen={bookkeepingOpen} 
-                onToggle={() => setBookkeepingOpen(!bookkeepingOpen)}
+                isOpen={bookkeepingOpen}
+                onToggle={() => setBookkeepingOpen(o => !o)}
               >
                 <NavLink to="/invoices" icon={FileText}>{t('nav.invoices')}</NavLink>
                 <NavLink to="/expenses" icon={Receipt}>{t('nav.expenses')}</NavLink>
@@ -166,13 +159,12 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink to="/vat-reports" icon={FileSpreadsheet}>{t('nav.vatReports')}</NavLink>
               </NavGroup>
 
-              {/* Salary Group (Admin and Accountant) */}
               {(user?.role === 'admin' || user?.role === 'accountant') && (
-                <NavGroup 
-                  title={t('nav.salary')} 
+                <NavGroup
+                  title={t('nav.salary')}
                   icon={DollarSign}
-                  isOpen={salaryOpen} 
-                  onToggle={() => setSalaryOpen(!salaryOpen)}
+                  isOpen={salaryOpen}
+                  onToggle={() => setSalaryOpen(o => !o)}
                 >
                   {user?.role === 'admin' && (
                     <NavLink to="/employees" icon={UserCog}>{t('nav.employees')}</NavLink>
@@ -181,20 +173,15 @@ export default function Layout({ children }: LayoutProps) {
                 </NavGroup>
               )}
 
-              {/* Users (Admin only) */}
               {user?.role === 'admin' && (
                 <NavLink to="/users" icon={Users}>{t('nav.users')}</NavLink>
               )}
 
-              {/* Translations (Admin only) */}
               {user?.role === 'admin' && (
                 <NavLink to="/translations" icon={Globe}>{t('nav.translations')}</NavLink>
               )}
 
-              {/* Settings */}
               <NavLink to="/settings" icon={SettingsIcon}>{t('nav.settings')}</NavLink>
-
-              {/* User Guide */}
               <NavLink to="/guide" icon={BookOpen}>{t('nav.userGuide')}</NavLink>
             </>
           )}
@@ -202,9 +189,8 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* User Info & Logout */}
         <div className="p-4 border-t border-sidebar-muted space-y-2">
-          {/* Language Switcher */}
           <LanguageSwitcher collapsed={!sidebarOpen} />
-          
+
           {sidebarOpen && (
             <div className="mb-3 px-3 animate-fade-in">
               <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
@@ -229,4 +215,4 @@ export default function Layout({ children }: LayoutProps) {
       </main>
     </div>
   );
-}
+});

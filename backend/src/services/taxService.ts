@@ -8,9 +8,17 @@ interface TaxRates {
   apitBrackets: { minIncome: number; maxIncome: number | null; rate: number }[];
 }
 
+// Simple in-memory cache for tax rates (refreshed every 5 minutes)
+let taxRatesCache: { data: TaxRates; ts: number } | null = null;
+const TAX_CACHE_TTL = 5 * 60 * 1000;
+
 export async function getActiveTaxRates(): Promise<TaxRates> {
+  if (taxRatesCache && Date.now() - taxRatesCache.ts < TAX_CACHE_TTL) {
+    return taxRatesCache.data;
+  }
+
   const now = new Date();
-  
+
   // Fetch all active tax configs
   const configs = await TaxConfig.find({
     isActive: true,
@@ -70,8 +78,10 @@ export async function getActiveTaxRates(): Promise<TaxRates> {
     ];
   }
 
+  taxRatesCache = { data: rates, ts: Date.now() };
   return rates;
 }
+
 
 export function calculateAPIT(grossSalary: number, scenario: 'employee' | 'employer' = 'employee'): number {
   // Scenario A: APIT Paid by Employee (Standard)

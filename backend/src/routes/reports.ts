@@ -3,10 +3,12 @@ import Invoice from '../models/Invoice';
 import Expense from '../models/Expense';
 import Payroll from '../models/Payroll';
 import { requireAuth } from '../middleware/auth';
+import { cache } from '../middleware/cache';
 
 const router = express.Router();
 
 router.use(requireAuth);
+
 
 // Helper to set endDate to end of day
 const endOfDay = (dateStr: string) => {
@@ -15,7 +17,7 @@ const endOfDay = (dateStr: string) => {
   return d;
 };
 
-router.get('/overview', async (req, res) => {
+router.get('/overview', cache(60), async (req, res) => {
   const { startDate, endDate } = req.query;
   
   // Build separate filters for each collection based on their date fields
@@ -64,7 +66,7 @@ router.get('/overview', async (req, res) => {
   });
 });
 
-router.get('/profit-loss', async (req, res) => {
+router.get('/profit-loss', cache(60), async (req, res) => {
   const { startDate, endDate } = req.query;
   
   // Build separate filters for each collection
@@ -134,7 +136,7 @@ router.get('/profit-loss', async (req, res) => {
   });
 });
 
-router.get('/expenses-breakdown', async (req, res) => {
+router.get('/expenses-breakdown', cache(60), async (req, res) => {
   const { startDate, endDate } = req.query;
   const filter: any = {};
   
