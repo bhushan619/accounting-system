@@ -807,6 +807,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
         paymentMethod: 'bank',
         bank: bankId,
         status: 'approved',
+        approvalStatus: 'approved',
         createdBy: req.user._id
       });
     }
@@ -824,6 +825,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
         paymentMethod: 'bank',
         bank: bankId,
         status: 'approved',
+        approvalStatus: 'approved',
         createdBy: req.user._id
       });
     }
@@ -841,6 +843,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
         paymentMethod: 'bank',
         bank: bankId,
         status: 'approved',
+        approvalStatus: 'approved',
         createdBy: req.user._id
       });
     }
@@ -858,6 +861,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
         paymentMethod: 'bank',
         bank: bankId,
         status: 'approved',
+        approvalStatus: 'approved',
         createdBy: req.user._id
       });
     }
@@ -875,6 +879,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
         paymentMethod: 'bank',
         bank: bankId,
         status: 'approved',
+        approvalStatus: 'approved',
         createdBy: req.user._id
       });
     }
