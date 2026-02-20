@@ -24,7 +24,8 @@ import {
   PieChart,
   FileSpreadsheet,
   Zap,
-  Globe
+  Globe,
+  Shield
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -181,6 +182,10 @@ export default memo(function Layout({ children }: LayoutProps) {
 
               {user?.role === 'admin' && (
                 <NavLink to="/users" icon={Users}>{t('nav.users')}</NavLink>
+              )}
+
+              {user?.role === 'admin' && (
+                <NavLink to="/audit-logs" icon={Shield}>{t('nav.auditLogs')}</NavLink>
               )}
 
               {user?.role === 'admin' && (
