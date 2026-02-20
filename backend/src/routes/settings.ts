@@ -131,6 +131,29 @@ router.put('/:type', requireAuth, requireRole('admin'), auditLog('update', 'Sett
       },
       { upsert: true, new: true }
     );
+
+    // When company settings change, keep defaultCurrency and baseCurrency in sync
+    if (type === 'company' && data.currency) {
+      const newCurrency = data.currency;
+
+      // Sync defaults.defaultCurrency
+      const existingDefaults = await Settings.findOne({ type: 'defaults' });
+      const defaultsData = { ...(existingDefaults?.data || defaultAppSettings), defaultCurrency: newCurrency };
+      await Settings.findOneAndUpdate(
+        { type: 'defaults' },
+        { type: 'defaults', data: defaultsData, updatedBy: authReq.user?._id },
+        { upsert: true }
+      );
+
+      // Sync currency.baseCurrency
+      const existingCurrency = await Settings.findOne({ type: 'currency' });
+      const currencyData = { ...(existingCurrency?.data || defaultCurrencySettings), baseCurrency: newCurrency };
+      await Settings.findOneAndUpdate(
+        { type: 'currency' },
+        { type: 'currency', data: currencyData, updatedBy: authReq.user?._id },
+        { upsert: true }
+      );
+    }
     
     res.json(settings.data);
   } catch (error) {

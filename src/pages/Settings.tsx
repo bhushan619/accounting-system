@@ -277,6 +277,17 @@ export default function Settings() {
     setSaving(true);
     try {
       await axios.put(`${import.meta.env.VITE_API_URL}/settings/company`, companySettings);
+
+      // Sync the single source-of-truth currency to defaults and currency settings
+      const syncedDefaults = { ...defaultSettings, defaultCurrency: companySettings.currency };
+      const syncedCurrency = { ...currencySettings, baseCurrency: companySettings.currency };
+      await Promise.all([
+        axios.put(`${import.meta.env.VITE_API_URL}/settings/defaults`, syncedDefaults),
+        axios.put(`${import.meta.env.VITE_API_URL}/settings/currency`, syncedCurrency),
+      ]);
+      setDefaultSettings(syncedDefaults);
+      setCurrencySettings(syncedCurrency);
+
       showMessage("success", "Company settings saved successfully");
       await refreshBranding(); // Apply new branding instantly
     } catch (error: any) {
@@ -956,15 +967,10 @@ export default function Settings() {
                     <label className="block text-sm font-medium text-foreground mb-1">
                       {t("settings.defaultCurrency") || "Default Currency"}
                     </label>
-                    <select
-                      value={defaultSettings.defaultCurrency}
-                      onChange={(e) => setDefaultSettings({ ...defaultSettings, defaultCurrency: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    >
-                      <option value="LKR">LKR - Sri Lankan Rupee</option>
-                      <option value="AED">AED - UAE Dirham</option>
-                      <option value="CNY">CNY - Chinese Yuan</option>
-                    </select>
+                    <div className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed flex items-center gap-2">
+                      <span>{defaultSettings.defaultCurrency === 'LKR' ? 'LKR - Sri Lankan Rupee' : defaultSettings.defaultCurrency === 'AED' ? 'AED - UAE Dirham' : defaultSettings.defaultCurrency === 'CNY' ? 'CNY - Chinese Yuan' : defaultSettings.defaultCurrency}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Set in Company settings</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
@@ -1048,21 +1054,16 @@ export default function Settings() {
               <h2 className="text-xl font-semibold text-foreground mb-6">Currency & VAT Configuration</h2>
 
               <form onSubmit={handleCurrencySettingsSave} className="space-y-6">
-                {/* Base Currency */}
+                {/* Base Currency (read-only, synced from Company settings) */}
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-4">Base Currency</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Default Base Currency</label>
-                      <select
-                        value={currencySettings.baseCurrency}
-                        onChange={(e) => setCurrencySettings({ ...currencySettings, baseCurrency: e.target.value })}
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                      >
-                        <option value="LKR">LKR - Sri Lankan Rupee</option>
-                        <option value="AED">AED - UAE Dirham</option>
-                        <option value="CNY">CNY - Chinese Yuan</option>
-                      </select>
+                      <div className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed">
+                        {currencySettings.baseCurrency === 'LKR' ? 'LKR - Sri Lankan Rupee' : currencySettings.baseCurrency === 'AED' ? 'AED - UAE Dirham' : currencySettings.baseCurrency === 'CNY' ? 'CNY - Chinese Yuan' : currencySettings.baseCurrency}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Set in Company settings</p>
                     </div>
                   </div>
                 </div>
