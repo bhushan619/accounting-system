@@ -32,6 +32,7 @@ const EmployeePortal = lazy(() => import('./pages/EmployeePortal'));
 const Approvals = lazy(() => import('./pages/Approvals'));
 const VATReports = lazy(() => import('./pages/VATReports'));
 const PendingApproval = lazy(() => import('./pages/PendingApproval'));
+const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 
 // Shared spinner used during lazy-load and auth checks
 const PageSpinner = () => (
@@ -106,6 +107,7 @@ function App() {
               <Route path="/tax-configurations" element={<ProtectedRoute allowedRoles={['admin']}><TaxConfigurations /></ProtectedRoute>} />
               <Route path="/translations" element={<ProtectedRoute allowedRoles={['admin']}><TranslationManagement /></ProtectedRoute>} />
               <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin']}><Approvals /></ProtectedRoute>} />
+              <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogs /></ProtectedRoute>} />
 
               {/* Shared protected routes */}
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
