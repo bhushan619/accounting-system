@@ -169,7 +169,7 @@ export default function Expenses() {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ data: null }))
       ]);
-      setExpenses(expensesRes.data);
+      setExpenses(expensesRes.data.filter((exp: any) => exp.category !== 'Payroll'));
       setVendors(vendorsRes.data);
       setBanks(banksRes.data);
       setCompanySettings(companyRes.data);
