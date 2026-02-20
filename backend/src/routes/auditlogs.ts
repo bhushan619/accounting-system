@@ -172,4 +172,17 @@ router.get('/rollback-preview/:logId', requireRole(['admin']), async (req, res) 
   });
 });
 
+// Delete a single audit log (Admin only)
+router.delete('/:logId', requireRole(['admin']), async (req, res) => {
+  const log = await AuditLog.findByIdAndDelete(req.params.logId);
+  if (!log) return res.status(404).json({ error: 'Audit log not found' });
+  res.json({ message: 'Audit log deleted' });
+});
+
+// Delete all audit logs (Admin only)
+router.delete('/', requireRole(['admin']), async (req, res) => {
+  await AuditLog.deleteMany({});
+  res.json({ message: 'All audit logs deleted' });
+});
+
 export default router;
