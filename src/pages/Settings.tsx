@@ -769,16 +769,37 @@ export default function Settings() {
                 <div>
                   <h3 className="text-base font-medium text-foreground mb-1">Theme Colors</h3>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Enter HSL values (hue saturation% lightness%). Example: <code className="bg-muted px-1 rounded">217 71% 45%</code>
+                    Use the color picker or enter HSL values manually (hue saturation% lightness%).
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Primary Color */}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Primary Color</label>
                       <div className="flex gap-2 items-center">
-                        <div
-                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
-                          style={{ background: `hsl(${companySettings.primaryColor})` }}
-                        />
+                        <label className="relative flex-shrink-0 cursor-pointer">
+                          <div
+                            className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
+                            style={{ background: `hsl(${companySettings.primaryColor})` }}
+                          />
+                          <input
+                            type="color"
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            value={(() => {
+                              const [h, s, l] = companySettings.primaryColor.split(' ').map(v => parseFloat(v));
+                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
+                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
+                              return `#${f(0)}${f(8)}${f(4)}`;
+                            })()}
+                            onChange={(e) => {
+                              const hex = e.target.value;
+                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+                              let h = 0, s = 0, l = (max + min) / 2;
+                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
+                              setCompanySettings({ ...companySettings, primaryColor: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
+                            }}
+                          />
+                        </label>
                         <input
                           type="text"
                           value={companySettings.primaryColor}
@@ -789,13 +810,34 @@ export default function Settings() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Buttons, active links, highlights</p>
                     </div>
+                    {/* Accent Color */}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Accent Color</label>
                       <div className="flex gap-2 items-center">
-                        <div
-                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
-                          style={{ background: `hsl(${companySettings.accentColor})` }}
-                        />
+                        <label className="relative flex-shrink-0 cursor-pointer">
+                          <div
+                            className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
+                            style={{ background: `hsl(${companySettings.accentColor})` }}
+                          />
+                          <input
+                            type="color"
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            value={(() => {
+                              const [h, s, l] = companySettings.accentColor.split(' ').map(v => parseFloat(v));
+                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
+                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
+                              return `#${f(0)}${f(8)}${f(4)}`;
+                            })()}
+                            onChange={(e) => {
+                              const hex = e.target.value;
+                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+                              let h = 0, s = 0, l = (max + min) / 2;
+                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
+                              setCompanySettings({ ...companySettings, accentColor: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
+                            }}
+                          />
+                        </label>
                         <input
                           type="text"
                           value={companySettings.accentColor}
@@ -806,13 +848,34 @@ export default function Settings() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Gradients and secondary accents</p>
                     </div>
+                    {/* Sidebar Background */}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Sidebar Background</label>
                       <div className="flex gap-2 items-center">
-                        <div
-                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
-                          style={{ background: `hsl(${companySettings.sidebarBg})` }}
-                        />
+                        <label className="relative flex-shrink-0 cursor-pointer">
+                          <div
+                            className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
+                            style={{ background: `hsl(${companySettings.sidebarBg})` }}
+                          />
+                          <input
+                            type="color"
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            value={(() => {
+                              const [h, s, l] = companySettings.sidebarBg.split(' ').map(v => parseFloat(v));
+                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
+                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
+                              return `#${f(0)}${f(8)}${f(4)}`;
+                            })()}
+                            onChange={(e) => {
+                              const hex = e.target.value;
+                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+                              let h = 0, s = 0, l = (max + min) / 2;
+                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
+                              setCompanySettings({ ...companySettings, sidebarBg: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
+                            }}
+                          />
+                        </label>
                         <input
                           type="text"
                           value={companySettings.sidebarBg}
