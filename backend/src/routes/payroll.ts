@@ -23,13 +23,14 @@ router.use(requireRole(['admin', 'accountant']));
 
 router.get('/', async (req, res) => {
   const payrolls = await Payroll.find()
-    .populate('employee')
-    .populate('bank')
+    .populate('employee', 'fullName nickname employeeId')
+    .populate('bank', 'name')
     .populate('createdBy', 'email')
     .sort({ year: -1, month: -1 })
     .lean();
   res.json(payrolls);
 });
+
 
 router.get('/:id', async (req, res) => {
   const payroll = await Payroll.findById(req.params.id)

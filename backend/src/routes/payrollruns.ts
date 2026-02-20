@@ -14,7 +14,7 @@ router.use(requireAuth);
 // Allow admin and accountant to access payroll routes
 const requirePayrollAccess = requireRole(['admin', 'accountant']);
 
-router.get('/', requirePayrollAccess, async (req, res) => {
+router.get('/', requirePayrollAccess, async (_req, res) => {
   const runs = await PayrollRun.find()
     .populate('createdBy', 'email')
     .populate('submittedBy', 'email')
@@ -24,6 +24,7 @@ router.get('/', requirePayrollAccess, async (req, res) => {
     .lean();
   res.json(runs);
 });
+
 
 router.get('/:id', requirePayrollAccess, async (req, res) => {
   const run = await PayrollRun.findById(req.params.id)
@@ -74,45 +75,27 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
     // Create payroll period end date (last day of the payroll month) - set to end of day
     // JavaScript months are 0-indexed, so month parameter here is already 1-indexed from frontend
     // new Date(2025, 9, 0) = September 30, 2025 (day 0 of October = last day of September)
-    const payrollPeriodEnd = new Date(year, month, 0, 23, 59, 59, 999);
-    
-    console.log('=== PAYROLL DEBUG ===');
-    console.log('Input month (1-indexed):', month, 'year:', year);
-    console.log('Payroll period end:', payrollPeriodEnd.toISOString());
-    
+
     for (const employee of employees) {
       const basicSalary = employee.basicSalary;
-      
-      // Get base performance salary rates
       const probationPerformance = employee.performanceSalaryProbation || 0;
       const confirmedPerformance = employee.performanceSalaryConfirmed || 0;
-      
-      console.log(`Employee ${employee.fullName}:`);
-      console.log(`  status in DB:`, employee.status);
-      console.log(`  performanceSalaryProbation:`, probationPerformance);
-      console.log(`  performanceSalaryConfirmed:`, confirmedPerformance);
-      console.log(`  probationEndDate:`, employee.probationEndDate);
-      console.log(`  statusUpdateDate:`, employee.statusUpdateDate);
-      
-      // Calculate performance salary based on DB status directly (manual admin selection)
-      // Do NOT auto-determine status from probationEndDate - respect the manually set status
+
+      // Calculate performance salary based on DB status (manual admin selection)
+      // Do NOT auto-determine from probationEndDate - respect the manually set status
       let performanceSalary = 0;
-      
+
+
       if (employee.status === 'confirmed') {
         performanceSalary = confirmedPerformance;
-        console.log(`  Using confirmed performance salary (status is confirmed)`);
       } else if (employee.status === 'under_probation') {
         performanceSalary = probationPerformance;
-        console.log(`  Using probation performance salary (status is under_probation)`);
       } else {
-        // Closed or other status - use confirmed rate
         performanceSalary = confirmedPerformance;
-        console.log(`  Using confirmed performance salary (status is ${employee.status})`);
       }
-      
-      console.log(`  FINAL performanceSalary: ${performanceSalary}`);
-      
+
       // Calculate deficit salary if applicable
+
       // Deficit = difference in performance salary from probationEndDate to last day of payroll month
       // Only applies when employee is confirmed and probation ended before/during the payroll month
       let deficitSalary = 0;
@@ -154,16 +137,15 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
               // Prorate performance salary: probation days at probation rate + confirmed days at confirmed rate
               const probationDays = probationEnd.getDate();
               performanceSalary = Math.round((dailyProbationPerformance * probationDays + dailyConfirmedPerformance * diffDays) * 100) / 100;
-              
-              console.log(`  Deficit calculation: from ${deficitStart.toISOString().split('T')[0]} to ${deficitEnd.toISOString().split('T')[0]} = ${diffDays} days x (${dailyConfirmedPerformance.toFixed(2)} - ${dailyProbationPerformance.toFixed(2)}) / ${daysInMonth} days in month = ${deficitSalary}`);
-              console.log(`  Prorated performance salary: ${performanceSalary}`);
+
             }
           } else {
-            console.log(`  No deficit for this month (probation end not in this payroll period)`);
+            // probation end not in this payroll period
           }
         } else {
-          console.log(`  No deficit for this month (probation ends after payroll month)`);
+          // probation ends after payroll month
         }
+
       }
       
       // Carry-forward deficit: if probation ended in a previous month and deficit was never paid
@@ -230,11 +212,9 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
               // Fold total into performanceSalary (not deficitSalary) to avoid double-counting
               performanceSalary = Math.round(totalDeficit * 100) / 100;
               deficitDetails = detailParts.join(' | ');
-              console.log(`  Carry-forward total performance (all unpaid months): ${performanceSalary}`);
-              console.log(`  Details: ${deficitDetails}`);
             }
           } else {
-            console.log(`  Deficit already paid in previous payroll entry`);
+            // Deficit already paid in previous payroll entry
           }
         }
       }
