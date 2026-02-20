@@ -72,6 +72,26 @@ export default function Expenses() {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  
+
+  const EXPENSE_CATEGORIES = [
+    'Office Supplies',
+    'Rent & Utilities',
+    'Travel & Transport',
+    'Meals & Entertainment',
+    'Marketing & Advertising',
+    'Software & Subscriptions',
+    'Equipment & Hardware',
+    'Professional Services',
+    'Maintenance & Repairs',
+    'Insurance',
+    'Salaries & Benefits',
+    'Training & Education',
+    'Bank Charges',
+    'Taxes & Licenses',
+    'Miscellaneous',
+    'Other',
+  ];
 
   const filteredExpenses = expenses.filter(exp => {
     if (filterNumber && !exp.serialNumber.toLowerCase().includes(filterNumber.toLowerCase())) return false;
@@ -597,13 +617,30 @@ export default function Expenses() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Category *</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  <select
+                    value={EXPENSE_CATEGORIES.includes(formData.category) ? formData.category : (formData.category ? 'custom' : '')}
+                    onChange={(e) => {
+                      setFormData({ ...formData, category: e.target.value === 'custom' ? '' : e.target.value });
+                    }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    required
-                  />
+                    required={!formData.category}
+                  >
+                    <option value="">Select Category</option>
+                    {EXPENSE_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
+                  {!EXPENSE_CATEGORIES.includes(formData.category) && (
+                    <input
+                      type="text"
+                      placeholder="Enter custom category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full mt-2 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      required
+                    />
+                  )}
                 </div>
               </div>
 
