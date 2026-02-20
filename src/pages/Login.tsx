@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useBranding } from "../contexts/BrandingContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Login() {
   const { t } = useLanguage();
+  const { branding } = useBranding();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -53,12 +55,16 @@ export default function Login() {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl">
-              <Zap className="text-white" size={28} />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl overflow-hidden flex-shrink-0">
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Zap className="text-white" size={28} />
+              )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-sidebar-foreground">Accounting System</h1>
-              <p className="text-sidebar-foreground/60">{t("login.accounts") || "Accounts"}</p>
+              <h1 className="text-3xl font-bold text-sidebar-foreground">{branding.brandName}</h1>
+              <p className="text-sidebar-foreground/60">{branding.brandTagline}</p>
             </div>
           </div>
 
@@ -100,12 +106,16 @@ export default function Login() {
           <div className="w-full max-w-md">
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                <Zap className="text-white" size={24} />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+                {branding.logoUrl ? (
+                  <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Zap className="text-white" size={24} />
+                )}
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Accounting System</h1>
-                <p className="text-xs text-muted-foreground">{t("login.accounts") || "Accounts"}</p>
+                <h1 className="text-2xl font-bold text-foreground">{branding.brandName}</h1>
+                <p className="text-xs text-muted-foreground">{branding.brandTagline}</p>
               </div>
             </div>
 
@@ -225,7 +235,7 @@ export default function Login() {
 
             {/* Footer */}
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Accounting System. {t("login.allRightsReserved") || "All rights reserved."}
+              © {new Date().getFullYear()} {branding.brandName}. {t("login.allRightsReserved") || "All rights reserved."}
             </p>
           </div>
         </div>

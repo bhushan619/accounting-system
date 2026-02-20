@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { BrandingProvider } from './contexts/BrandingContext';
 import Layout from './components/Layout';
 import './styles.css';
 
@@ -71,10 +72,11 @@ const DefaultRedirect = memo(function DefaultRedirect() {
 function App() {
   return (
     <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<PageSpinner />}>
-            <Routes>
+      <BrandingProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageSpinner />}>
+              <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/employee-login" element={<EmployeeLogin />} />
@@ -114,7 +116,8 @@ function App() {
           </Suspense>
         </BrowserRouter>
       </AuthProvider>
-    </LanguageProvider>
+    </BrandingProvider>
+  </LanguageProvider>
   );
 }
 

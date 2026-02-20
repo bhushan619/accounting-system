@@ -2,6 +2,7 @@ import React, { ReactNode, useState, memo, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useBranding } from '../contexts/BrandingContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
   Home,
@@ -33,6 +34,7 @@ interface LayoutProps {
 export default memo(function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
+  const { branding } = useBranding();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -100,13 +102,17 @@ export default memo(function Layout({ children }: LayoutProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-muted">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-            <Zap className="text-white" size={20} />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              <Zap className="text-white" size={20} />
+            )}
           </div>
           {sidebarOpen && (
-            <div className="animate-fade-in">
-              <h1 className="text-lg font-bold text-sidebar-foreground">VeloSync</h1>
-              <p className="text-xs text-sidebar-foreground/50">Accounts</p>
+            <div className="animate-fade-in min-w-0">
+              <h1 className="text-lg font-bold text-sidebar-foreground truncate">{branding.brandName}</h1>
+              <p className="text-xs text-sidebar-foreground/50">{branding.brandTagline}</p>
             </div>
           )}
           <button

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useBranding } from "../contexts/BrandingContext";
 import axios from "axios";
 import {
   User,
@@ -15,6 +16,7 @@ import {
   CheckCircle,
   Loader2,
   DollarSign,
+  Palette,
 } from "lucide-react";
 import { usePreventSwipe } from "../hooks/usePreventSwipe";
 
@@ -28,6 +30,13 @@ interface CompanySettings {
   dateFormat: string;
   fiscalYearStart: string;
   region: string;
+  // Branding fields
+  brandName: string;
+  brandTagline: string;
+  logoUrl: string;
+  primaryColor: string;
+  accentColor: string;
+  sidebarBg: string;
 }
 
 interface DefaultSettings {
@@ -66,9 +75,10 @@ interface CurrencySettings {
 export default function Settings() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { refreshBranding } = useBranding();
   const isAdmin = user?.role === "admin";
 
-  const [activeTab, setActiveTab] = useState<"profile" | "password" | "company" | "defaults" | "email" | "currency">(
+  const [activeTab, setActiveTab] = useState<"profile" | "password" | "company" | "branding" | "defaults" | "email" | "currency">(
     "profile",
   );
   const [showModal, _setShowModal] = useState(false);
@@ -94,7 +104,7 @@ export default function Settings() {
 
   // Company settings (admin only)
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
-    companyName: "VeloSync Accounts",
+    companyName: "Accounting System",
     companyAddress: "",
     companyPhone: "",
     companyEmail: "",
@@ -103,6 +113,12 @@ export default function Settings() {
     dateFormat: "DD/MM/YYYY",
     fiscalYearStart: "01-01",
     region: "LK",
+    brandName: "Accounting System",
+    brandTagline: "Accounts",
+    logoUrl: "",
+    primaryColor: "217 71% 45%",
+    accentColor: "217 91% 60%",
+    sidebarBg: "222 47% 11%",
   });
 
   // Default settings (admin only)
@@ -222,6 +238,7 @@ export default function Settings() {
     try {
       await axios.put(`${import.meta.env.VITE_API_URL}/settings/company`, companySettings);
       showMessage("success", "Company settings saved successfully");
+      await refreshBranding(); // Apply new branding instantly
     } catch (error: any) {
       showMessage("error", error.response?.data?.error || "Failed to save company settings");
     } finally {
@@ -344,6 +361,7 @@ export default function Settings() {
     ...(isAdmin
       ? [
           { id: "company", label: t("settings.company") || "Company", icon: Building },
+          { id: "branding", label: "Branding", icon: Palette },
           { id: "defaults", label: t("settings.defaults") || "Defaults", icon: Globe },
           { id: "currency", label: "Currency & VAT", icon: DollarSign },
           { id: "email", label: t("settings.email") || "Email", icon: Mail },
@@ -673,6 +691,157 @@ export default function Settings() {
                   >
                     <Save size={18} />
                     {saving ? "Saving..." : t("common.save") || "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Branding Tab (Admin Only) */}
+          {activeTab === "branding" && isAdmin && (
+            <div className="bg-card rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">White-Label Branding</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Customize the application name, logo, and colors to match your brand. Changes apply instantly across the entire app.
+              </p>
+
+              <form onSubmit={handleCompanySettingsSave} className="space-y-6">
+                {/* Brand Identity */}
+                <div>
+                  <h3 className="text-base font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Palette size={16} className="text-primary" /> Brand Identity
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">App / Brand Name</label>
+                      <input
+                        type="text"
+                        value={companySettings.brandName}
+                        onChange={(e) => setCompanySettings({ ...companySettings, brandName: e.target.value })}
+                        placeholder="My Company"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Shown in the sidebar header and login page</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Brand Tagline</label>
+                      <input
+                        type="text"
+                        value={companySettings.brandTagline}
+                        onChange={(e) => setCompanySettings({ ...companySettings, brandTagline: e.target.value })}
+                        placeholder="Accounts"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Shown below the brand name</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo */}
+                <div>
+                  <h3 className="text-base font-medium text-foreground mb-3">Logo URL</h3>
+                  <input
+                    type="url"
+                    value={companySettings.logoUrl}
+                    onChange={(e) => setCompanySettings({ ...companySettings, logoUrl: e.target.value })}
+                    placeholder="https://your-cdn.com/logo.png"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Paste a publicly accessible image URL. Recommended: 64×64px square PNG with transparent background.
+                  </p>
+                  {companySettings.logoUrl && (
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl border border-border overflow-hidden bg-sidebar-bg flex items-center justify-center">
+                        <img
+                          src={companySettings.logoUrl}
+                          alt="Logo preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">Logo preview</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Theme Colors */}
+                <div>
+                  <h3 className="text-base font-medium text-foreground mb-1">Theme Colors</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Enter HSL values (hue saturation% lightness%). Example: <code className="bg-muted px-1 rounded">217 71% 45%</code>
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Primary Color</label>
+                      <div className="flex gap-2 items-center">
+                        <div
+                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
+                          style={{ background: `hsl(${companySettings.primaryColor})` }}
+                        />
+                        <input
+                          type="text"
+                          value={companySettings.primaryColor}
+                          onChange={(e) => setCompanySettings({ ...companySettings, primaryColor: e.target.value })}
+                          placeholder="217 71% 45%"
+                          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Buttons, active links, highlights</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Accent Color</label>
+                      <div className="flex gap-2 items-center">
+                        <div
+                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
+                          style={{ background: `hsl(${companySettings.accentColor})` }}
+                        />
+                        <input
+                          type="text"
+                          value={companySettings.accentColor}
+                          onChange={(e) => setCompanySettings({ ...companySettings, accentColor: e.target.value })}
+                          placeholder="217 91% 60%"
+                          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Gradients and secondary accents</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Sidebar Background</label>
+                      <div className="flex gap-2 items-center">
+                        <div
+                          className="w-8 h-8 rounded-lg border border-border flex-shrink-0"
+                          style={{ background: `hsl(${companySettings.sidebarBg})` }}
+                        />
+                        <input
+                          type="text"
+                          value={companySettings.sidebarBg}
+                          onChange={(e) => setCompanySettings({ ...companySettings, sidebarBg: e.target.value })}
+                          placeholder="222 47% 11%"
+                          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Sidebar panel background</p>
+                    </div>
+                  </div>
+
+                  {/* Live preview strip */}
+                  <div className="mt-4 flex gap-2 items-center">
+                    <div className="h-8 flex-1 rounded-lg" style={{ background: `hsl(${companySettings.sidebarBg})` }} />
+                    <div className="h-8 w-20 rounded-lg" style={{ background: `hsl(${companySettings.primaryColor})` }} />
+                    <div className="h-8 w-12 rounded-lg" style={{ background: `hsl(${companySettings.accentColor})` }} />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Live preview</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={18} />
+                    {saving ? "Applying branding..." : "Apply Branding"}
                   </button>
                 </div>
               </form>
