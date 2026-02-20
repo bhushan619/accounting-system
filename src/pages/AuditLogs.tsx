@@ -14,6 +14,7 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 
 interface AuditLogEntry {
@@ -65,6 +66,43 @@ export default function AuditLogs() {
   // Detail modal
   const [selected, setSelected] = useState<AuditLogEntry | null>(null);
 
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<'single' | 'all' | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteSingle = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      await axios.delete(`${API}/auditlogs/${deleteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeleteTarget(null);
+      setDeleteId(null);
+      fetchLogs();
+    } catch {
+      setError('Failed to delete log.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setDeleting(true);
+    try {
+      await axios.delete(`${API}/auditlogs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeleteTarget(null);
+      fetchLogs();
+    } catch {
+      setError('Failed to delete all logs.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -104,14 +142,22 @@ export default function AuditLogs() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Shield size={20} className="text-primary" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Shield size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
+            <p className="text-sm text-muted-foreground">Track all system changes — admin eyes only</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
-          <p className="text-sm text-muted-foreground">Track all system changes — admin eyes only</p>
-        </div>
+        <button
+          onClick={() => setDeleteTarget('all')}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
+        >
+          <Trash2 size={15} /> Clear All Logs
+        </button>
       </div>
 
       {/* Filters */}
@@ -218,12 +264,20 @@ export default function AuditLogs() {
                     <td className="px-4 py-3 capitalize text-foreground">{log.entity}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{log.ipAddress || '—'}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => setSelected(log)}
-                        className="flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        <Eye size={13} /> Details
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelected(log)}
+                          className="flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          <Eye size={13} /> Details
+                        </button>
+                        <button
+                          onClick={() => { setDeleteId(log._id); setDeleteTarget('single'); }}
+                          className="flex items-center gap-1 text-xs text-destructive hover:underline"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -321,6 +375,45 @@ export default function AuditLogs() {
                 </pre>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={18} className="text-destructive" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">
+                  {deleteTarget === 'all' ? 'Clear All Logs?' : 'Delete Log?'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {deleteTarget === 'all'
+                    ? 'This will permanently delete all audit log entries. This cannot be undone.'
+                    : 'This will permanently delete this audit log entry.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteId(null); }}
+                className="px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteTarget === 'all' ? handleDeleteAll : handleDeleteSingle}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors disabled:opacity-60"
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {deleteTarget === 'all' ? 'Clear All' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
