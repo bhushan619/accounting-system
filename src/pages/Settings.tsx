@@ -72,6 +72,46 @@ interface CurrencySettings {
   };
 }
 
+// Safe HSL string (e.g. "217 71% 45%") → hex color
+function hslStringToHex(hsl: string): string {
+  try {
+    const parts = hsl.split(' ').map(v => parseFloat(v));
+    if (parts.length < 3 || parts.some(isNaN)) return '#3b82f6';
+    const [h, s, l] = parts;
+    const sn = s / 100, ln = l / 100;
+    const a = sn * Math.min(ln, 1 - ln);
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = ln - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  } catch {
+    return '#3b82f6';
+  }
+}
+
+// Hex → HSL string
+function hexToHslString(hex: string): string {
+  try {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+    if (d) {
+      s = d / (1 - Math.abs(2 * l - 1));
+      h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6
+        : max === g ? ((b - r) / d + 2) / 6
+        : ((r - g) / d + 4) / 6;
+    }
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  } catch {
+    return '217 71% 45%';
+  }
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -781,22 +821,12 @@ export default function Settings() {
                             className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
                             style={{ background: `hsl(${companySettings.primaryColor})` }}
                           />
-                          <input
+                           <input
                             type="color"
                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            value={(() => {
-                              const [h, s, l] = companySettings.primaryColor.split(' ').map(v => parseFloat(v));
-                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
-                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
-                              return `#${f(0)}${f(8)}${f(4)}`;
-                            })()}
+                            value={hslStringToHex(companySettings.primaryColor)}
                             onChange={(e) => {
-                              const hex = e.target.value;
-                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
-                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-                              let h = 0, s = 0, l = (max + min) / 2;
-                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
-                              setCompanySettings({ ...companySettings, primaryColor: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
+                              setCompanySettings({ ...companySettings, primaryColor: hexToHslString(e.target.value) });
                             }}
                           />
                         </label>
@@ -822,19 +852,9 @@ export default function Settings() {
                           <input
                             type="color"
                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            value={(() => {
-                              const [h, s, l] = companySettings.accentColor.split(' ').map(v => parseFloat(v));
-                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
-                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
-                              return `#${f(0)}${f(8)}${f(4)}`;
-                            })()}
+                            value={hslStringToHex(companySettings.accentColor)}
                             onChange={(e) => {
-                              const hex = e.target.value;
-                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
-                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-                              let h = 0, s = 0, l = (max + min) / 2;
-                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
-                              setCompanySettings({ ...companySettings, accentColor: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
+                              setCompanySettings({ ...companySettings, accentColor: hexToHslString(e.target.value) });
                             }}
                           />
                         </label>
@@ -858,23 +878,13 @@ export default function Settings() {
                             style={{ background: `hsl(${companySettings.sidebarBg})` }}
                           />
                           <input
-                            type="color"
-                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            value={(() => {
-                              const [h, s, l] = companySettings.sidebarBg.split(' ').map(v => parseFloat(v));
-                              const a = (100 - l) / 100 * Math.min(s / 100, 1 - s / 100);
-                              const f = (n: number) => { const k = (n + h / 30) % 12; const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
-                              return `#${f(0)}${f(8)}${f(4)}`;
-                            })()}
-                            onChange={(e) => {
-                              const hex = e.target.value;
-                              const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
-                              const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-                              let h = 0, s = 0, l = (max + min) / 2;
-                              if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6; }
-                              setCompanySettings({ ...companySettings, sidebarBg: `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%` });
-                            }}
-                          />
+                             type="color"
+                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                             value={hslStringToHex(companySettings.sidebarBg)}
+                             onChange={(e) => {
+                               setCompanySettings({ ...companySettings, sidebarBg: hexToHslString(e.target.value) });
+                             }}
+                           />
                         </label>
                         <input
                           type="text"
