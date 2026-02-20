@@ -4,11 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useBranding } from "../contexts/BrandingContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+
 import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Login() {
   const { t } = useLanguage();
-  const { branding } = useBranding();
+  const { branding, refreshBranding } = useBranding();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -29,6 +30,7 @@ export default function Login() {
       } else {
         await login(email, pw);
       }
+      await refreshBranding();
       navigate("/dashboard");
     } catch (err: any) {
       setError(
