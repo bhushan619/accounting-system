@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, FileText, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import { useLanguage } from '../contexts/LanguageContext';
+
 
 interface TaxReportData {
   period: { startDate: string; endDate: string };
@@ -42,6 +43,21 @@ export default function TaxReports() {
   const [companyTIN, setCompanyTIN] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchCompanyDefaults = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/settings/company`);
+        const data = res.data;
+        if (data.companyName) setCompanyName(data.companyName);
+        if (data.taxNumber) setCompanyTIN(data.taxNumber);
+        if (data.companyAddress) setCompanyAddress(data.companyAddress);
+      } catch {
+        // silently fail — user can fill manually
+      }
+    };
+    fetchCompanyDefaults();
+  }, []);
 
   const fetchTaxData = async (): Promise<TaxReportData | null> => {
     try {
