@@ -67,7 +67,11 @@ export function useApi<T>(
 
     let req = pending.get(url) as Promise<T> | undefined;
     if (!req) {
-      req = axios.get<T>(url).then(r => r.data);
+      const axiosPromise = axios.get<T>(url);
+      // Pre-handle the base axios promise to prevent Node's unhandledRejection
+      // from firing before the derived promise's .catch() can attach.
+      axiosPromise.catch(() => undefined);
+      req = axiosPromise.then(r => r.data) as Promise<T>;
       pending.set(url, req);
       req.finally(() => pending.delete(url));
     }

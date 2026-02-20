@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import axios from 'axios';
 import { useApi, invalidateCache } from './useApi';
-
 
 // Mock axios entirely
 vi.mock('axios', async () => {
@@ -42,13 +41,9 @@ describe('useApi', () => {
   });
 
   it('sets error when request fails', async () => {
-    // Use a plain object rejection (not an Error instance) to avoid unhandled rejection noise
-    mockedGet.mockRejectedValueOnce({
-      response: { data: { error: 'Unauthorized' } },
-    });
+    mockedGet.mockRejectedValueOnce({ response: { data: { error: 'Unauthorized' } } });
 
     const { result } = renderHook(() => useApi('/invoices-fail'));
-
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.data).toBeNull();
@@ -81,7 +76,9 @@ describe('useApi', () => {
     const { result } = renderHook(() => useApi<{ count: number }>('/refetch-path'));
     await waitFor(() => expect(result.current.data?.count).toBe(1));
 
-    result.current.refetch();
+    await act(async () => {
+      result.current.refetch();
+    });
     await waitFor(() => expect(result.current.data?.count).toBe(2));
 
     expect(mockedGet).toHaveBeenCalledTimes(2);
