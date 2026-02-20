@@ -86,13 +86,13 @@ export default function Transactions() {
         .filter((exp: any) => exp.status === 'approved' && exp.approvalStatus === 'approved')
         .map((exp: any) => ({
           _id: exp._id,
-          type: exp.category === 'Payroll' ? 'payroll' : 'expense',
+          type: 'expense' as const,
           amount: exp.amount,
           currency: exp.currency || 'LKR',
           category: exp.category,
           description: exp.description || 'Expense',
           date: exp.date,
-          reference: exp.receiptNumber
+          reference: exp.serialNumber
         }));
 
       const payrollTransactions = payrollRes.data
