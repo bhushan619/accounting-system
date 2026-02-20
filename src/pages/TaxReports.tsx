@@ -440,80 +440,91 @@ export default function TaxReports() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-card rounded-lg shadow p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <FileText className="text-primary" size={28} />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{t('taxReports.title')}</h1>
-            <p className="text-muted-foreground text-sm">{t('taxReports.infoText')}</p>
+          {t('taxReports.title')}
+        </h1>
+        <p className="text-muted-foreground mt-1">{t('taxReports.infoText')}</p>
+      </div>
+
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="text-primary mt-0.5 shrink-0" size={20} />
+          <div className="text-sm text-foreground">
+            <p className="font-semibold mb-2">This report includes:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2 text-muted-foreground">
+              <li>Income Tax calculations based on paid invoices</li>
+              <li>VAT (Value Added Tax) collected and paid</li>
+              <li>Payroll tax obligations (EPF, ETF, APIT, Stamp Fee)</li>
+              <li>Business expenses with supporting documentation</li>
+              <li>Complete list of all invoices, receipts, and bills</li>
+            </ul>
           </div>
         </div>
+      </div>
 
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="text-primary mt-0.5" size={20} />
-            <div className="text-sm text-foreground">
-              <p className="font-semibold mb-2">{t('taxReports.title')}:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Income Tax calculations based on paid invoices</li>
-                <li>VAT (Value Added Tax) collected and paid</li>
-                <li>Payroll tax obligations (EPF, ETF, APIT, Stamp Fee)</li>
-                <li>Business expenses with supporting documentation</li>
-                <li>Complete list of all invoices, receipts, and bills</li>
-              </ul>
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Company Information */}
+      <div className="bg-card rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-foreground mb-6">Company Information</h2>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                {t('taxReports.companyName')} <span className="text-destructive">*</span>
+              </label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder={t('taxReports.companyName')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                {t('taxReports.companyTIN')} <span className="text-destructive">*</span>
+              </label>
+              <input
+                type="text"
+                value={companyTIN}
+                onChange={(e) => setCompanyTIN(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="TIN"
+              />
             </div>
           </div>
-        </div>
-
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
-            <p className="text-destructive">{error}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('taxReports.companyName')} <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder={t('taxReports.companyName')}
-            />
-          </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('taxReports.companyTIN')} <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              value={companyTIN}
-              onChange={(e) => setCompanyTIN(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="TIN"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('taxReports.companyAddress')}
             </label>
-            <input
-              type="text"
+            <textarea
               value={companyAddress}
               onChange={(e) => setCompanyAddress(e.target.value)}
+              rows={3}
               className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder={t('taxReports.companyAddress')}
             />
           </div>
+        </div>
+      </div>
 
+      {/* Report Period */}
+      <div className="bg-card rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-foreground mb-6">Report Period</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('common.startDate')} <span className="text-destructive">*</span>
             </label>
             <input
@@ -523,9 +534,8 @@ export default function TaxReports() {
               className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('common.endDate')} <span className="text-destructive">*</span>
             </label>
             <input
@@ -537,24 +547,26 @@ export default function TaxReports() {
           </div>
         </div>
 
-        <button
-          onClick={generatePDF}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed transition-colors"
-        >
-          <Download size={20} />
-          {loading ? t('taxReports.generating') : t('taxReports.downloadPDF')}
-        </button>
-
-        <div className="mt-6 text-sm text-muted-foreground">
-          <p className="font-semibold mb-2">After generating the report:</p>
-          <ol className="list-decimal list-inside space-y-1 ml-2">
-            <li>Review the PDF document carefully</li>
-            <li>Gather all physical copies of supporting documents</li>
-            <li>Submit to IRD via online portal: <a href="https://www.ird.gov.lk/en/eservices/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.ird.gov.lk/en/eservices/</a></li>
-            <li>Keep a copy for your records</li>
-          </ol>
+        <div className="flex justify-end pt-6">
+          <button
+            onClick={generatePDF}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed transition-colors"
+          >
+            <Download size={18} />
+            {loading ? t('taxReports.generating') : t('taxReports.downloadPDF')}
+          </button>
         </div>
+      </div>
+
+      <div className="bg-card rounded-lg shadow p-6 text-sm text-muted-foreground">
+        <p className="font-semibold text-foreground mb-2">After generating the report:</p>
+        <ol className="list-decimal list-inside space-y-1 ml-2">
+          <li>Review the PDF document carefully</li>
+          <li>Gather all physical copies of supporting documents</li>
+          <li>Submit to IRD via online portal: <a href="https://www.ird.gov.lk/en/eservices/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.ird.gov.lk/en/eservices/</a></li>
+          <li>Keep a copy for your records</li>
+        </ol>
       </div>
     </div>
   );
