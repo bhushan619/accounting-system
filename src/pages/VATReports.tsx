@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { fmtCurrency } from '../utils/currency';
-import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
+import { FormattedCurrency, CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Globe, Calculator, ArrowRightLeft } from 'lucide-react';
 
@@ -64,9 +63,6 @@ export default function VATReports() {
     setLoading(false);
   };
 
-  const formatCurrency = (amount: number, currency: string = 'LKR') => {
-    return fmtCurrency(amount, currency);
-  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -127,35 +123,35 @@ export default function VATReports() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Standard Rated Supplies (Box 1)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.ftaFormat.box1_standardRatedSupplies, 'AED')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.ftaFormat.box1_standardRatedSupplies} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Zero Rated Supplies (Box 2)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.ftaFormat.box2_zeroRatedSupplies, 'AED')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.ftaFormat.box2_zeroRatedSupplies} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-700 dark:text-blue-300">Output VAT @ 5% (Box 5)</p>
-                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(report.ftaFormat.box5_outputVat, 'AED')}</p>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300"><FormattedCurrency amount={report.ftaFormat.box5_outputVat} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Standard Rated Expenses (Box 6)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.ftaFormat.box6_standardRatedExpenses, 'AED')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.ftaFormat.box6_standardRatedExpenses} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Zero Rated Expenses (Box 7)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.ftaFormat.box7_zeroRatedExpenses, 'AED')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.ftaFormat.box7_zeroRatedExpenses} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
                   <p className="text-sm text-orange-700 dark:text-orange-300">Input VAT (Box 9)</p>
-                  <p className="text-xl font-bold text-orange-700 dark:text-orange-300">{formatCurrency(report.ftaFormat.box9_inputVat, 'AED')}</p>
+                  <p className="text-xl font-bold text-orange-700 dark:text-orange-300"><FormattedCurrency amount={report.ftaFormat.box9_inputVat} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 col-span-2 md:col-span-1">
                   <p className="text-sm text-green-700 dark:text-green-300">Net VAT Due (Box 10)</p>
-                  <p className="text-xl font-bold text-green-700 dark:text-green-300">{formatCurrency(report.ftaFormat.box10_dueVat, 'AED')}</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-300"><FormattedCurrency amount={report.ftaFormat.box10_dueVat} currency="AED" /></p>
                 </div>
                 <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800 col-span-2 md:col-span-1">
                   <p className="text-sm text-purple-700 dark:text-purple-300">Refundable VAT (Box 11)</p>
-                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300">{formatCurrency(report.ftaFormat.box11_refundableVat, 'AED')}</p>
+                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300"><FormattedCurrency amount={report.ftaFormat.box11_refundableVat} currency="AED" /></p>
                 </div>
               </div>
             ) : (
@@ -163,27 +159,27 @@ export default function VATReports() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Total Sales (Box 1)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.irdFormat.box1_totalSales, 'LKR')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.irdFormat.box1_totalSales} currency="LKR" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Output VAT (Box 2)</p>
-                  <p className="text-xl font-bold text-blue-600">{formatCurrency(report.irdFormat.box2_outputVat, 'LKR')}</p>
+                  <p className="text-xl font-bold text-blue-600"><FormattedCurrency amount={report.irdFormat.box2_outputVat} currency="LKR" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Total Purchases (Box 3)</p>
-                  <p className="text-xl font-bold">{formatCurrency(report.irdFormat.box3_totalPurchases, 'LKR')}</p>
+                  <p className="text-xl font-bold"><FormattedCurrency amount={report.irdFormat.box3_totalPurchases} currency="LKR" /></p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <p className="text-sm text-muted-foreground">Input VAT (Box 4)</p>
-                  <p className="text-xl font-bold text-orange-600">{formatCurrency(report.irdFormat.box4_inputVat, 'LKR')}</p>
+                  <p className="text-xl font-bold text-orange-600"><FormattedCurrency amount={report.irdFormat.box4_inputVat} currency="LKR" /></p>
                 </div>
                 <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
                   <p className="text-sm text-green-700 dark:text-green-300">Net VAT Payable (Box 5)</p>
-                  <p className="text-xl font-bold text-green-700 dark:text-green-300">{formatCurrency(report.irdFormat.box5_netVatPayable, 'LKR')}</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-300"><FormattedCurrency amount={report.irdFormat.box5_netVatPayable} currency="LKR" /></p>
                 </div>
                 <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-700 dark:text-blue-300">VAT Refundable (Box 6)</p>
-                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(report.irdFormat.box6_vatRefundable, 'LKR')}</p>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300"><FormattedCurrency amount={report.irdFormat.box6_vatRefundable} currency="LKR" /></p>
                 </div>
               </div>
             )}
@@ -224,8 +220,8 @@ export default function VATReports() {
                           {inv.vatRate}%
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(inv.subtotal || 0, inv.currency)}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(inv.vatAmount || 0, inv.currency)}</td>
+                      <td className="px-4 py-2 text-right"><FormattedCurrency amount={inv.subtotal || 0} currency={inv.currency} /></td>
+                      <td className="px-4 py-2 text-right"><FormattedCurrency amount={inv.vatAmount || 0} currency={inv.currency} /></td>
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {inv.currency !== report.currency && (
@@ -269,8 +265,8 @@ export default function VATReports() {
                           {exp.vatRate}%
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(exp.amount || 0, exp.currency)}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(exp.vatAmount || 0, exp.currency)}</td>
+                      <td className="px-4 py-2 text-right"><FormattedCurrency amount={exp.amount || 0} currency={exp.currency} /></td>
+                      <td className="px-4 py-2 text-right"><FormattedCurrency amount={exp.vatAmount || 0} currency={exp.currency} /></td>
                       {currencySettings && (
                         <td className="px-4 py-2 text-right text-muted-foreground">
                           {exp.currency !== report.currency && (
