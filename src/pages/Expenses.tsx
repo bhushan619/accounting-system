@@ -597,24 +597,13 @@ export default function Expenses() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">{t('expenses.createNew')}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-4">
+          <div className="bg-card rounded-xl shadow-lg w-full max-w-2xl p-6 m-4 border border-border">
+            <h2 className="text-xl font-semibold mb-5 text-foreground">{t('expenses.createNew')}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* Row 1: Category + Vendor */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('expenses.vendor')}</label>
-                  <select
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="">{t('expenses.selectVendor')}</option>
-                    {vendors.map((vendor) => (
-                      <option key={vendor._id} value={vendor._id}>{vendor.name}</option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Category *</label>
                   <select
@@ -642,8 +631,22 @@ export default function Expenses() {
                     />
                   )}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">{t('expenses.vendor')}</label>
+                  <select
+                    value={formData.vendor}
+                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="">{t('expenses.selectVendor')}</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor._id} value={vendor._id}>{vendor.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
+              {/* Row 2: Description */}
               <div>
                 <label className="block text-sm font-medium mb-1 text-foreground">Description *</label>
                 <input
@@ -651,10 +654,12 @@ export default function Expenses() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  placeholder="What is this expense for?"
                   required
                 />
               </div>
 
+              {/* Row 3: Amount + Currency + Date */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Amount *</label>
@@ -663,6 +668,7 @@ export default function Expenses() {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    min={0}
                     required
                   />
                 </div>
@@ -690,6 +696,7 @@ export default function Expenses() {
                 </div>
               </div>
 
+              {/* Row 4: Payment Method + Bank Account */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Payment Method</label>
@@ -703,60 +710,55 @@ export default function Expenses() {
                     <option value="card">Card</option>
                   </select>
                 </div>
-                {formData.paymentMethod === 'bank' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-foreground">Bank Account</label>
-                    <select
-                      value={formData.bank}
-                      onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    >
-                      <option value="">Select bank</option>
-                      {banks.map((bank) => (
-                        <option key={bank._id} value={bank._id}>{bank.accountName}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Bank Account</label>
+                  <select
+                    value={formData.bank}
+                    onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                    disabled={formData.paymentMethod !== 'bank'}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank._id} value={bank._id}>{bank.accountName}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              {/* VAT Configuration */}
-              <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+              {/* Row 5: VAT */}
+              <div className="p-3 bg-muted/40 rounded-lg border border-border/50">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="isVatApplicable"
                     checked={formData.isVatApplicable}
                     onChange={(e) => setFormData({ ...formData, isVatApplicable: e.target.checked })}
-                    className="w-4 h-4"
+                    className="w-4 h-4 accent-primary"
                   />
-                  <label htmlFor="isVatApplicable" className="text-sm font-medium">
+                  <label htmlFor="isVatApplicable" className="text-sm font-medium cursor-pointer">
                     VAT Applicable ({companySettings.region === 'AE' ? '🇦🇪 UAE' : '🇱🇰 LK'}: {getVatRate()}%)
                   </label>
+                  {formData.isVatApplicable && (
+                    <select
+                      value={formData.vatCategory}
+                      onChange={(e) => setFormData({ ...formData, vatCategory: e.target.value as 'standard' | 'zero_rated' })}
+                      className="ml-auto px-3 py-1 border border-border rounded-lg bg-background text-foreground text-sm"
+                    >
+                      <option value="standard">Standard ({getVatRate()}%)</option>
+                      <option value="zero_rated">Zero Rated (0%)</option>
+                    </select>
+                  )}
                 </div>
-                {formData.isVatApplicable && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">VAT Category</label>
-                      <select
-                        value={formData.vatCategory}
-                        onChange={(e) => setFormData({ ...formData, vatCategory: e.target.value as 'standard' | 'zero_rated' })}
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                      >
-                        <option value="standard">Standard Rate ({getVatRate()}%)</option>
-                        <option value="zero_rated">Zero Rated (0%)</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
               </div>
 
+              {/* Row 6: File uploads */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Bill Document</label>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
-                      <Upload size={16} />
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer text-sm">
+                      <Upload size={15} />
                       {uploadingBill ? 'Uploading...' : 'Upload Bill'}
                       <input
                         type="file"
@@ -773,8 +775,7 @@ export default function Expenses() {
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
-                        <FileDown size={14} />
-                        View
+                        <FileDown size={14} /> View
                       </a>
                     )}
                   </div>
@@ -782,8 +783,8 @@ export default function Expenses() {
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Receipt</label>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer">
-                      <Upload size={16} />
+                    <label className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 cursor-pointer text-sm">
+                      <Upload size={15} />
                       {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
                       <input
                         type="file"
@@ -800,25 +801,25 @@ export default function Expenses() {
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
-                        <FileDown size={14} />
-                        View
+                        <FileDown size={14} /> View
                       </a>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end">
+              {/* Actions */}
+              <div className="flex gap-2 justify-end pt-1 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+                  className="px-5 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  className="px-5 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
                 >
                   Create Expense
                 </button>
