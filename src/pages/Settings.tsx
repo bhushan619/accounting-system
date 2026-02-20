@@ -242,23 +242,65 @@ export default function Settings() {
 
   const fetchLiveRates = async () => {
     setFetchingRates(true);
+    let source = '';
     try {
-      // Frankfurter API - free, no API key, no limits, ECB reference rates
-      const response = await fetch('https://api.frankfurter.dev/v1/latest?base=LKR&symbols=AED,CNY');
-      const data = await response.json();
-      if (data.rates) {
-        const lkrToAed = data.rates.AED;
-        const lkrToCny = data.rates.CNY;
+      // Primary: ExchangeRate-API open access (real-time, updated every 24h, no key needed)
+      // Endpoint: https://open.er-api.com/v6/latest/{base}
+      let lkrToAed: number | null = null;
+      let lkrToCny: number | null = null;
+      let rateDate = '';
+
+      try {
+        const erRes = await fetch('https://open.er-api.com/v6/latest/LKR', { signal: AbortSignal.timeout(8000) });
+        if (erRes.ok) {
+          const erData = await erRes.json();
+          if (erData.result === 'success' && erData.rates?.AED && erData.rates?.CNY) {
+            lkrToAed = erData.rates.AED;
+            lkrToCny = erData.rates.CNY;
+            rateDate = erData.time_last_update_utc ?? '';
+            source = 'ExchangeRate-API';
+          }
+        }
+      } catch {
+        // Primary failed, try fallback
+      }
+
+      // Fallback: HexaRate (pair-by-pair, no key, real-time mid-market rates)
+      if (lkrToAed === null || lkrToCny === null) {
+        try {
+          const [aedRes, cnyRes] = await Promise.all([
+            fetch('https://hexarate.paikama.co/api/rates/LKR/AED/latest', { signal: AbortSignal.timeout(8000) }),
+            fetch('https://hexarate.paikama.co/api/rates/LKR/CNY/latest', { signal: AbortSignal.timeout(8000) })
+          ]);
+          if (aedRes.ok && cnyRes.ok) {
+            const aedData = await aedRes.json();
+            const cnyData = await cnyRes.json();
+            if (aedData.data?.mid && cnyData.data?.mid) {
+              lkrToAed = aedData.data.mid;
+              lkrToCny = cnyData.data.mid;
+              rateDate = aedData.data.timestamp ?? '';
+              source = 'HexaRate';
+            }
+          }
+        } catch {
+          // Both failed
+        }
+      }
+
+      if (lkrToAed !== null && lkrToCny !== null) {
         setCurrencySettings(prev => ({
           ...prev,
           exchangeRates: {
-            LKR_AED: parseFloat(lkrToAed.toFixed(6)),
-            AED_LKR: parseFloat((1 / lkrToAed).toFixed(4)),
-            LKR_CNY: parseFloat(lkrToCny.toFixed(6)),
-            CNY_LKR: parseFloat((1 / lkrToCny).toFixed(4)),
+            LKR_AED: parseFloat(lkrToAed!.toFixed(6)),
+            AED_LKR: parseFloat((1 / lkrToAed!).toFixed(4)),
+            LKR_CNY: parseFloat(lkrToCny!.toFixed(6)),
+            CNY_LKR: parseFloat((1 / lkrToCny!).toFixed(4)),
           }
         }));
-        showMessage('success', `Live rates updated (ECB data from ${data.date})`);
+        const dateStr = rateDate ? ` · ${new Date(rateDate).toLocaleDateString()}` : '';
+        showMessage('success', `Live rates updated via ${source}${dateStr}`);
+      } else {
+        showMessage('error', 'All rate sources unavailable. Please enter rates manually.');
       }
     } catch (error) {
       console.error('Failed to fetch live rates:', error);
