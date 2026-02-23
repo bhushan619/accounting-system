@@ -40,6 +40,7 @@ router.post('/', auditLog('create', 'bank'), async (req, res) => {
       tax: 0,
       total: bank.balance,
       status: 'paid',
+      approvalStatus: 'approved',
       currency: bank.currency || 'LKR',
       bank: bank._id
     });
