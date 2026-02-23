@@ -227,23 +227,20 @@ export default function Transactions() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="page-header">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="page-title">{t('transactions')}</h1>
-        <p className="page-description">{t('transactionsDescription') || 'View all financial transactions'}</p>
-      </div>
-
-      {/* Currency Filter */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Display in:</span>
-        <select
-          value={displayCurrency}
-          onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED' | 'CNY')}
-          className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-        >
-          <option value="LKR">LKR (Rs.)</option>
-          <option value="AED">AED</option>
-          <option value="CNY">CNY (¥)</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Display in:</span>
+          <select
+            value={displayCurrency}
+            onChange={(e) => setDisplayCurrency(e.target.value as 'LKR' | 'AED' | 'CNY')}
+            className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+          >
+            <option value="LKR">LKR (Rs.)</option>
+            <option value="AED">AED</option>
+            <option value="CNY">CNY (¥)</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

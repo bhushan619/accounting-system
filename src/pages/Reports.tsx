@@ -9,7 +9,6 @@ export default function Reports() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">{t('reports')}</h1>
-        <p className="page-description">Generate and export financial reports</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
