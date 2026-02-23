@@ -794,6 +794,12 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
     
     const monthName = new Date(0, run.month - 1).toLocaleString('default', { month: 'long' });
     
+    // Check bank balance BEFORE creating any expenses
+    const totalStatutoryDeduction = totalEPFEmployer + totalEPFEmployee + totalETF + totalAPIT + totalStampFee;
+    if (bank.balance < totalStatutoryDeduction) {
+      return res.status(400).json({ error: `Insufficient bank balance. Available: Rs. ${bank.balance.toLocaleString()}, Required: Rs. ${totalStatutoryDeduction.toLocaleString()}` });
+    }
+    
     // Create expense entry for EPF employer contribution
     if (totalEPFEmployer > 0) {
       const epfEmployerSerial = await getNextSequence('expense', 'EXP');
@@ -884,11 +890,7 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
       });
     }
     
-    // Update bank balance - decrease only for statutory contributions (not employee net salary)
-    const totalStatutoryDeduction = totalEPFEmployer + totalETF;
-    if (bank.balance < totalStatutoryDeduction) {
-      return res.status(400).json({ error: `Insufficient bank balance. Available: ${bank.balance.toFixed(2)}, Required: ${totalStatutoryDeduction.toFixed(2)}` });
-    }
+    // Update bank balance - deduct all statutory contributions
     bank.balance -= totalStatutoryDeduction;
     bank.updatedAt = new Date();
     await bank.save();
