@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock, Upload, Download, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Link, XCircle, Clock, Upload, Download, ArrowUp, ArrowDown, ArrowUpDown, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
@@ -483,7 +483,11 @@ export default function Employees() {
     });
   }, [employees, sortKey, sortDir]);
 
-  if (loading) return <div>{t('common.loading')}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="animate-spin text-primary" size={32} />
+    </div>
+  );
 
   return (
     <div>

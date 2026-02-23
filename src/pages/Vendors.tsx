@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Building2, Phone, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2, Phone, Mail, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
@@ -93,7 +93,11 @@ export default function Vendors() {
     setShowModal(true);
   };
 
-  if (loading) return <div>{t('common.loading')}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="animate-spin text-primary" size={32} />
+    </div>
+  );
 
   return (
     <div>

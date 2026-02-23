@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
-import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
@@ -369,7 +369,11 @@ export default function Expenses() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  if (loading) return <div>{t('common.loading')}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="animate-spin text-primary" size={32} />
+    </div>
+  );
 
   return (
     <div>
