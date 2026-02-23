@@ -6,8 +6,11 @@ export default function Reports() {
   const { t } = useLanguage();
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-foreground mb-6">{t('reports')}</h1>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">{t('reports')}</h1>
+        <p className="page-description">Generate and export financial reports</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-card rounded-lg shadow border border-border p-6">

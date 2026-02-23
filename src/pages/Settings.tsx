@@ -474,11 +474,11 @@ export default function Settings() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-foreground mb-2">{t("settings.title") || "Settings"}</h1>
-      <p className="text-muted-foreground mb-6">
-        {t("settings.subtitle") || "Manage your account and application settings"}
-      </p>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">{t("settings.title") || "Settings"}</h1>
+        <p className="page-description">{t("settings.subtitle") || "Manage your account and application settings"}</p>
+      </div>
 
       {/* Message Toast */}
       {message && (

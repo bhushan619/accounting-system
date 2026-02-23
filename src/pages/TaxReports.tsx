@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, FileText, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -456,13 +456,10 @@ export default function TaxReports() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <FileText className="text-primary" size={28} />
-          {t('taxReports.title')}
-        </h1>
-        <p className="text-muted-foreground mt-1">{t('taxReports.infoText')}</p>
+    <div className="animate-fade-in space-y-6">
+      <div className="page-header">
+        <h1 className="page-title">{t('taxReports.title')}</h1>
+        <p className="page-description">{t('taxReports.infoText')}</p>
       </div>
 
       <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">

@@ -86,15 +86,18 @@ export default function EnhancedReports() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{t('reports.title')}</h1>
+    <div className="animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">{t('reports.title')}</h1>
+          <p className="page-description">{t('reports.description') || 'Financial overview and analytics'}</p>
+        </div>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          className="btn btn-primary btn-md"
         >
-          <Download size={20} />
-          {t('common.export')} {t('reports.report') || 'Report'}
+          <Download size={18} />
+          <span>{t('common.export')} {t('reports.report') || 'Report'}</span>
         </button>
       </div>
 

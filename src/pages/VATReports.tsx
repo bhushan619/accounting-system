@@ -65,9 +65,9 @@ export default function VATReports() {
 
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">{t('vatReports.title') || 'VAT Returns'}</h1>
+    <div className="animate-fade-in max-w-6xl mx-auto">
+      <div className="page-header">
+        <h1 className="page-title">{t('vatReports.title') || 'VAT Returns'}</h1>
         <p className="text-muted-foreground mt-2">
           {region === 'AE' 
             ? 'Generate UAE FTA-compliant VAT returns (5% standard rate)' 
