@@ -263,8 +263,10 @@ export default function Expenses() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update status:', error);
+      const msg = error?.response?.data?.error || 'Failed to update expense status';
+      alert(msg);
     }
   };
 
@@ -281,9 +283,10 @@ export default function Expenses() {
       setPendingStatusChange(null);
       setSelectedBank('');
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update status:', error);
-      alert('Failed to update expense status');
+      const msg = error?.response?.data?.error || 'Failed to update expense status';
+      alert(msg);
     }
   };
 
