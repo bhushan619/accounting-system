@@ -206,8 +206,9 @@ export default function Invoices() {
       setShowModal(false);
       resetForm();
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save invoice:", error);
+      alert(error?.response?.data?.error || "Failed to save invoice");
     }
   };
 
@@ -219,8 +220,9 @@ export default function Invoices() {
         headers: { Authorization: `Bearer ${token}` },
       });
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to delete invoice:", error);
+      alert(error?.response?.data?.error || "Failed to delete invoice");
     }
   };
 
@@ -244,8 +246,9 @@ export default function Invoices() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update status:", error);
+      alert(error?.response?.data?.error || "Failed to update invoice status");
     }
   };
 
@@ -263,9 +266,9 @@ export default function Invoices() {
       setPendingStatusChange(null);
       setSelectedBank("");
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update status:", error);
-      alert("Failed to update invoice status");
+      alert(error?.response?.data?.error || "Failed to update invoice status");
     }
   };
 
@@ -276,8 +279,9 @@ export default function Invoices() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setViewInvoice(res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load invoice:", error);
+      alert(error?.response?.data?.error || "Failed to load invoice details");
     }
   };
 

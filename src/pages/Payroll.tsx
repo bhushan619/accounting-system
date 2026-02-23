@@ -971,8 +971,9 @@ export default function Payroll() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/payrollruns/${id}`);
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to delete:", error);
+      alert(error?.response?.data?.error || "Failed to delete payroll run");
     }
   };
 

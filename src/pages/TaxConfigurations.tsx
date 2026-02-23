@@ -85,8 +85,9 @@ export default function TaxConfigurations() {
       }
       fetchConfigs();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving tax config:', error);
+      alert(error?.response?.data?.error || 'Failed to save tax configuration');
     }
   };
 
@@ -108,8 +109,9 @@ export default function TaxConfigurations() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/taxconfig/${id}`);
       fetchConfigs();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting tax config:', error);
+      alert(error?.response?.data?.error || 'Failed to delete tax configuration');
     }
   };
 

@@ -220,8 +220,9 @@ export default function Expenses() {
       setShowModal(false);
       resetForm();
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save expense:', error);
+      alert(error?.response?.data?.error || 'Failed to save expense');
     }
   };
 
@@ -233,8 +234,9 @@ export default function Expenses() {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete expense:', error);
+      alert(error?.response?.data?.error || 'Failed to delete expense');
     }
   };
 

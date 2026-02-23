@@ -56,8 +56,9 @@ export default function Vendors() {
       setShowModal(false);
       resetForm();
       loadVendors();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save vendor:', error);
+      alert(error?.response?.data?.error || 'Failed to save vendor');
     }
   };
 
@@ -78,8 +79,9 @@ export default function Vendors() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/vendors/${id}`);
       loadVendors();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete vendor:', error);
+      alert(error?.response?.data?.error || 'Failed to delete vendor');
     }
   };
 
