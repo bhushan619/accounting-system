@@ -213,6 +213,21 @@ router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
   if (!body.bank) delete body.bank;
   if (!body.vendor) delete body.vendor;
   
+  // If admin auto-approves with a bank, deduct bank balance
+  if (approvalStatus === 'approved' && body.bank) {
+    const Bank = require('../models/Bank').default;
+    const bank = await Bank.findById(body.bank);
+    if (bank) {
+      const amount = Number(body.amount) || 0;
+      if (bank.balance < amount) {
+        return res.status(400).json({ error: `Insufficient bank balance. Available: ${bank.balance.toFixed(2)}, Required: ${amount.toFixed(2)}` });
+      }
+      bank.balance -= amount;
+      bank.updatedAt = new Date();
+      await bank.save();
+    }
+  }
+  
   const expense = await Expense.create({
     ...body,
     serialNumber,
