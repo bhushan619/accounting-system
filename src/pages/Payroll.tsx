@@ -194,6 +194,8 @@ export default function Payroll() {
   const [attendanceWarnings, setAttendanceWarnings] = useState<AttendanceWarning[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [_viewAttendanceData, setViewAttendanceData] = useState<AttendanceHistory[]>([]);
 
   // Disable swipe gestures when any modal is open
@@ -735,6 +737,7 @@ export default function Payroll() {
   };
 
   const handleGenerate = async () => {
+    setGenerating(true);
     try {
       // Send preview data with performance salary, transport allowance, deductions, attendance, and deficit
       const employeeData = previewData.map((entry) => ({
@@ -792,6 +795,8 @@ export default function Payroll() {
       setPreviewData([]);
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to generate payroll run");
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -831,6 +836,7 @@ export default function Payroll() {
   const confirmProcess = async () => {
     if (!selectedBank || !pendingProcess) return;
 
+    setProcessingPayment(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/payrollruns/${pendingProcess.id}/process`, {
         bankId: selectedBank,
@@ -847,6 +853,8 @@ export default function Payroll() {
       loadData();
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to process payroll");
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -1287,7 +1295,11 @@ export default function Payroll() {
       emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  if (loading) return <div className="text-center py-8">{t("common.loading")}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="animate-spin text-primary" size={32} />
+    </div>
+  );
 
   return (
     <div>
@@ -2148,9 +2160,11 @@ export default function Payroll() {
               <button
                 type="button"
                 onClick={handleGenerate}
-                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                disabled={generating}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
               >
-                Confirm & Generate
+                {generating && <Loader2 className="animate-spin" size={16} />}
+                {generating ? "Generating..." : "Confirm & Generate"}
               </button>
             </div>
           </div>
@@ -2195,10 +2209,11 @@ export default function Payroll() {
                 </button>
                 <button
                   onClick={confirmProcess}
-                  disabled={!selectedBank}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedBank || processingPayment}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm & Process
+                  {processingPayment && <Loader2 className="animate-spin" size={16} />}
+                  {processingPayment ? "Processing..." : "Confirm & Process"}
                 </button>
               </div>
             </div>

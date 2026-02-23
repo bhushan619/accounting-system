@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { currencySymbol } from "../utils/currency";
 import { CurrencySymbolDisplay } from "../utils/FormattedCurrency";
 import axios from "axios";
-import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X, RefreshCw } from "lucide-react";
+import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Search, X, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { usePreventSwipe } from "../hooks/usePreventSwipe";
@@ -560,7 +560,11 @@ export default function Invoices() {
     doc.save(`Invoice-${invoice.serialNumber}.pdf`);
   };
 
-  if (loading) return <div>{t("common.loading")}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="animate-spin text-primary" size={32} />
+    </div>
+  );
 
   return (
     <div>
@@ -1291,8 +1295,9 @@ export default function Invoices() {
               <button
                 onClick={handleImport}
                 disabled={!importFile || importing}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
               >
+                {importing && <Loader2 className="animate-spin" size={16} />}
                 {importing ? "Importing..." : "Import"}
               </button>
             </div>

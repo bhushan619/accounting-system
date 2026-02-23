@@ -1031,7 +1031,8 @@ export default function Expenses() {
               <button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80">
                 {t('common.cancel')}
               </button>
-              <button onClick={handleImport} disabled={!importFile || importing} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+              <button onClick={handleImport} disabled={!importFile || importing} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                {importing && <Loader2 className="animate-spin" size={16} />}
                 {importing ? 'Importing...' : 'Import'}
               </button>
             </div>
