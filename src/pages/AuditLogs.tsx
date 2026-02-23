@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { format } from 'date-fns';
 import {
-  Shield,
   Filter,
   ChevronLeft,
   ChevronRight,
@@ -140,23 +139,18 @@ export default function AuditLogs() {
   const actionOptions = ['create', 'update', 'delete', 'rollback'];
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Shield size={20} className="text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
-            <p className="text-sm text-muted-foreground">Track all system changes — admin eyes only</p>
-          </div>
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Audit Logs</h1>
+          <p className="page-description">Track all system changes — admin eyes only</p>
         </div>
         <button
           onClick={() => setDeleteTarget('all')}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
+          className="btn btn-sm text-destructive hover:bg-destructive/10"
         >
-          <Trash2 size={15} /> Clear All Logs
+          <Trash2 size={15} /> <span>Clear All Logs</span>
         </button>
       </div>
 

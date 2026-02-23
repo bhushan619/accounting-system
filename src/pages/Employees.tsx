@@ -494,35 +494,38 @@ export default function Employees() {
   );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-foreground">{t('employees.title')}</h1>
+          <div>
+            <h1 className="page-title">{t('employees.title')}</h1>
+            <p className="page-description">{t('employees.description') || 'Manage employee records'}</p>
+          </div>
           {selectedIds.size > 0 && (
             <button
               onClick={handleBulkDelete}
               disabled={bulkDeleting}
-              className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+              className="btn btn-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
             >
               <Trash2 size={16} />
-              {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} selected`}
+              <span>{bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} selected`}</span>
             </button>
           )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+            className="btn btn-secondary btn-md"
           >
-            <Upload size={20} />
-            Import Excel
+            <Upload size={18} />
+            <span>Import Excel</span>
           </button>
           <button
             onClick={openNewModal}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            className="btn btn-primary btn-md"
           >
-            <Plus size={20} />
-            {t('employees.addEmployee')}
+            <Plus size={18} />
+            <span>{t('employees.addEmployee')}</span>
           </button>
         </div>
       </div>

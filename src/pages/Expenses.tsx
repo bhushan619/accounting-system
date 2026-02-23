@@ -382,23 +382,26 @@ export default function Expenses() {
   );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{t('expenses.title')}</h1>
+    <div className="animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">{t('expenses.title')}</h1>
+          <p className="page-description">{t('expenses.description') || 'Track and manage business expenses'}</p>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80"
+            className="btn btn-secondary btn-md"
           >
-            <Upload size={20} />
-            Import Excel
+            <Upload size={18} />
+            <span>Import Excel</span>
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            className="btn btn-primary btn-md"
           >
-            <Plus size={20} />
-            {t('expenses.addExpense')}
+            <Plus size={18} />
+            <span>{t('expenses.addExpense')}</span>
           </button>
         </div>
       </div>

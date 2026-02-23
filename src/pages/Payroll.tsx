@@ -1303,11 +1303,11 @@ export default function Payroll() {
   );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("payroll.title")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t("payroll.description")}</p>
+          <h1 className="page-title">{t("payroll.title")}</h1>
+          <p className="page-description">{t("payroll.description")}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}

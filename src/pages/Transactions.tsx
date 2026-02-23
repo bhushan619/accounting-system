@@ -226,11 +226,11 @@ export default function Transactions() {
   if (loading) return <div className="text-foreground">Loading...</div>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-        <Wallet className="text-primary" />
-        {t('transactions')}
-      </h1>
+    <div className="animate-fade-in space-y-6">
+      <div className="page-header">
+        <h1 className="page-title">{t('transactions')}</h1>
+        <p className="page-description">{t('transactionsDescription') || 'View all financial transactions'}</p>
+      </div>
 
       {/* Currency Filter */}
       <div className="flex items-center gap-2">

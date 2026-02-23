@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { Plus, Pencil, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
 
@@ -145,29 +145,29 @@ export default function TaxConfigurations() {
   if (loading) return <div className="text-foreground">{t('common.loading')}</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="text-primary" />
-          {t('taxConfig.title')}
-        </h1>
+    <div className="animate-fade-in space-y-6">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">{t('taxConfig.title')}</h1>
+          <p className="page-description">{t('taxConfig.description') || 'Configure tax rates and brackets'}</p>
+        </div>
         <div className="flex gap-2">
           {configs.length === 0 && (
             <button
               onClick={handleSeed}
               disabled={seeding}
-              className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-secondary/80 transition-colors disabled:opacity-50"
+              className="btn btn-secondary btn-md disabled:opacity-50"
             >
-              <Download size={20} />
-              {seeding ? t('taxConfig.seeding') : t('taxConfig.seedDefault')}
+              <Download size={18} />
+              <span>{seeding ? t('taxConfig.seeding') : t('taxConfig.seedDefault')}</span>
             </button>
           )}
           <button
             onClick={() => setShowModal(true)}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
+            className="btn btn-primary btn-md"
           >
-            <Plus size={20} />
-            {t('taxConfig.addConfig')}
+            <Plus size={18} />
+            <span>{t('taxConfig.addConfig')}</span>
           </button>
         </div>
       </div>

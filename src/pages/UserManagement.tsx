@@ -260,7 +260,7 @@ export default function UserManagement() {
   if (loading) return <div className="text-center py-8">{t('common.loading')}</div>;
 
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Unmarked Users Reminder Banner */}
       {unmarkedUsers.length > 0 && (
         <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center gap-3">
@@ -283,23 +283,26 @@ export default function UserManagement() {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">{t('users.title')}</h1>
+          <p className="page-description">{t('users.description') || 'Manage user accounts and permissions'}</p>
+        </div>
         <div className="flex gap-3">
           <button
             onClick={() => setShowRoleInfo(!showRoleInfo)}
-            className="flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
+            className="btn btn-secondary btn-md"
           >
-            <Shield size={20} />
-            {t('users.rolePermissionsTitle') || 'Role Permissions'}
+            <Shield size={18} />
+            <span>{t('users.rolePermissionsTitle') || 'Role Permissions'}</span>
             {showRoleInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           <button
             onClick={openNewModal}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            className="btn btn-primary btn-md"
           >
-            <Plus size={20} />
-            {t('users.addUser')}
+            <Plus size={18} />
+            <span>{t('users.addUser')}</span>
           </button>
         </div>
       </div>

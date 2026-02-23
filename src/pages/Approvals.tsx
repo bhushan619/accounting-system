@@ -101,12 +101,10 @@ export default function Approvals() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">{t('approvals.title')}</h1>
-        <p className="text-muted-foreground mt-2">
-          {t('approvals.subtitle')}
-        </p>
+    <div className="animate-fade-in max-w-6xl mx-auto">
+      <div className="page-header">
+        <h1 className="page-title">{t('approvals.title')}</h1>
+        <p className="page-description">{t('approvals.subtitle')}</p>
       </div>
 
       {loading ? (

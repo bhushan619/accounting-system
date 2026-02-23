@@ -361,8 +361,11 @@ export default function Guide() {
   ];
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-foreground mb-6">{t('guide.title')}</h1>
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <h1 className="page-title">{t('guide.title')}</h1>
+        <p className="page-description">{t('guide.description') || 'Learn how to use the system'}</p>
+      </div>
 
       <div className="bg-card rounded-lg shadow border border-border">
         {sections.map((section, index) => (
