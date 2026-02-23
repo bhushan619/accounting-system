@@ -203,6 +203,7 @@ export default function Expenses() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.category || formData.category === 'custom') return;
     try {
       const token = localStorage.getItem('token');
       const region = companySettings.region || 'LK';
@@ -613,7 +614,11 @@ export default function Expenses() {
                   <select
                     value={EXPENSE_CATEGORIES.includes(formData.category) ? formData.category : (formData.category ? 'custom' : '')}
                     onChange={(e) => {
-                      setFormData({ ...formData, category: e.target.value === 'custom' ? '' : e.target.value });
+                      if (e.target.value === 'custom') {
+                        setFormData({ ...formData, category: 'custom' });
+                      } else {
+                        setFormData({ ...formData, category: e.target.value });
+                      }
                     }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     required={!formData.category}
@@ -624,16 +629,16 @@ export default function Expenses() {
                     ))}
                     <option value="custom">+ Add Custom Category</option>
                   </select>
-                  {!EXPENSE_CATEGORIES.includes(formData.category) && (
+                  {formData.category === 'custom' || (!EXPENSE_CATEGORIES.includes(formData.category) && formData.category !== '' && formData.category !== 'custom') ? (
                     <input
                       type="text"
                       placeholder="Enter custom category"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.category === 'custom' ? '' : formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value || 'custom' })}
                       className="w-full mt-2 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       required
                     />
-                  )}
+                  ) : null}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('expenses.vendor')}</label>
