@@ -961,18 +961,6 @@ export default function Settings() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">Set in Company settings</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t("settings.stampFee") || "Stamp Fee (LKR)"}
-                    </label>
-                    <input
-                      type="number"
-                      value={defaultSettings.stampFee}
-                      onChange={(e) => setDefaultSettings({ ...defaultSettings, stampFee: parseFloat(e.target.value) })}
-                      min={0}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-4">
