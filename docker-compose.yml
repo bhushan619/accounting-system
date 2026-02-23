@@ -20,6 +20,7 @@ services:
       - NODE_ENV=production
       - ALLOWED_ORIGINS=http://localhost:8005,http://localhost
       - FRONTEND_URL=http://localhost:8005
+    depends_on:
       - mongo
     ports:
       - "4005:4005"
