@@ -49,8 +49,9 @@ export default function Clients() {
       setFormData({ name: '', email: '' });
       setEditingClient(null);
       loadClients();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save client:', error);
+      alert(error?.response?.data?.error || 'Failed to save client');
     }
   };
 
@@ -65,8 +66,9 @@ export default function Clients() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/clients/${id}`);
       loadClients();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete client:', error);
+      alert(error?.response?.data?.error || 'Failed to delete client');
     }
   };
 

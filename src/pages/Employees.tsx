@@ -245,8 +245,9 @@ export default function Employees() {
       setShowModal(false);
       resetForm();
       loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save employee:', error);
+      alert(error?.response?.data?.error || 'Failed to save employee');
     }
   };
 
@@ -286,8 +287,9 @@ export default function Employees() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/employees/${id}`);
       loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete employee:', error);
+      alert(error?.response?.data?.error || 'Failed to delete employee');
     }
   };
 
@@ -299,8 +301,9 @@ export default function Employees() {
       const closeDate = closeDateStr?.trim() ? new Date(closeDateStr.trim()).toISOString() : new Date().toISOString();
       await axios.put(`${import.meta.env.VITE_API_URL}/employees/${id}`, { status: 'closed', closeDate });
       loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to close employee:', error);
+      alert(error?.response?.data?.error || 'Failed to close employee');
     }
   };
 
@@ -328,8 +331,9 @@ export default function Employees() {
       await axios.post(`${import.meta.env.VITE_API_URL}/employees/bulk-delete`, { ids: Array.from(selectedIds) });
       setSelectedIds(new Set());
       loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to bulk delete:', error);
+      alert(error?.response?.data?.error || 'Failed to bulk delete employees');
     } finally {
       setBulkDeleting(false);
     }

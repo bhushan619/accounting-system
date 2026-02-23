@@ -162,8 +162,9 @@ export default function UserManagement() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/users/${id}`);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete user:', error);
+      alert(error?.response?.data?.error || 'Failed to delete user');
     }
   };
 
@@ -238,8 +239,9 @@ export default function UserManagement() {
       await axios.post(`${import.meta.env.VITE_API_URL}/role-permissions/reset`);
       await loadRolePermissions();
       cancelEditingRole();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to reset permissions:', error);
+      alert(error?.response?.data?.error || 'Failed to reset permissions');
     }
   };
 

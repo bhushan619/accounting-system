@@ -57,8 +57,9 @@ export default function Banks() {
       setShowModal(false);
       resetForm();
       loadBanks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save bank:', error);
+      alert(error?.response?.data?.error || 'Failed to save bank');
     }
   };
 
@@ -80,8 +81,9 @@ export default function Banks() {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/banks/${id}`);
       loadBanks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete bank:', error);
+      alert(error?.response?.data?.error || 'Failed to delete bank');
     }
   };
 
