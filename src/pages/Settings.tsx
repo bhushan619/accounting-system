@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { HexColorPicker } from "react-colorful";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useBranding } from "../contexts/BrandingContext";
@@ -110,6 +111,51 @@ function hexToHslString(hex: string): string {
   } catch {
     return '217 71% 45%';
   }
+}
+
+function ColorPickerField({ label, value, onChange, placeholder, hint }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder: string; hint: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
+      <div className="flex gap-2 items-center relative" ref={ref}>
+        <button
+          type="button"
+          className="w-9 h-9 rounded-lg border-2 border-border shadow-sm flex-shrink-0 cursor-pointer"
+          style={{ background: `hsl(${value})` }}
+          onClick={() => setOpen(!open)}
+        />
+        {open && (
+          <div className="absolute top-11 left-0 z-50 bg-popover border border-border rounded-xl shadow-lg p-3">
+            <HexColorPicker
+              color={hslStringToHex(value)}
+              onChange={(hex) => onChange(hexToHslString(hex))}
+            />
+          </div>
+        )}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+    </div>
+  );
 }
 
 export default function Settings() {
@@ -819,84 +865,27 @@ export default function Settings() {
                       Use the color picker or enter HSL values manually (hue saturation% lightness%).
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Primary Color */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Primary Color</label>
-                        <div className="flex gap-2 items-center">
-                          <label className="relative flex-shrink-0 cursor-pointer">
-                            <div
-                              className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
-                              style={{ background: `hsl(${companySettings.primaryColor})` }}
-                            />
-                            <input
-                              type="color"
-                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                              value={hslStringToHex(companySettings.primaryColor)}
-                              onChange={(e) => setCompanySettings({ ...companySettings, primaryColor: hexToHslString(e.target.value) })}
-                            />
-                          </label>
-                          <input
-                            type="text"
-                            value={companySettings.primaryColor}
-                            onChange={(e) => setCompanySettings({ ...companySettings, primaryColor: e.target.value })}
-                            placeholder="217 71% 45%"
-                            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Buttons, active links, highlights</p>
-                      </div>
-                      {/* Accent Color */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Accent Color</label>
-                        <div className="flex gap-2 items-center">
-                          <label className="relative flex-shrink-0 cursor-pointer">
-                            <div
-                              className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
-                              style={{ background: `hsl(${companySettings.accentColor})` }}
-                            />
-                            <input
-                              type="color"
-                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                              value={hslStringToHex(companySettings.accentColor)}
-                              onChange={(e) => setCompanySettings({ ...companySettings, accentColor: hexToHslString(e.target.value) })}
-                            />
-                          </label>
-                          <input
-                            type="text"
-                            value={companySettings.accentColor}
-                            onChange={(e) => setCompanySettings({ ...companySettings, accentColor: e.target.value })}
-                            placeholder="217 91% 60%"
-                            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Gradients and secondary accents</p>
-                      </div>
-                      {/* Sidebar Background */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Sidebar Background</label>
-                        <div className="flex gap-2 items-center">
-                          <label className="relative flex-shrink-0 cursor-pointer">
-                            <div
-                              className="w-9 h-9 rounded-lg border-2 border-border shadow-sm"
-                              style={{ background: `hsl(${companySettings.sidebarBg})` }}
-                            />
-                            <input
-                              type="color"
-                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                              value={hslStringToHex(companySettings.sidebarBg)}
-                              onChange={(e) => setCompanySettings({ ...companySettings, sidebarBg: hexToHslString(e.target.value) })}
-                            />
-                          </label>
-                          <input
-                            type="text"
-                            value={companySettings.sidebarBg}
-                            onChange={(e) => setCompanySettings({ ...companySettings, sidebarBg: e.target.value })}
-                            placeholder="222 47% 11%"
-                            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Sidebar panel background</p>
-                      </div>
+                      <ColorPickerField
+                        label="Primary Color"
+                        value={companySettings.primaryColor}
+                        onChange={(val) => setCompanySettings({ ...companySettings, primaryColor: val })}
+                        placeholder="217 71% 45%"
+                        hint="Buttons, active links, highlights"
+                      />
+                      <ColorPickerField
+                        label="Accent Color"
+                        value={companySettings.accentColor}
+                        onChange={(val) => setCompanySettings({ ...companySettings, accentColor: val })}
+                        placeholder="217 91% 60%"
+                        hint="Gradients and secondary accents"
+                      />
+                      <ColorPickerField
+                        label="Sidebar Background"
+                        value={companySettings.sidebarBg}
+                        onChange={(val) => setCompanySettings({ ...companySettings, sidebarBg: val })}
+                        placeholder="222 47% 11%"
+                        hint="Sidebar panel background"
+                      />
                     </div>
 
                     {/* Live preview strip */}
