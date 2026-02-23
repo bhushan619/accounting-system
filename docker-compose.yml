@@ -1,26 +1,16 @@
 services:
-  mongo:
-    image: mongo:8.0
-    container_name: mongo
-    command: ["mongod", "--port", "27019", "--bind_ip_all"]
-    ports:
-      - "27019:27019"
-    volumes:
-      - mongo-data:/data/db
-
   backend:
     build: ./backend
     image: accounting-system-backend:latest
     environment:
-      - MONGODB_URI=mongodb://mongo:27019/velosync
-      - JWT_SECRET=$${JWT_SECRET:hrVwJGQgD4d2T5WeMhjatlEFisfyJgWow3m+jlwlLLEpAT6kt+h3Da4IlIsCVsjL1PuWGFnoFxi0bEQxwKGZjQ==}
+      - MONGODB_URI=mongodb://your-mongo-host:27017/velosync
+      - JWT_SECRET=${JWT_SECRET:-hrVwJGQgD4d2T5WeMhjatlEFisfyJgWow3m+jlwlLLEpAT6kt+h3Da4IlIsCVsjL1PuWGFnoFxi0bEQxwKGZjQ==}
       - JWT_EXP=7d
       - REFRESH_EXP=7d
       - UPLOADS_DIR=./uploads
       - NODE_ENV=production
       - ALLOWED_ORIGINS=http://localhost:8005,http://localhost
       - FRONTEND_URL=http://localhost:8005
-      - mongo
     ports:
       - "4005:4005"
 
@@ -31,6 +21,3 @@ services:
       - "8005:80"
     depends_on:
       - backend
-
-volumes:
-  mongo-data:
