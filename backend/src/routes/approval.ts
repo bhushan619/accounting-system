@@ -82,6 +82,9 @@ router.post('/expenses/:id/approve', requireRole(['admin']), auditLog('approve',
     const Bank = require('../models/Bank').default;
     const bank = await Bank.findById(bankId || expense.bank);
     if (bank) {
+      if (bank.balance < expense.amount) {
+        return res.status(400).json({ error: `Insufficient bank balance. Available: ${bank.balance.toFixed(2)}, Required: ${expense.amount.toFixed(2)}` });
+      }
       bank.balance -= expense.amount;
       bank.updatedAt = new Date();
       await bank.save();

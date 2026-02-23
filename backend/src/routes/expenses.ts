@@ -252,6 +252,9 @@ router.put('/:id', auditLog('update', 'expense'), async (req: any, res) => {
     const bank = await Bank.findById(bankId);
     
     if (bank) {
+      if (bank.balance < expense.amount) {
+        return res.status(400).json({ error: `Insufficient bank balance. Available: ${bank.balance.toFixed(2)}, Required: ${expense.amount.toFixed(2)}` });
+      }
       bank.balance -= expense.amount;
       bank.updatedAt = new Date();
       await bank.save();

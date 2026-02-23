@@ -886,6 +886,9 @@ router.post('/:id/process', requireRole('admin'), auditLog('update', 'payrollrun
     
     // Update bank balance - decrease only for statutory contributions (not employee net salary)
     const totalStatutoryDeduction = totalEPFEmployer + totalETF;
+    if (bank.balance < totalStatutoryDeduction) {
+      return res.status(400).json({ error: `Insufficient bank balance. Available: ${bank.balance.toFixed(2)}, Required: ${totalStatutoryDeduction.toFixed(2)}` });
+    }
     bank.balance -= totalStatutoryDeduction;
     bank.updatedAt = new Date();
     await bank.save();
