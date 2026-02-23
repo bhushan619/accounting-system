@@ -27,6 +27,7 @@
     "lucide-react": "^0.554.0",
     "new-dirham-symbol": "^1.0.3",
     "react": "^19.2.4",
+    "react-colorful": "^5.6.1",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.66.1",
     "react-router-dom": "^7.9.6",
