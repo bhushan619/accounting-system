@@ -16,6 +16,7 @@ interface Employee {
   phone?: string;
   designation?: string;
   department?: string;
+  country?: string;
   basicSalary: number;
   status: string;
   userAccount?: string;
@@ -38,6 +39,10 @@ interface TaxConfig {
 }
 
 const DEPARTMENTS = ['HR department', 'R&D department'];
+const COUNTRIES = [
+  { value: 'LK', label: 'Sri Lanka' },
+  { value: 'AE', label: 'UAE' }
+];
 const STATUS_OPTIONS = [
   { value: 'under_probation', label: 'Under Probation' },
   { value: 'confirmed', label: 'Confirmed (Post Probation)' },
@@ -72,6 +77,7 @@ export default function Employees() {
     basicInformation: '',
     designation: '',
     department: '',
+    country: 'LK',
     joinDate: new Date().toISOString().split('T')[0],
     basicSalary: 0,
     transportAllowance: 0,
@@ -188,6 +194,23 @@ export default function Employees() {
 
   // Recalculate whenever salary or rates change
   useEffect(() => {
+    // UAE employees have no statutory deductions
+    if (formData.country === 'AE') {
+      const performanceSalary = getCurrentPerformanceSalary();
+      const grossSalary = formData.basicSalary + formData.transportAllowance + performanceSalary;
+      setCalculations({
+        grossSalary: Math.round(grossSalary * 100) / 100,
+        epfEmployee: 0,
+        epfEmployer: 0,
+        etf: 0,
+        apit: 0,
+        stampFee: 0,
+        netSalary: Math.round(grossSalary * 100) / 100,
+        totalCTC: Math.round(grossSalary * 100) / 100
+      });
+      return;
+    }
+
     const performanceSalary = getCurrentPerformanceSalary();
     const grossSalary = formData.basicSalary + formData.transportAllowance + performanceSalary;
     // EPF and ETF calculated on (Basic + Performance Salary)
@@ -215,7 +238,7 @@ export default function Employees() {
       netSalary: Math.round(netSalary * 100) / 100,
       totalCTC: Math.round(totalCTC * 100) / 100
     });
-  }, [formData.basicSalary, formData.transportAllowance, formData.performanceSalaryProbation, formData.performanceSalaryConfirmed, formData.status, formData.probationEndDate, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate, formData.apitScenario]);
+  }, [formData.basicSalary, formData.transportAllowance, formData.performanceSalaryProbation, formData.performanceSalaryConfirmed, formData.status, formData.probationEndDate, formData.epfEmployeeRate, formData.epfEmployerRate, formData.etfRate, formData.apitScenario, formData.country]);
 
   const loadEmployees = async () => {
     try {
@@ -266,6 +289,7 @@ export default function Employees() {
       basicInformation: emp.basicInformation || '',
       designation: employee.designation || '',
       department: employee.department || '',
+      country: emp.country || 'LK',
       joinDate: emp.joinDate?.split('T')[0] || new Date().toISOString().split('T')[0],
       basicSalary: employee.basicSalary,
       transportAllowance: emp.transportAllowance || emp.allowances || 0,
@@ -380,6 +404,7 @@ export default function Employees() {
       basicInformation: '',
       designation: '',
       department: '',
+      country: 'LK',
       joinDate: new Date().toISOString().split('T')[0],
       basicSalary: 0,
       transportAllowance: 0,
@@ -763,7 +788,20 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Country *</label>
+                  <select
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    required
+                  >
+                    {COUNTRIES.map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
                   <select
@@ -844,17 +882,19 @@ export default function Employees() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.apitScenario') || 'APIT Scenario'}</label>
-                  <select
-                    value={formData.apitScenario}
-                    onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  >
-                    <option value="employee">{t('employees.scenarioEmployee') || 'Scenario A (Employee Pays APIT)'}</option>
-                    <option value="employer">{t('employees.scenarioEmployer') || 'Scenario B (Employer Pays APIT)'}</option>
-                  </select>
-                </div>
+                {formData.country === 'LK' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.apitScenario') || 'APIT Scenario'}</label>
+                    <select
+                      value={formData.apitScenario}
+                      onChange={(e) => setFormData({ ...formData, apitScenario: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    >
+                      <option value="employee">{t('employees.scenarioEmployee') || 'Scenario A (Employee Pays APIT)'}</option>
+                      <option value="employer">{t('employees.scenarioEmployer') || 'Scenario B (Employer Pays APIT)'}</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -904,24 +944,36 @@ export default function Employees() {
                 </div>
               </div>
 
-              {/* Tax Configuration Info */}
-              <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                <h3 className="text-sm font-semibold mb-3 text-foreground">{t('employees.epfRates')}</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{t('employees.epfEmployee')}:</span>
-                    <span className="ml-2 font-medium text-foreground">{formData.epfEmployeeRate}%</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{t('employees.epfEmployer')}:</span>
-                    <span className="ml-2 font-medium text-foreground">{formData.epfEmployerRate}%</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{t('employees.etf')}:</span>
-                    <span className="ml-2 font-medium text-foreground">{formData.etfRate}%</span>
+              {/* Tax Configuration Info - Sri Lanka only */}
+              {formData.country === 'LK' && (
+                <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                  <h3 className="text-sm font-semibold mb-3 text-foreground">{t('employees.epfRates')}</h3>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">{t('employees.epfEmployee')}:</span>
+                      <span className="ml-2 font-medium text-foreground">{formData.epfEmployeeRate}%</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{t('employees.epfEmployer')}:</span>
+                      <span className="ml-2 font-medium text-foreground">{formData.epfEmployerRate}%</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{t('employees.etf')}:</span>
+                      <span className="ml-2 font-medium text-foreground">{formData.etfRate}%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {formData.country === 'AE' && (
+                <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                  <h3 className="text-sm font-semibold mb-3 text-foreground">UAE Tax Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    UAE has no personal income tax. No EPF, ETF, APIT, or stamp fee deductions apply. 
+                    GPSSA contributions may apply for UAE/GCC nationals (configured in Tax Configurations).
+                  </p>
+                </div>
+              )}
 
               {/* Payroll Calculations Preview */}
               <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
@@ -929,47 +981,55 @@ export default function Employees() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('employees.grossSalary')}:</span>
-                    <span className="font-medium text-foreground">LKR {calculations.grossSalary.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">{calculations.grossSalary.toLocaleString()}</span>
                   </div>
-                  <div className="border-t border-border my-2"></div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('employees.epfEmployee')} ({formData.epfEmployeeRate}%):</span>
-                    <span className="font-medium text-foreground">LKR {calculations.epfEmployee.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {t('employees.apit')} ({formData.apitScenario === 'employee' ? 'Scenario A' : 'Scenario B'}):
-                    </span>
-                    <span className="font-medium text-foreground">
-                      LKR {calculations.apit.toLocaleString()}
-                      {formData.apitScenario === 'employer' && <span className="text-xs text-muted-foreground ml-1">(employer pays)</span>}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('employees.stampFee')}:</span>
-                    <span className="font-medium text-foreground">LKR {calculations.stampFee.toLocaleString()}</span>
-                  </div>
+                  {formData.country === 'LK' && (
+                    <>
+                      <div className="border-t border-border my-2"></div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{t('employees.epfEmployee')} ({formData.epfEmployeeRate}%):</span>
+                        <span className="font-medium text-foreground">{calculations.epfEmployee.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          {t('employees.apit')} ({formData.apitScenario === 'employee' ? 'Scenario A' : 'Scenario B'}):
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {calculations.apit.toLocaleString()}
+                          {formData.apitScenario === 'employer' && <span className="text-xs text-muted-foreground ml-1">(employer pays)</span>}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{t('employees.stampFee')}:</span>
+                        <span className="font-medium text-foreground">{calculations.stampFee.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="border-t border-border my-2"></div>
                   <div className="flex justify-between font-semibold">
                     <span className="text-foreground">{t('employees.netSalary')}:</span>
-                    <span className="text-primary">LKR {calculations.netSalary.toLocaleString()}</span>
+                    <span className="text-primary">{calculations.netSalary.toLocaleString()}</span>
                   </div>
-                  <div className="border-t border-border my-2"></div>
-                  <div className="text-xs text-muted-foreground mt-3">
-                    <div className="font-medium mb-1">{t('employees.employerCosts')}:</div>
-                    <div className="flex justify-between">
-                      <span>{t('employees.epfEmployer')} ({formData.epfEmployerRate}%):</span>
-                      <span>LKR {calculations.epfEmployer.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t('employees.etf')} ({formData.etfRate}%):</span>
-                      <span>LKR {calculations.etf.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold mt-1 pt-1 border-t border-border">
-                      <span>{t('employees.totalCTC')}:</span>
-                      <span>LKR {calculations.totalCTC.toLocaleString()}</span>
-                    </div>
-                  </div>
+                  {formData.country === 'LK' && (
+                    <>
+                      <div className="border-t border-border my-2"></div>
+                      <div className="text-xs text-muted-foreground mt-3">
+                        <div className="font-medium mb-1">{t('employees.employerCosts')}:</div>
+                        <div className="flex justify-between">
+                          <span>{t('employees.epfEmployer')} ({formData.epfEmployerRate}%):</span>
+                          <span>{calculations.epfEmployer.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>{t('employees.etf')} ({formData.etfRate}%):</span>
+                          <span>{calculations.etf.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between font-semibold mt-1 pt-1 border-t border-border">
+                          <span>{t('employees.totalCTC')}:</span>
+                          <span>{calculations.totalCTC.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

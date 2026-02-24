@@ -42,6 +42,7 @@ interface Employee {
   status: string;
   apitScenario?: string;
   closeDate?: string;
+  country?: string;
 }
 
 interface AttendanceData {
@@ -546,6 +547,7 @@ export default function Payroll() {
     const workingDays = entry.workingDays || workingDaysInMonth;
     const deficitSalary = entry.deficitSalary || 0;
     const includeDeficitInPayroll = newIncludeDeficit;
+    const isUAE = entry.employee.country === 'AE';
 
     // Attendance deduction: during probation ALL leaves are unpaid
     const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
@@ -565,6 +567,21 @@ export default function Payroll() {
     const cashPayment = entry.cashPayment || 0;
     const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount - cashPayment;
 
+    // UAE employees: no EPF/ETF/APIT/stamp fee
+    if (isUAE) {
+      const deductions = deductionAmount + attendanceDeduction;
+      const netSalary = grossSalary - deductions;
+      return {
+        ...entry,
+        performanceSalary, transportAllowance, deductionAmount, deductionReason,
+        attendedDays, absentDays, attendanceDeduction, grossSalary,
+        epfEmployee: 0, epfEmployer: 0, etf: 0, apit: 0, stampFee: 0,
+        totalDeductions: deductions, netSalary, totalCTC: grossSalary,
+        includeDeficitInPayroll,
+      };
+    }
+
+    // Sri Lanka: full statutory deductions
     // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
     const currentMonthPerf = (entry.deficitDetails && entry.deficitSalary === 0) 
       ? (entry.currentMonthPerformance ?? performanceSalary) 

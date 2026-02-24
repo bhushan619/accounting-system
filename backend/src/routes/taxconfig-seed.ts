@@ -17,10 +17,12 @@ router.post('/seed', async (req, res) => {
 
     const now = new Date();
     
-    // Create default Sri Lankan tax configurations
+    // Create default tax configurations for both countries
     const configs = [
+      // ── Sri Lanka (LK) ──
       {
         name: 'EPF Employee Contribution',
+        country: 'LK',
         taxType: 'epf_employee',
         rate: 8,
         applicableFrom: now,
@@ -28,6 +30,7 @@ router.post('/seed', async (req, res) => {
       },
       {
         name: 'EPF Employer Contribution',
+        country: 'LK',
         taxType: 'epf_employer',
         rate: 12,
         applicableFrom: now,
@@ -35,6 +38,7 @@ router.post('/seed', async (req, res) => {
       },
       {
         name: 'ETF Contribution',
+        country: 'LK',
         taxType: 'etf',
         rate: 3,
         applicableFrom: now,
@@ -42,8 +46,34 @@ router.post('/seed', async (req, res) => {
       },
       {
         name: 'Stamp Fee',
+        country: 'LK',
         taxType: 'stamp_fee',
         rate: 25,
+        applicableFrom: now,
+        isActive: true
+      },
+      // ── UAE (AE) ──
+      {
+        name: 'GPSSA Employee Contribution (UAE Nationals)',
+        country: 'AE',
+        taxType: 'gpssa_employee',
+        rate: 5,
+        applicableFrom: now,
+        isActive: true
+      },
+      {
+        name: 'GPSSA Employer Contribution (UAE Nationals)',
+        country: 'AE',
+        taxType: 'gpssa_employer',
+        rate: 12.5,
+        applicableFrom: now,
+        isActive: true
+      },
+      {
+        name: 'End of Service Gratuity',
+        country: 'AE',
+        taxType: 'gratuity',
+        rate: 0,
         applicableFrom: now,
         isActive: true
       }

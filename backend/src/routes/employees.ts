@@ -68,8 +68,8 @@ const COLUMN_MAP: Record<string, string> = {
   'nickname': 'nickname',
   'email': 'email', 'phone': 'phone', 'nic': 'nic', 'address': 'address',
   'basic information': 'basicInformation', 'basicinformation': 'basicInformation',
-  'designation': 'designation', 'department': 'department', 'join date': 'joinDate',
-  'joindate': 'joinDate', 'basic salary': 'basicSalary', 'basicsalary': 'basicSalary',
+  'designation': 'designation', 'department': 'department', 'country': 'country',
+  'join date': 'joinDate', 'joindate': 'joinDate', 'basic salary': 'basicSalary', 'basicsalary': 'basicSalary',
   'transport allowance': 'transportAllowance', 'transportallowance': 'transportAllowance',
   'performance salary probation': 'performanceSalaryProbation',
   'performancesalaryprobation': 'performanceSalaryProbation',
@@ -98,6 +98,10 @@ const APIT_MAP: Record<string, string> = {
 const DEPARTMENT_MAP: Record<string, string> = {
   'hr department': 'HR department', 'r&d department': 'R&D department',
   'hr': 'HR department', 'r&d': 'R&D department', '': '',
+};
+const COUNTRY_MAP: Record<string, string> = {
+  'sri lanka': 'LK', 'lk': 'LK', 'sl': 'LK',
+  'uae': 'AE', 'ae': 'AE', 'united arab emirates': 'AE',
 };
 
 function parseExcelDate(val: any): Date | null {
@@ -157,6 +161,11 @@ router.post('/import', upload.single('file'), auditLog('import', 'employee'), as
         const apitKey = mapped.apitScenario.toString().trim().toLowerCase();
         if (apitKey in APIT_MAP) { mapped.apitScenario = APIT_MAP[apitKey]; }
         else { results.errors.push(`Row ${rowNum}: Invalid APIT Scenario "${mapped.apitScenario}". Use "Employee" or "Employer"`); results.skipped++; continue; }
+      }
+      if (mapped.country) {
+        const countryKey = mapped.country.toString().trim().toLowerCase();
+        if (countryKey in COUNTRY_MAP) { mapped.country = COUNTRY_MAP[countryKey]; }
+        else { results.errors.push(`Row ${rowNum}: Invalid Country "${mapped.country}". Use "LK" or "AE"`); results.skipped++; continue; }
       }
       if (mapped.status) {
         const statusKey = mapped.status.toString().trim().toLowerCase();

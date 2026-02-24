@@ -265,28 +265,37 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       const perDaySalary = (basicSalary + performanceSalary + transportAllowance) / workingDays;
       const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
       
-      const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
-      const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
-      const etfRate = employee.etfRate || taxRates.etf;
-      const stampFee = taxRates.stampFee;
+      const isUAE = employee.country === 'AE';
       
-      // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
-      const epfEtfBase = basicSalary + currentMonthPerformance;
-      const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
-      const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
-      const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
-      
-      // Calculate APIT based on employee's scenario
+      let epfEmployee = 0, epfEmployer = 0, etf = 0, stampFee = 0, apit = 0;
+      let apitDeduction = 0, apitEmployerCost = 0;
       const apitScenario = employee.apitScenario || 'employee';
-      const apit = calculateAPIT(grossSalary, apitScenario);
       
-      // Scenario A: Employee pays APIT - deducted from salary
-      // Scenario B: Employer pays APIT - added to employer costs
-      const apitDeduction = apitScenario === 'employee' ? apit : 0;
+      if (!isUAE) {
+        // Sri Lanka: full statutory deductions
+        const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
+        const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
+        const etfRate = employee.etfRate || taxRates.etf;
+        stampFee = taxRates.stampFee;
+        
+        // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+        const epfEtfBase = basicSalary + currentMonthPerformance;
+        epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
+        epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
+        etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
+        
+        // Calculate APIT based on employee's scenario
+        apit = calculateAPIT(grossSalary, apitScenario);
+        
+        // Scenario A: Employee pays APIT - deducted from salary
+        // Scenario B: Employer pays APIT - added to employer costs
+        apitDeduction = apitScenario === 'employee' ? apit : 0;
+        apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+      }
+      
       const deductions = epfEmployee + apitDeduction + stampFee + attendanceDeduction;
       const netSalary = grossSalary - deductions;
-      const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
-      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
+      const ctc = isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost;
       
       previewData.push({
         employee: {
@@ -295,7 +304,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
           fullName: employee.fullName,
           nickname: employee.nickname || '',
           status: employee.status,
-          apitScenario: employee.apitScenario || 'employee'
+          apitScenario: employee.apitScenario || 'employee',
+          country: employee.country || 'LK'
         },
         basicSalary,
         performanceSalary,
@@ -447,33 +457,36 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
       const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount;
       
-      // Use rates from TaxConfig, fall back to employee-specific rates if set
-      const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
-      const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
-      const etfRate = employee.etfRate || taxRates.etf;
-      const stampFee = taxRates.stampFee;
+      const isUAE = employee.country === 'AE';
       
-      // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
-      // Carry-forward: deficitDetails is set but deficitSalary is 0 (deficit folded into performanceSalary)
-      const currentMonthPerformance = (deficitDetails && deficitSalary === 0) 
-        ? confirmedPerformance  // Carry-forward: use only current month confirmed rate
-        : performanceSalary;     // Normal or in-month deficit: use calculated performance
-      const epfEtfBase = basicSalary + currentMonthPerformance;
-      const epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
-      const epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
-      const etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
-      
-      // Calculate APIT based on employee's scenario
+      let epfEmployee = 0, epfEmployer = 0, etf = 0, stampFee = 0, apit = 0;
+      let apitDeduction = 0, apitEmployerCost = 0;
       const apitScenario = employee.apitScenario || 'employee';
-      const apit = calculateAPIT(grossSalary, apitScenario);
       
-      // Scenario A: Employee pays APIT - deducted from salary
-      // Scenario B: Employer pays APIT - added to employer costs
-      const apitDeduction = apitScenario === 'employee' ? apit : 0;
+      if (!isUAE) {
+        // Sri Lanka: full statutory deductions
+        const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
+        const epfEmployerRate = employee.epfEmployerRate || taxRates.epfEmployer;
+        const etfRate = employee.etfRate || taxRates.etf;
+        stampFee = taxRates.stampFee;
+        
+        // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
+        const currentMonthPerformance = (deficitDetails && deficitSalary === 0) 
+          ? confirmedPerformance  // Carry-forward: use only current month confirmed rate
+          : performanceSalary;     // Normal or in-month deficit: use calculated performance
+        const epfEtfBase = basicSalary + currentMonthPerformance;
+        epfEmployee = Math.round((epfEtfBase * epfEmployeeRate / 100) * 100) / 100;
+        epfEmployer = Math.round((epfEtfBase * epfEmployerRate / 100) * 100) / 100;
+        etf = Math.round((epfEtfBase * etfRate / 100) * 100) / 100;
+        
+        apit = calculateAPIT(grossSalary, apitScenario);
+        apitDeduction = apitScenario === 'employee' ? apit : 0;
+        apitEmployerCost = apitScenario === 'employer' ? apit : 0;
+      }
+      
       const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
       const netSalary = grossSalary - deductions;
-      const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
-      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
+      const ctc = isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost;
       
       const payroll = await Payroll.create({
         serialNumber,
