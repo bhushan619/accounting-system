@@ -16,7 +16,7 @@ router.use(requireRole('admin'));
 router.get('/template', (_req, res) => {
   const headers = [
     'Employee ID', 'EPF Number', 'Full Name', 'Nickname', 'Email', 'Phone', 'NIC', 'Address',
-    'Basic Information', 'Designation', 'Department', 'Join Date', 'Basic Salary',
+    'Basic Information', 'Designation', 'Department', 'Country', 'Join Date', 'Basic Salary',
     'Transport Allowance', 'Performance Salary Probation', 'Performance Salary Confirmed',
     'Probation End Date', 'EPF Employee Rate', 'EPF Employer Rate', 'ETF Rate',
     'APIT Scenario', 'Status', 'Bank Name', 'Bank Account Number', 'Bank Account Name', 'Bank Branch'
@@ -25,7 +25,7 @@ router.get('/template', (_req, res) => {
     'Employee ID': 'EMP001', 'EPF Number': 'EPF001', 'Full Name': 'John Doe',
     'Nickname': 'Johnny', 'Email': 'john@example.com', 'Phone': '0771234567', 'NIC': '200012345678',
     'Address': '123 Main St, Colombo', 'Basic Information': '', 'Designation': 'Software Engineer',
-    'Department': 'R&D department', 'Join Date': '2025-01-15', 'Basic Salary': 100000,
+    'Department': 'R&D department', 'Country': 'LK', 'Join Date': '2025-01-15', 'Basic Salary': 100000,
     'Transport Allowance': 5000, 'Performance Salary Probation': 10000,
     'Performance Salary Confirmed': 20000, 'Probation End Date': '2025-07-15',
     'EPF Employee Rate': 8, 'EPF Employer Rate': 12, 'ETF Rate': 3,
@@ -36,7 +36,7 @@ router.get('/template', (_req, res) => {
     'Employee ID': '* Required, Unique', 'EPF Number': 'Optional', 'Full Name': '* Required',
     'Nickname': 'Optional', 'Email': '* Required', 'Phone': 'Optional', 'NIC': 'Optional',
     'Address': 'Optional', 'Basic Information': 'Optional', 'Designation': 'Optional',
-    'Department': 'HR department / R&D department', 'Join Date': 'YYYY-MM-DD', 'Basic Salary': '* Required, Number',
+    'Department': 'HR department / R&D department', 'Country': 'LK / AE, Default: LK', 'Join Date': 'YYYY-MM-DD', 'Basic Salary': '* Required, Number',
     'Transport Allowance': 'Number, Default: 0', 'Performance Salary Probation': 'Number, Default: 0',
     'Performance Salary Confirmed': 'Number, Default: 0', 'Probation End Date': 'YYYY-MM-DD',
     'EPF Employee Rate': 'Number, Default: 8', 'EPF Employer Rate': 'Number, Default: 12', 'ETF Rate': 'Number, Default: 3',
