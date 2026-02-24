@@ -241,7 +241,7 @@ export default function Transactions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{t('totalIncome')}</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-green-600 whitespace-nowrap">
                 {getCurrencySymbol(displayCurrency)} {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -253,7 +253,7 @@ export default function Transactions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{t('totalExpenses')}</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-red-600 whitespace-nowrap">
                 {getCurrencySymbol(displayCurrency)} {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -265,7 +265,7 @@ export default function Transactions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{t('totalPayroll')}</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-red-600 whitespace-nowrap">
                 {getCurrencySymbol(displayCurrency)} {totalPayroll.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -277,7 +277,7 @@ export default function Transactions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{t('netBalance')}</p>
-              <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-2xl font-bold whitespace-nowrap ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {getCurrencySymbol(displayCurrency)} {balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
