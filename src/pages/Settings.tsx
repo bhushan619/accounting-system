@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useBranding } from "../contexts/BrandingContext";
 import axios from "axios";
+import { invalidateDefaultCurrency } from "../hooks/useDefaultCurrency";
 import {
   User,
   Lock,
@@ -335,6 +336,7 @@ export default function Settings() {
       setCurrencySettings(syncedCurrency);
 
       showMessage("success", "Company settings saved successfully");
+      invalidateDefaultCurrency(); // Clear cached default currency
       await refreshBranding(); // Apply new branding instantly
     } catch (error: any) {
       showMessage("error", error.response?.data?.error || "Failed to save company settings");

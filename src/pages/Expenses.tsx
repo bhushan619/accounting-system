@@ -5,6 +5,7 @@ import { Plus, Trash2, Receipt, Upload, FileDown, Eye, Search, X, Download, Refr
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
+import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 
 interface ImportResult { created: number; skipped: number; errors: string[] }
 
@@ -35,6 +36,7 @@ export default function Expenses() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const isAdmin = user?.role === 'admin';
+  const defaultCurrency = useDefaultCurrency();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -50,7 +52,7 @@ export default function Expenses() {
     category: '',
     description: '',
     amount: 0,
-    currency: 'LKR',
+    currency: defaultCurrency,
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash',
     bank: '',
@@ -340,7 +342,7 @@ export default function Expenses() {
       category: '',
       description: '',
       amount: 0,
-      currency: 'LKR',
+      currency: defaultCurrency,
       date: new Date().toISOString().split('T')[0],
       paymentMethod: 'cash',
       bank: '',
@@ -695,7 +697,7 @@ export default function Expenses() {
                   <label className="block text-sm font-medium mb-1 text-foreground">Currency</label>
                   <select
                     value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value as typeof defaultCurrency })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     <option value="LKR">LKR</option>

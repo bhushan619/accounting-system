@@ -4,6 +4,7 @@ import { CurrencySymbolDisplay } from "../utils/FormattedCurrency";
 import { Download, Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useDefaultCurrency } from "../hooks/useDefaultCurrency";
 
 interface CurrencySettings {
   exchangeRates: { LKR_AED: number; AED_LKR: number; LKR_CNY: number; CNY_LKR: number };
@@ -21,8 +22,12 @@ export default function EnhancedReports() {
   const [profitLossData, setProfitLossData] = useState<any>(null);
   const [expensesData, setExpensesData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<"LKR" | "AED" | "CNY">("LKR");
+  const defaultCurrency = useDefaultCurrency();
+  const [displayCurrency, setDisplayCurrency] = useState<"LKR" | "AED" | "CNY">(defaultCurrency);
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
+
+  // Sync displayCurrency when default loads from settings
+  useEffect(() => { setDisplayCurrency(defaultCurrency); }, [defaultCurrency]);
 
   useEffect(() => {
     loadCurrencySettings();

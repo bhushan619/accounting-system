@@ -4,6 +4,7 @@ import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import jsPDF from 'jspdf';
+import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { 
   User, FileText, Download, Edit, Check, X, Clock, 
   Phone, Mail, MapPin, CreditCard, Receipt, Plus, Trash2, Upload
@@ -80,6 +81,7 @@ const CLAIM_CATEGORIES = [
 export default function EmployeePortal() {
   useAuth();
   const { t } = useLanguage();
+  const defaultCurrency = useDefaultCurrency();
   const [activeTab, setActiveTab] = useState<'profile' | 'payslips' | 'requests' | 'expenses'>('profile');
   const [profile, setProfile] = useState<Employee | null>(null);
   const [payslips, setPayslips] = useState<Payslip[]>([]);
@@ -96,7 +98,7 @@ export default function EmployeePortal() {
     category: 'Travel',
     description: '',
     amount: '',
-    currency: 'LKR',
+    currency: defaultCurrency,
     date: new Date().toISOString().split('T')[0]
   });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -325,7 +327,7 @@ export default function EmployeePortal() {
 
       alert('Expense claim submitted successfully');
       setShowClaimForm(false);
-      setClaimData({ category: 'Travel', description: '', amount: '', currency: 'LKR', date: new Date().toISOString().split('T')[0] });
+      setClaimData({ category: 'Travel', description: '', amount: '', currency: defaultCurrency, date: new Date().toISOString().split('T')[0] });
       setReceiptFile(null);
       fetchData();
     } catch (error: any) {
@@ -657,7 +659,7 @@ export default function EmployeePortal() {
                           <label className="block text-sm font-medium text-foreground mb-1">Currency</label>
                           <select
                             value={claimData.currency}
-                            onChange={(e) => setClaimData({...claimData, currency: e.target.value})}
+                            onChange={(e) => setClaimData({...claimData, currency: e.target.value as typeof defaultCurrency})}
                             className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                           >
                             <option value="LKR">LKR</option>

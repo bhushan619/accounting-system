@@ -6,6 +6,7 @@ import { Plus, Trash2, FileText, Eye, Upload, FileDown, Receipt, Download, Searc
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { usePreventSwipe } from "../hooks/usePreventSwipe";
+import { useDefaultCurrency } from "../hooks/useDefaultCurrency";
 import jsPDF from "jspdf";
 
 interface ImportResult {
@@ -30,6 +31,7 @@ export default function Invoices() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const isAdmin = user?.role === "admin";
+  const defaultCurrency = useDefaultCurrency();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [banks, setBanks] = useState<any[]>([]);
@@ -46,7 +48,7 @@ export default function Invoices() {
     client: "",
     issueDate: new Date().toISOString().split("T")[0],
     dueDate: "",
-    currency: "LKR",
+    currency: defaultCurrency,
     lines: [{ description: "", quantity: 1, unitPrice: 0 }],
     tax: 0,
     discount: 0,
@@ -332,7 +334,7 @@ export default function Invoices() {
       client: "",
       issueDate: new Date().toISOString().split("T")[0],
       dueDate: "",
-      currency: "LKR",
+      currency: defaultCurrency,
       lines: [{ description: "", quantity: 1, unitPrice: 0 }],
       tax: 0,
       discount: 0,
@@ -847,7 +849,7 @@ export default function Invoices() {
                   <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.currency")}</label>
                   <select
                     value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value as typeof defaultCurrency })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     <option value="LKR">LKR</option>

@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Landmark, CreditCard, Loader2, Search, X } from 'lu
 import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePreventSwipe } from '../hooks/usePreventSwipe';
+import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 
 interface Bank {
   _id: string;
@@ -17,6 +18,7 @@ interface Bank {
 
 export default function Banks() {
   const { t } = useLanguage();
+  const defaultCurrency = useDefaultCurrency();
   const [banks, setBanks] = useState<Bank[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -26,7 +28,7 @@ export default function Banks() {
     accountName: '',
     accountNumber: '',
     branch: '',
-    currency: 'LKR',
+    currency: defaultCurrency,
     balance: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,7 +74,7 @@ export default function Banks() {
       accountName: bank.accountName,
       accountNumber: bank.accountNumber,
       branch: bank.branch || '',
-      currency: bank.currency,
+      currency: bank.currency as typeof defaultCurrency,
       balance: bank.balance
     });
     setShowModal(true);
@@ -96,7 +98,7 @@ export default function Banks() {
       accountName: '',
       accountNumber: '',
       branch: '',
-      currency: 'LKR',
+      currency: defaultCurrency,
       balance: 0
     });
   };
