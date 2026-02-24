@@ -531,7 +531,8 @@ export default function Employees() {
       </div>
 
       <div className="bg-card rounded-lg shadow border border-border overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px]">
           <thead className="bg-muted">
             <tr>
               <th className="px-4 py-3 w-10">
@@ -628,19 +629,20 @@ export default function Employees() {
             ))}
           </tbody>
         </table>
+        </div>
         {employees.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">{t('employees.noEmployees')}</div>
         )}
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-2 sm:p-4">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-4 sm:p-6 m-0 sm:m-4 border border-border max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4 text-foreground">
               {editingEmployee ? t('employees.editTitle') : t('employees.addNew')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.employeeId')} *</label>
                   <input
@@ -663,7 +665,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">
                     <span className="flex items-center gap-1">
@@ -740,7 +742,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.phone')}</label>
                   <input
@@ -761,7 +763,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.department')}</label>
                   <select
@@ -807,7 +809,7 @@ export default function Employees() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.joinDate')}</label>
                   <input
@@ -828,7 +830,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('common.status')} *</label>
                   <select
@@ -855,7 +857,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t('employees.basicSalary')} *</label>
                   <input
@@ -879,7 +881,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Performance Salary (Under Probation)</label>
                   <input

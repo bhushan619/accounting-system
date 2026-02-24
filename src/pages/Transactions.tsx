@@ -236,7 +236,7 @@ export default function Transactions() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -310,7 +310,7 @@ export default function Transactions() {
           </div>
 
           {activeTab === 'transactions' && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg ${
@@ -349,7 +349,7 @@ export default function Transactions() {
 
         <div className="overflow-x-auto">
           {activeTab === 'transactions' ? (
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead className="bg-muted">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>
@@ -394,7 +394,7 @@ export default function Transactions() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead className="bg-muted">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('date')}</th>

@@ -243,7 +243,7 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            <div className="ml-auto">
+            <div className="w-full sm:w-auto sm:ml-auto">
               <label className="block text-xs text-muted-foreground mb-1">{t('transactions.displayCurrency') || 'Display Currency'}</label>
               <select
                 value={displayCurrency}

@@ -659,7 +659,8 @@ export default function Invoices() {
       </div>
 
       <div className="bg-card rounded-lg shadow border border-border overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px]">
           <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
@@ -812,6 +813,7 @@ export default function Invoices() {
             ))}
           </tbody>
         </table>
+        </div>
         {filteredInvoices.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             {hasActiveFilters ? t("common.noResults") || "No matching results" : t("invoices.noInvoices")}
@@ -820,11 +822,11 @@ export default function Invoices() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-3xl p-6 m-4 border border-border max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-2 sm:p-4">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-3xl p-4 sm:p-6 m-0 sm:m-4 border border-border max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4 text-foreground">{t("invoices.createNew")}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">{t("invoices.client")}</label>
                   <select
@@ -933,7 +935,7 @@ export default function Invoices() {
                   </label>
                 </div>
                 {formData.isVatApplicable && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-muted-foreground mb-1">VAT Category</label>
                       <select
@@ -951,7 +953,7 @@ export default function Invoices() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Tax (%)</label>
                   <input
@@ -982,7 +984,7 @@ export default function Invoices() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-foreground">Invoice Document</label>
                   <div className="flex items-center gap-2">
@@ -1064,7 +1066,7 @@ export default function Invoices() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-2xl p-6 m-4 border border-border">
             <h2 className="text-xl font-semibold mb-4 text-foreground">Invoice Details</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Invoice Number</p>
                   <p className="font-medium text-foreground">{viewInvoice.serialNumber}</p>
