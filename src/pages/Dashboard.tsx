@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useDefaultCurrency } from "../hooks/useDefaultCurrency";
 import { FormattedCurrency } from "../utils/FormattedCurrency";
 import { useNavigate } from "react-router-dom";
 import {
@@ -26,7 +27,8 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currencySettings, setCurrencySettings] = useState<any>(null);
-  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>('LKR');
+  const defaultCurrency = useDefaultCurrency();
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>(defaultCurrency);
 
   // Date filter state
   const [startDate, setStartDate] = useState(() => {
@@ -38,6 +40,9 @@ export default function Dashboard() {
     return new Date().toISOString().split("T")[0];
   });
   const [filterApplied, setFilterApplied] = useState(false);
+
+  // Sync displayCurrency when default loads from settings
+  useEffect(() => { setDisplayCurrency(defaultCurrency); }, [defaultCurrency]);
 
   useEffect(() => {
     if (!authLoading && token) {

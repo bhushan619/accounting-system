@@ -4,6 +4,7 @@ import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
 import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 
 interface Transaction {
   _id: string;
@@ -48,7 +49,11 @@ export default function Transactions() {
   const [activeTab, setActiveTab] = useState<'transactions' | 'bank'>('transactions');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'payroll'>('all');
   const [currencySettings, setCurrencySettings] = useState<CurrencySettings | null>(null);
-  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>('LKR');
+  const defaultCurrency = useDefaultCurrency();
+  const [displayCurrency, setDisplayCurrency] = useState<'LKR' | 'AED' | 'CNY'>(defaultCurrency);
+
+  // Sync displayCurrency when default loads from settings
+  useEffect(() => { setDisplayCurrency(defaultCurrency); }, [defaultCurrency]);
 
   useEffect(() => {
     if (!authLoading && token) {
@@ -212,6 +217,7 @@ export default function Transactions() {
     .reduce((sum, t) => sum + convertToDisplayCurrency(t.amount, t.currency), 0);
 
   const balance = totalIncome - (totalExpense + totalPayroll);
+
 
 
   const getCurrencySymbol = (currency: string) => <CurrencySymbolDisplay currency={currency} />;
