@@ -283,7 +283,7 @@ export default function Dashboard() {
               )}
             </div>
             <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-            <p className={`text-2xl font-bold ${stat.valueColor}`}>
+            <p className={`text-2xl font-bold whitespace-nowrap ${stat.valueColor}`}>
               <FormattedCurrency amount={convertAmount(stat.value)} currency={displayCurrency} />
             </p>
           </div>
@@ -376,7 +376,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.revenue')}</span>
                   </div>
-                  <span className="font-semibold text-green-600"><FormattedCurrency amount={convertAmount(stats.totalRevenue || 0)} currency={displayCurrency} /></span>
+                  <span className="font-semibold text-green-600 whitespace-nowrap"><FormattedCurrency amount={convertAmount(stats.totalRevenue || 0)} currency={displayCurrency} /></span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
@@ -386,7 +386,7 @@ export default function Dashboard() {
                     </div>
                     <span className="text-sm text-foreground">{t('dashboard.expenses')}</span>
                   </div>
-                  <span className="font-semibold text-red-600"><FormattedCurrency amount={convertAmount(stats.totalExpenses || 0)} currency={displayCurrency} /></span>
+                  <span className="font-semibold text-red-600 whitespace-nowrap"><FormattedCurrency amount={convertAmount(stats.totalExpenses || 0)} currency={displayCurrency} /></span>
                 </div>
 
                 {isAdmin && (
@@ -397,7 +397,7 @@ export default function Dashboard() {
                       </div>
                       <span className="text-sm text-foreground">{t('dashboard.payroll')}</span>
                     </div>
-                    <span className="font-semibold text-orange-600">
+                    <span className="font-semibold text-orange-600 whitespace-nowrap">
                       <FormattedCurrency amount={convertAmount(stats.totalPayroll || 0)} currency={displayCurrency} />
                     </span>
                   </div>
@@ -411,7 +411,7 @@ export default function Dashboard() {
                       </div>
                       <span className="text-sm font-medium text-foreground">{t('dashboard.netProfit')}</span>
                     </div>
-                    <span className={`font-bold text-lg ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
+                    <span className={`font-bold text-lg whitespace-nowrap ${(stats.profit || 0) >= 0 ? "text-primary" : "text-red-600"}`}>
                       <FormattedCurrency amount={convertAmount(stats.profit || 0)} currency={displayCurrency} />
                     </span>
                   </div>
