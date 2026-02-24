@@ -16,6 +16,11 @@ const EmployeeSchema = new Schema({
     enum: ['HR department', 'R&D department', ''],
     default: ''
   },
+  country: { 
+    type: String, 
+    enum: ['LK', 'AE'],
+    default: 'LK'
+  },
   joinDate: { type: Date, default: Date.now },
   basicSalary: { type: Number, required: true },
   transportAllowance: { type: Number, default: 0 }, // Renamed from allowances

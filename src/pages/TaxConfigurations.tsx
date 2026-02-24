@@ -13,7 +13,8 @@ interface TaxBracket {
 interface TaxConfig {
   _id: string;
   name: string;
-  taxType: 'apit' | 'epf_employee' | 'epf_employer' | 'etf' | 'stamp_fee' | 'vat' | 'income' | 'withholding';
+  country?: string;
+  taxType: 'apit' | 'epf_employee' | 'epf_employer' | 'etf' | 'stamp_fee' | 'vat' | 'income' | 'withholding' | 'gpssa_employee' | 'gpssa_employer' | 'gratuity';
   rate?: number;
   brackets?: TaxBracket[];
   applicableFrom: string;
@@ -30,6 +31,7 @@ export default function TaxConfigurations() {
   const [seeding, setSeeding] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    country: 'LK',
     taxType: 'epf_employee' as TaxConfig['taxType'],
     rate: 0,
     applicableFrom: new Date().toISOString().split('T')[0],
@@ -55,7 +57,7 @@ export default function TaxConfigurations() {
   };
 
   const handleSeed = async () => {
-    if (!confirm('This will create default Sri Lankan tax configurations. Continue?')) return;
+    if (!confirm('This will create default tax configurations for Sri Lanka and UAE. Continue?')) return;
     setSeeding(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/taxconfig/seed`);
@@ -95,6 +97,7 @@ export default function TaxConfigurations() {
     setEditingConfig(config);
     setFormData({
       name: config.name,
+      country: config.country || 'LK',
       taxType: config.taxType,
       rate: config.rate || 0,
       applicableFrom: config.applicableFrom.split('T')[0],
@@ -118,6 +121,7 @@ export default function TaxConfigurations() {
   const resetForm = () => {
     setFormData({
       name: '',
+      country: 'LK',
       taxType: 'epf_employee',
       rate: 0,
       applicableFrom: new Date().toISOString().split('T')[0],
@@ -137,9 +141,16 @@ export default function TaxConfigurations() {
       'stamp_fee': 'Stamp Fee',
       'vat': 'VAT',
       'income': 'Income Tax',
-      'withholding': 'Withholding Tax'
+      'withholding': 'Withholding Tax',
+      'gpssa_employee': 'GPSSA Employee',
+      'gpssa_employer': 'GPSSA Employer',
+      'gratuity': 'Gratuity (EOSB)'
     };
     return types[type] || type;
+  };
+
+  const formatCountry = (country?: string) => {
+    return country === 'AE' ? '🇦🇪 UAE' : '🇱🇰 Sri Lanka';
   };
 
   if (loading) return <div className="text-foreground">{t('common.loading')}</div>;
@@ -177,6 +188,7 @@ export default function TaxConfigurations() {
           <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('common.name')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Country</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.type')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.from')}</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('taxConfig.to')}</th>
@@ -188,6 +200,7 @@ export default function TaxConfigurations() {
             {configs.map((config) => (
               <tr key={config._id} className="hover:bg-accent/50">
                 <td className="px-6 py-4 text-sm text-foreground">{config.name}</td>
+                <td className="px-6 py-4 text-sm text-foreground">{formatCountry(config.country)}</td>
                 <td className="px-6 py-4 text-sm text-foreground">{formatTaxType(config.taxType)}</td>
                 <td className="px-6 py-4 text-sm text-foreground">
                   {new Date(config.applicableFrom).toLocaleDateString()}
@@ -241,6 +254,17 @@ export default function TaxConfigurations() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Country</label>
+                <select
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                >
+                  <option value="LK">🇱🇰 Sri Lanka</option>
+                  <option value="AE">🇦🇪 UAE</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-foreground mb-1">{t('taxConfig.taxType')}</label>
                 <select
                   value={formData.taxType}
@@ -248,10 +272,21 @@ export default function TaxConfigurations() {
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   disabled={!!editingConfig && editingConfig.taxType === 'apit'}
                 >
-                  <option value="epf_employee">EPF Employee</option>
-                  <option value="epf_employer">EPF Employer</option>
-                  <option value="etf">ETF</option>
-                  <option value="stamp_fee">Stamp Fee</option>
+                  {formData.country === 'LK' ? (
+                    <>
+                      <option value="epf_employee">EPF Employee</option>
+                      <option value="epf_employer">EPF Employer</option>
+                      <option value="etf">ETF</option>
+                      <option value="stamp_fee">Stamp Fee</option>
+                      <option value="apit">APIT</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="gpssa_employee">GPSSA Employee</option>
+                      <option value="gpssa_employer">GPSSA Employer</option>
+                      <option value="gratuity">Gratuity (EOSB)</option>
+                    </>
+                  )}
                   <option value="vat">VAT</option>
                   <option value="income">Income Tax</option>
                   <option value="withholding">Withholding Tax</option>

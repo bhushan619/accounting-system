@@ -8,7 +8,8 @@ const TaxBracketSchema = new Schema({
 
 const TaxConfigSchema = new Schema({
   name: { type: String, required: true },
-  taxType: { type: String, enum: ['apit', 'epf_employee', 'epf_employer', 'etf', 'stamp_fee', 'vat', 'income', 'withholding'], required: true },
+  country: { type: String, enum: ['LK', 'AE'], default: 'LK' },
+  taxType: { type: String, enum: ['apit', 'epf_employee', 'epf_employer', 'etf', 'stamp_fee', 'vat', 'income', 'withholding', 'gpssa_employee', 'gpssa_employer', 'gratuity'], required: true },
   rate: { type: Number }, // For simple rates like EPF, ETF, Stamp Fee
   brackets: [TaxBracketSchema], // For progressive rates like APIT
   applicableFrom: { type: Date, required: true },
