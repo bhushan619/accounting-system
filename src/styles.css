@@ -275,11 +275,11 @@
   
   /* Modal Styles */
   .modal-overlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4;
   }
   
   .modal-content {
-    @apply bg-card rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto;
+    @apply bg-card rounded-2xl shadow-xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto;
   }
   
   .modal-header {
