@@ -213,13 +213,6 @@ export default function Transactions() {
 
   const balance = totalIncome - (totalExpense + totalPayroll);
 
-  const getConvertedAmount = (amount: number, currency: string) => {
-    if (!currencySettings) return null;
-    if (currency === 'LKR') {
-      return { amount: amount * currencySettings.exchangeRates.LKR_AED, currency: 'AED' };
-    }
-    return { amount: amount * currencySettings.exchangeRates.AED_LKR, currency: 'LKR' };
-  };
 
   const getCurrencySymbol = (currency: string) => <CurrencySymbolDisplay currency={currency} />;
 
@@ -249,7 +242,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('totalIncome')}</p>
               <p className="text-2xl font-bold text-green-600">
-                {getCurrencySymbol(displayCurrency)} {totalIncome.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {getCurrencySymbol(displayCurrency)} {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowUpRight className="text-green-600" size={32} />
@@ -261,7 +254,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('totalExpenses')}</p>
               <p className="text-2xl font-bold text-red-600">
-                {getCurrencySymbol(displayCurrency)} {totalExpense.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {getCurrencySymbol(displayCurrency)} {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowDownRight className="text-red-600" size={32} />
@@ -273,7 +266,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('totalPayroll')}</p>
               <p className="text-2xl font-bold text-red-600">
-                {getCurrencySymbol(displayCurrency)} {totalPayroll.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {getCurrencySymbol(displayCurrency)} {totalPayroll.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <ArrowDownRight className="text-red-600" size={32} />
@@ -285,7 +278,7 @@ export default function Transactions() {
             <div>
               <p className="text-sm text-muted-foreground">{t('netBalance')}</p>
               <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {getCurrencySymbol(displayCurrency)} {balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {getCurrencySymbol(displayCurrency)} {balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <Wallet className={balance >= 0 ? 'text-green-600' : 'text-red-600'} size={32} />
@@ -392,14 +385,9 @@ export default function Transactions() {
                     <td className={`px-6 py-4 text-sm text-right ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      <div className="font-medium">
-                        {transaction.type === 'income' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString()}
-                      </div>
-                      {currencySettings && (
-                        <div className="text-xs text-muted-foreground">
-                          ≈ {getCurrencySymbol(getConvertedAmount(transaction.amount, transaction.currency)?.currency || '')} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        </div>
-                      )}
+                      <span className="font-medium whitespace-nowrap">
+                        {transaction.type === 'income' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -450,14 +438,9 @@ export default function Transactions() {
                     <td className={`px-6 py-4 text-sm text-right ${
                       transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      <div className="font-medium">
-                        {transaction.type === 'credit' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString()}
-                      </div>
-                      {currencySettings && (
-                        <div className="text-xs text-muted-foreground">
-                          ≈ {getCurrencySymbol(getConvertedAmount(transaction.amount, transaction.currency)?.currency || '')} {getConvertedAmount(transaction.amount, transaction.currency)?.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        </div>
-                      )}
+                      <span className="font-medium whitespace-nowrap">
+                        {transaction.type === 'credit' ? '+' : '-'} {getCurrencySymbol(transaction.currency)} {transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </td>
                   </tr>
                 ))}
