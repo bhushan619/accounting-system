@@ -188,7 +188,7 @@ export default function Banks() {
                   <td className="text-muted-foreground">{bank.branch || '-'}</td>
                   <td className="text-right">
                     <span className={`font-semibold ${bank.balance > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                      <CurrencySymbolDisplay currency={bank.currency} /> {bank.balance.toLocaleString()}
+                      <CurrencySymbolDisplay currency={bank.currency} /> {bank.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </td>
                   <td className="text-right">
