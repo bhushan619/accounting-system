@@ -238,7 +238,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         : performanceSalary;     // Normal or in-month deficit: use calculated performance
       
       const transportAllowance = employee.transportAllowance || 0;
-      const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitSalary;
+      const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       // Calculate attendance deduction from uploaded attendance data
       const attendance = attendanceMap.get(employee.employeeId);
@@ -453,9 +453,8 @@ router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'),
       const includeDeficitInPayroll = empData?.includeDeficitInPayroll || false;
       const deficitDetails = empData?.deficitDetails || '';
       
-      // Calculate gross salary - include deficit if flag is set
-      const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
-      const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount;
+      // Calculate gross salary - deficit is already included in prorated performanceSalary
+      const grossSalary = basicSalary + performanceSalary + transportAllowance;
       
       const isUAE = employee.country === 'AE';
       

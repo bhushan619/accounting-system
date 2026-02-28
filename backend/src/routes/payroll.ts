@@ -194,9 +194,8 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
       ? confirmedPerf  // Carry-forward: use only current month confirmed rate
       : finalPerformanceSalary;  // Normal or in-month deficit: use calculated performance
     
-    // Include carry-forward deficit in gross salary
-    const deficitAmount = (carryForward && deficitSalary > 0) ? deficitSalary : 0;
-    const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance + deficitAmount;
+    // Deficit is already included in prorated performanceSalary - no separate addition needed
+    const grossSalary = basicSalary + finalPerformanceSalary + transportAllowance;
     
     // Use rates from TaxConfig, fall back to employee-specific rates if set
     const epfEmployeeRate = employee.epfEmployeeRate || taxRates.epfEmployee;
