@@ -533,7 +533,7 @@ export default function Payroll() {
     newDeductionReason: string = entry.deductionReason,
     newAttendedDays: number = entry.attendedDays,
     newAbsentDays: number = entry.absentDays,
-    newIncludeDeficit: boolean = entry.includeDeficitInPayroll,
+    newIncludeDeficit: boolean = entry.includeDeficitInPayroll ?? false,
   ): PayrollPreview => {
     if (!taxRates) return entry;
 
@@ -574,7 +574,7 @@ export default function Payroll() {
         attendedDays, absentDays, attendanceDeduction, grossSalary,
         epfEmployee: 0, epfEmployer: 0, etf: 0, apit: 0, stampFee: 0,
         totalDeductions: deductions, netSalary, totalCTC: grossSalary,
-        includeDeficitInPayroll: entry.includeDeficitInPayroll,
+        includeDeficitInPayroll: newIncludeDeficit,
       };
     }
 
@@ -618,7 +618,7 @@ export default function Payroll() {
       totalDeductions: deductions,
       netSalary,
       totalCTC: ctc,
-      includeDeficitInPayroll: entry.includeDeficitInPayroll,
+      includeDeficitInPayroll: newIncludeDeficit,
     };
   };
 
@@ -732,15 +732,22 @@ export default function Payroll() {
         employeeIds: selectedEmployees,
         attendanceData: attendanceData,
       });
-      // Add deduction fields to preview data - attendance deductions now calculated by backend
+      // Add deduction fields to preview data - deficit checkbox unchecked by default
       const dataWithExtras = response.data.map((entry: PayrollPreview) => {
-      return {
+        const hasDeficit = !!entry.deficitDetails;
+        const baseEntry = {
           ...entry,
           deductionAmount: 0,
           deductionReason: "",
           cashPayment: 0,
           originalPerformanceSalary: entry.performanceSalary,
+          includeDeficitInPayroll: false,
         };
+        // If deficit exists, recalculate with performanceSalary=0 (unchecked default)
+        if (hasDeficit && taxRates) {
+          return recalculatePayroll(baseEntry, 0, entry.transportAllowance);
+        }
+        return baseEntry;
       });
 
       setPreviewData(dataWithExtras);
