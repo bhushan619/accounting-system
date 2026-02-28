@@ -332,7 +332,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
         workingDays,
         deficitSalary,
         deficitDetails,
-        includeDeficitInPayroll: deficitSalary > 0
+        includeDeficitInPayroll: false
       });
     }
     
