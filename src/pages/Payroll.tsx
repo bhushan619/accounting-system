@@ -42,6 +42,7 @@ interface Employee {
   status: string;
   apitScenario?: string;
   closeDate?: string;
+  joinDate?: string;
   country?: string;
 }
 
@@ -289,8 +290,14 @@ export default function Payroll() {
   };
 
   const downloadAttendanceTemplate = () => {
-    // Create sample data with all active employees including leave types
-    const templateData = employees.map((emp) => ({
+    // Filter employees who joined on or before the selected payroll month
+    const payrollMonthEnd = new Date(formData.year, formData.month, 0, 23, 59, 59, 999);
+    const eligibleEmployees = employees.filter((emp) => {
+      if (!emp.joinDate) return true;
+      return new Date(emp.joinDate) <= payrollMonthEnd;
+    });
+    // Create sample data with eligible employees including leave types
+    const templateData = eligibleEmployees.map((emp) => ({
       "Employee ID": emp.employeeId,
       "Employee Name": emp.fullName,
       "Working Days": workingDaysInMonth,
@@ -1170,13 +1177,7 @@ export default function Payroll() {
   };
 
   const selectAll = () => {
-    const filtered = employees.filter(
-      (emp) =>
-        (emp.nickname || emp.fullName).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-    setSelectedEmployees(filtered.map((e) => e._id));
+    setSelectedEmployees(filteredEmployees.map((e) => e._id));
   };
 
   const deselectAll = () => {
@@ -1308,11 +1309,19 @@ export default function Payroll() {
     }
   };
 
+  // Filter employees: must have joined on or before the selected payroll month, plus search query
+  const payrollMonthEnd = new Date(formData.year, formData.month, 0, 23, 59, 59, 999);
   const filteredEmployees = employees.filter(
-    (emp) =>
-      (emp.nickname || emp.fullName).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()),
+    (emp) => {
+      // Filter by join date - only include employees who joined on or before the payroll month
+      if (emp.joinDate && new Date(emp.joinDate) > payrollMonthEnd) return false;
+      // Filter by search query
+      return (
+        (emp.nickname || emp.fullName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    },
   );
 
   if (loading) return (
