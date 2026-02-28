@@ -545,8 +545,6 @@ export default function Payroll() {
     const attendedDays = newAttendedDays;
     const absentDays = newAbsentDays;
     const workingDays = entry.workingDays || workingDaysInMonth;
-    const deficitSalary = entry.deficitSalary || 0;
-    const includeDeficitInPayroll = newIncludeDeficit;
     const isUAE = entry.employee.country === 'AE';
 
     // Attendance deduction: during probation ALL leaves are unpaid
@@ -562,10 +560,9 @@ export default function Payroll() {
     }
     const attendanceDeduction = Math.round(perDaySalary * deductibleDays * 100) / 100;
 
-    // Include deficit salary if checkbox is checked
-    const deficitAmount = includeDeficitInPayroll ? deficitSalary : 0;
+    // Deficit is already included in prorated performanceSalary
     const cashPayment = entry.cashPayment || 0;
-    const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitAmount - cashPayment;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance - cashPayment;
 
     // UAE employees: no EPF/ETF/APIT/stamp fee
     if (isUAE) {
@@ -577,7 +574,7 @@ export default function Payroll() {
         attendedDays, absentDays, attendanceDeduction, grossSalary,
         epfEmployee: 0, epfEmployer: 0, etf: 0, apit: 0, stampFee: 0,
         totalDeductions: deductions, netSalary, totalCTC: grossSalary,
-        includeDeficitInPayroll,
+        includeDeficitInPayroll: entry.includeDeficitInPayroll,
       };
     }
 
@@ -621,7 +618,7 @@ export default function Payroll() {
       totalDeductions: deductions,
       netSalary,
       totalCTC: ctc,
-      includeDeficitInPayroll,
+      includeDeficitInPayroll: entry.includeDeficitInPayroll,
     };
   };
 
@@ -1044,13 +1041,11 @@ export default function Payroll() {
     const performanceSalary = newPerformanceSalary;
     const transportAllowance = newTransportAllowance;
     const deductionAmount = newDeductionAmount;
-    const deficitSalary = entry.deficitSalary;
-    const includeDeficitInPayroll = newIncludeDeficit !== undefined ? newIncludeDeficit : entry.includeDeficitInPayroll;
     
-    // Include deficit in gross if enabled
-    const deficitToInclude = includeDeficitInPayroll ? deficitSalary : 0;
+    
+    // Deficit is already included in prorated performanceSalary
     const cashPayment = entry.cashPayment || 0;
-    const grossSalary = basicSalary + performanceSalary + transportAllowance + deficitToInclude - cashPayment;
+    const grossSalary = basicSalary + performanceSalary + transportAllowance - cashPayment;
 
     // EPF and ETF calculated on (Basic + Current Month Performance) - excludes carry-forward deficit
     const currentMonthPerf = (entry.deficitDetails && entry.deficitSalary === 0) 
@@ -1077,8 +1072,8 @@ export default function Payroll() {
       performanceSalary,
       transportAllowance,
       deductionAmount,
-      deficitSalary,
-      includeDeficitInPayroll,
+      deficitSalary: entry.deficitSalary,
+      includeDeficitInPayroll: entry.includeDeficitInPayroll,
       grossSalary,
       epfEmployee,
       epfEmployer,
@@ -2056,7 +2051,7 @@ export default function Payroll() {
                         <span className="font-semibold">Gross Salary:</span>
                         <span className="font-bold">Rs. {previewData.reduce((sum, e) => sum + e.grossSalary, 0).toLocaleString()}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground italic">Basic + Performance + Transport + Deficit − Cash Payment</p>
+                      <p className="text-[10px] text-muted-foreground italic">Basic + Performance + Transport − Cash Payment</p>
                     </div>
                   </div>
                 </div>
@@ -3030,10 +3025,7 @@ export default function Payroll() {
                       <span>Transport Allowance:</span>
                       <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + e.transportAllowance, 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-green-700">
-                      <span>Deficit Salary (Included):</span>
-                      <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.includeDeficitInPayroll ? (e.deficitSalary || 0) : 0), 0).toLocaleString()}</span>
-                    </div>
+                    
                     <div className="flex justify-between text-emerald-700">
                       <span>Less: Cash Payment:</span>
                       <span className="font-medium">Rs. {editData.reduce((sum, e) => sum + (e.cashPayment || 0), 0).toLocaleString()}</span>
