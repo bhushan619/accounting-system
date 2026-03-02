@@ -295,8 +295,8 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
       }
       
       const deductions = epfEmployee + apitDeduction + stampFee + attendanceDeduction;
-      const netSalary = grossSalary - deductions;
-      const ctc = isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost;
+      const netSalary = Math.round(grossSalary - deductions);
+      const ctc = Math.round(isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost);
       
       previewData.push({
         employee: {
@@ -485,8 +485,8 @@ router.post('/generate', requirePayrollAccess, idempotent(), auditLog('create', 
       }
       
       const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
-      const netSalary = grossSalary - deductions;
-      const ctc = isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost;
+      const netSalary = Math.round(grossSalary - deductions);
+      const ctc = Math.round(isUAE ? grossSalary : grossSalary + epfEmployer + etf + apitEmployerCost);
       
       const payroll = await Payroll.create({
         serialNumber,
@@ -603,9 +603,9 @@ router.put('/:id/entries', requirePayrollAccess, auditLog('update', 'payrollrun'
       // Scenario A: Employee pays APIT, Scenario B: Employer pays
       const apitDeduction = apitScenario === 'employee' ? apit : 0;
       const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
-      const netSalary = grossSalary - deductions;
+      const netSalary = Math.round(grossSalary - deductions);
       const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
-      const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
+      const ctc = Math.round(grossSalary + epfEmployer + etf + apitEmployerCost);
       
       await Payroll.findByIdAndUpdate(entryData._id, {
         performanceSalary,
