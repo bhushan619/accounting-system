@@ -217,9 +217,9 @@ router.post('/calculate', validateRequest(payrollCalculateSchema), async (req: a
     // Scenario B: Employer pays APIT - added to employer costs
     const apitDeduction = apitScenario === 'employee' ? apit : 0;
     const totalDeductions = epfEmployee + apitDeduction + stampFee;
-    const netSalary = grossSalary - totalDeductions;
+    const netSalary = Math.round(grossSalary - totalDeductions);
     const apitEmployerCost = apitScenario === 'employer' ? apit : 0;
-    const totalCTC = grossSalary + epfEmployer + etf + apitEmployerCost;
+    const totalCTC = Math.round(grossSalary + epfEmployer + etf + apitEmployerCost);
     
     res.json({
       basicSalary,
