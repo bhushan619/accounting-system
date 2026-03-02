@@ -5,6 +5,7 @@ import Employee from '../models/Employee';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import { idempotent } from '../middleware/idempotency';
 import { getActiveTaxRates, calculateAPIT } from '../services/taxService';
 
 const router = express.Router();
@@ -343,7 +344,7 @@ router.post('/preview', requirePayrollAccess, async (req: any, res) => {
   }
 });
 
-router.post('/generate', requirePayrollAccess, auditLog('create', 'payrollrun'), async (req: any, res) => {
+router.post('/generate', requirePayrollAccess, idempotent(), auditLog('create', 'payrollrun'), async (req: any, res) => {
   try {
     const { month, year, employeeIds, employeeData } = req.body;
     

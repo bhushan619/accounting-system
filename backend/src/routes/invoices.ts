@@ -8,6 +8,7 @@ import { validateRequest } from '../middleware/validateRequest';
 import { createInvoiceSchema } from '../validation/invoice';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import { idempotent } from '../middleware/idempotency';
 import fs from 'fs';
 import path from 'path';
 import config from '../config';
@@ -210,7 +211,7 @@ router.get('/:id', async (req, res) => {
   res.json(invoice);
 });
 
-router.post('/', validateRequest(createInvoiceSchema), auditLog('create', 'invoice'), async (req: any, res) => {
+router.post('/', idempotent(), validateRequest(createInvoiceSchema), auditLog('create', 'invoice'), async (req: any, res) => {
   const { lines, tax, discount, ...rest } = req.body;
   
   const subtotal = lines.reduce((sum: number, line: any) => 

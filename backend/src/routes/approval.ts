@@ -5,6 +5,7 @@ import ProfileUpdateRequest from '../models/ProfileUpdateRequest';
 import Employee from '../models/Employee';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { auditLog } from '../middleware/auditLog';
+import { idempotent } from '../middleware/idempotency';
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.get('/pending', requireRole(['admin']), async (req: any, res) => {
 });
 
 // Approve invoice (admin only)
-router.post('/invoices/:id/approve', requireRole(['admin']), auditLog('approve', 'invoice'), async (req: any, res) => {
+router.post('/invoices/:id/approve', requireRole(['admin']), idempotent(), auditLog('approve', 'invoice'), async (req: any, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
   
@@ -68,7 +69,7 @@ router.post('/invoices/:id/reject', requireRole(['admin']), auditLog('reject', '
 });
 
 // Approve expense (admin only)
-router.post('/expenses/:id/approve', requireRole(['admin']), auditLog('approve', 'expense'), async (req: any, res) => {
+router.post('/expenses/:id/approve', requireRole(['admin']), idempotent(), auditLog('approve', 'expense'), async (req: any, res) => {
   const { bankId } = req.body;
   const expense = await Expense.findById(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Expense not found' });

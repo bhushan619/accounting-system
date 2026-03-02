@@ -4,6 +4,7 @@ import Invoice from '../models/Invoice';
 import { requireAuth } from '../middleware/auth';
 import { auditLog } from '../middleware/auditLog';
 import { getNextSequence } from '../services/counterService';
+import { idempotent } from '../middleware/idempotency';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/:id', async (req, res) => {
   res.json(bank);
 });
 
-router.post('/', auditLog('create', 'bank'), async (req, res) => {
+router.post('/', idempotent(), auditLog('create', 'bank'), async (req, res) => {
   const bank = await Bank.create(req.body);
   
   // If bank has initial balance, create an income transaction
