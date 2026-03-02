@@ -574,13 +574,13 @@ export default function Payroll() {
     // UAE employees: no EPF/ETF/APIT/stamp fee
     if (isUAE) {
       const deductions = deductionAmount + attendanceDeduction;
-      const netSalary = grossSalary - deductions;
+      const netSalary = Math.round(grossSalary - deductions);
       return {
         ...entry,
         performanceSalary, transportAllowance, deductionAmount, deductionReason,
         attendedDays, absentDays, attendanceDeduction, grossSalary,
         epfEmployee: 0, epfEmployer: 0, etf: 0, apit: 0, stampFee: 0,
-        totalDeductions: deductions, netSalary, totalCTC: grossSalary,
+        totalDeductions: deductions, netSalary, totalCTC: Math.round(grossSalary),
         includeDeficitInPayroll: newIncludeDeficit,
       };
     }
@@ -603,9 +603,9 @@ export default function Payroll() {
     // Scenario A: deduct from salary; Scenario B: employer cost
     const apitDeduction = apitScenario === "employee" ? apit : 0;
     const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount + attendanceDeduction;
-    const netSalary = grossSalary - deductions;
+    const netSalary = Math.round(grossSalary - deductions);
     const apitEmployerCost = apitScenario === "employer" ? apit : 0;
-    const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
+    const ctc = Math.round(grossSalary + epfEmployer + etf + apitEmployerCost);
 
     return {
       ...entry,
@@ -1077,9 +1077,9 @@ export default function Payroll() {
 
     const apitDeduction = apitScenario === "employee" ? apit : 0;
     const deductions = epfEmployee + apitDeduction + stampFee + deductionAmount;
-    const netSalary = grossSalary - deductions;
+    const netSalary = Math.round(grossSalary - deductions);
     const apitEmployerCost = apitScenario === "employer" ? apit : 0;
-    const ctc = grossSalary + epfEmployer + etf + apitEmployerCost;
+    const ctc = Math.round(grossSalary + epfEmployer + etf + apitEmployerCost);
 
     return {
       ...entry,
