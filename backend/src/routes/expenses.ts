@@ -6,6 +6,7 @@ import Vendor from '../models/Vendor';
 import { requireAuth } from '../middleware/auth';
 import { getNextSequence } from '../services/counterService';
 import { auditLog } from '../middleware/auditLog';
+import { idempotent } from '../middleware/idempotency';
 import fs from 'fs';
 import path from 'path';
 import config from '../config';
@@ -201,7 +202,7 @@ router.get('/:id', async (req, res) => {
   res.json(expense);
 });
 
-router.post('/', auditLog('create', 'expense'), async (req: any, res) => {
+router.post('/', idempotent(), auditLog('create', 'expense'), async (req: any, res) => {
   const serialNumber = await getNextSequence('expense', 'EXP');
   
   // Admin-created expenses are auto-approved, others need approval

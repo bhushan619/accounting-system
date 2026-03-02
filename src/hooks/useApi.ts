@@ -103,14 +103,25 @@ export function useApi<T>(
   return { data, loading, error, refetch };
 }
 
-/** Imperatively fetch (for mutations / one-off calls). */
+/** Generate a unique idempotency key (UUID v4). */
+export function generateIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+/** Imperatively fetch (for mutations / one-off calls).
+ *  Pass `idempotencyKey` to prevent duplicate mutations on retry / double-click. */
 export async function apiFetch<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
-  body?: unknown
+  body?: unknown,
+  options?: { idempotencyKey?: string }
 ): Promise<T> {
   const url = `${BASE_URL}${path}`;
-  const response = await axios({ method, url, data: body });
+  const headers: Record<string, string> = {};
+  if (options?.idempotencyKey) {
+    headers['Idempotency-Key'] = options.idempotencyKey;
+  }
+  const response = await axios({ method, url, data: body, headers });
   return response.data as T;
 }
 
