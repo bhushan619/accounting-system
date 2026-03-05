@@ -9,11 +9,14 @@ const router = express.Router();
 router.use(requireAuth);
 
 router.get('/invoices/csv', async (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
   const invoices = await Invoice.find().populate('client').lean();
   
-  let csv = 'Serial,Client,Issue Date,Due Date,Subtotal,Tax,Discount,Total,Status\n';
+  let csv = 'Serial,Client,Issue Date,Due Date,Currency,Subtotal,Tax,VAT Amount,VAT Rate,Discount,Total,Status,Approval Status,Attachment URL,Receipt URL\n';
   invoices.forEach(inv => {
-    csv += `${inv.serialNumber},"${(inv.client as any)?.name}",${inv.issueDate},${inv.dueDate || ''},${inv.subtotal},${inv.tax},${inv.discount},${inv.total},${inv.status}\n`;
+    const attachmentUrl = inv.attachmentUrl ? `${baseUrl}${inv.attachmentUrl}` : '';
+    const receiptUrl = inv.receiptUrl ? `${baseUrl}${inv.receiptUrl}` : '';
+    csv += `${inv.serialNumber},"${(inv.client as any)?.name || ''}",${inv.issueDate},${inv.dueDate || ''},${inv.currency || 'LKR'},${inv.subtotal},${inv.tax},${inv.vatAmount || 0},${inv.vatRate || 0},${inv.discount},${inv.total},${inv.status},${inv.approvalStatus},"${attachmentUrl}","${receiptUrl}"\n`;
   });
   
   res.setHeader('Content-Type', 'text/csv');
@@ -22,11 +25,14 @@ router.get('/invoices/csv', async (req, res) => {
 });
 
 router.get('/expenses/csv', async (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
   const expenses = await Expense.find().populate('vendor').lean();
   
-  let csv = 'Serial,Vendor,Category,Description,Amount,Date,Payment Method,Status\n';
+  let csv = 'Serial,Vendor,Category,Description,Amount,Currency,Date,Payment Method,VAT Amount,VAT Rate,Status,Approval Status,Bill URL,Receipt URL\n';
   expenses.forEach(exp => {
-    csv += `${exp.serialNumber},"${(exp.vendor as any)?.name || ''}",${exp.category},"${exp.description}",${exp.amount},${exp.date},${exp.paymentMethod},${exp.status}\n`;
+    const billUrl = exp.billUrl ? `${baseUrl}${exp.billUrl}` : '';
+    const receiptUrl = exp.receiptUrl ? `${baseUrl}${exp.receiptUrl}` : '';
+    csv += `${exp.serialNumber},"${(exp.vendor as any)?.name || ''}",${exp.category},"${exp.description}",${exp.amount},${exp.currency || 'LKR'},${exp.date},${exp.paymentMethod},${exp.vatAmount || 0},${exp.vatRate || 0},${exp.status},${exp.approvalStatus},"${billUrl}","${receiptUrl}"\n`;
   });
   
   res.setHeader('Content-Type', 'text/csv');
