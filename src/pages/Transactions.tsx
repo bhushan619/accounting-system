@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CurrencySymbolDisplay } from '../utils/FormattedCurrency';
-import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownRight, Landmark, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
@@ -228,7 +228,27 @@ export default function Transactions() {
     <div className="animate-fade-in space-y-6">
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="page-title">{t('transactions')}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={async () => {
+              const res = await axios.get(`${import.meta.env.VITE_API_URL}/exports/invoices/csv`, { responseType: 'blob' });
+              const url = URL.createObjectURL(res.data);
+              const a = document.createElement('a'); a.href = url; a.download = 'invoices.csv'; a.click(); URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+          >
+            <Download size={14} /> {t('exportInvoices')}
+          </button>
+          <button
+            onClick={async () => {
+              const res = await axios.get(`${import.meta.env.VITE_API_URL}/exports/expenses/csv`, { responseType: 'blob' });
+              const url = URL.createObjectURL(res.data);
+              const a = document.createElement('a'); a.href = url; a.download = 'expenses.csv'; a.click(); URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+          >
+            <Download size={14} /> {t('exportExpenses')}
+          </button>
           <span className="text-sm text-muted-foreground">Display in:</span>
           <select
             value={displayCurrency}
